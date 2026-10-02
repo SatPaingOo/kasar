@@ -134,18 +134,32 @@ tools/serve.ts         dev static server, serves folder indexes
 
 ## Tests
 
-`games/tazaung/tests/unit/` mirrors `games/tazaung/src/`, and each game keeps
-its own tests beside it for the same reason it keeps its own version.
+Tests mirror source. A game keeps its own beside it, for the same reason it
+keeps its own version; the shelf's and the tools' live in `tests/unit/`.
 
-They cover the judgment calls rather than the happy path: a spark stopping at
-the first thing in its column, a chain lifting only what touches it and being
-charged for every husk it wakes, the pile packing down afterwards, each boon's
-effect, sunrise beating the dark on the same step, and the ramps that make the
-last stretch of the night unanswerable.
+```text
+games/tazaung/tests/unit/game.test.ts   the rules
+tests/unit/tools/request.test.ts        what the dev server may serve
+tests/unit/tools/manifest.test.ts       what counts as a describable game
+tests/unit/tools/site.test.ts           what goes live
+tests/unit/shell/colour.test.ts         contrast on an accent nobody here chose
+tests/unit/shell/lang.test.ts           which language the shelf opens in
+```
 
-None of them needs a clock or a seed, because `game.ts` takes its randomness
-as an argument. A scripted sequence covers the whole boon table instead of
-trusting a seed to wander through it.
+They cover the judgment calls rather than the happy path, and in several cases
+the ones that were already got wrong once: a spark stopping at the first thing
+in its column, a chain charged for every husk it wakes, sunrise beating the
+dark on the same step, a dev server that never names a file outside the root
+however the path is spelled, a title that stays readable on its own poster.
+
+Nothing needs a clock, a seed or a mocked filesystem. `game.ts` takes its
+randomness as an argument, and the tools are tested against real folders in a
+temporary directory — mocking `readdir` would only prove the mock works.
+
+What is **not** tested is the drawing. Asserting on a canvas needs a native
+canvas build, and a snapshot of pixels tells you something changed, not
+whether it looks right. The wizard, the sky, the scroll and the motes are
+checked by looking at them.
 
 ## Stage notes
 
@@ -153,8 +167,10 @@ S2 per [canon 02](../SPO/02-PROJECT-LIFECYCLE.md): git from the start. A single
 game could have stayed an S0 sketch, but this repository is what holds every
 game, so losing it loses more than one thing.
 
-`tools/` is outside `include`, so the build scripts are typechecked by neither
-`tsc` nor the tests, only linted. That waits on `@types/node`.
+Everything is typechecked: `tsconfig.json` covers the shelf and the games as
+browser code, `tsconfig.tools.json` covers `tools/` and the tests as Node
+code, and `npm run typecheck` runs both. The split exists because the two
+halves have different globals, not because one is exempt.
 
 Two deliberate deviations from `SPO/tsconfig.base.json`, both because this runs
 in a browser rather than Node: `lib` includes `DOM`, and `types` is empty

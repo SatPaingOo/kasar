@@ -7,9 +7,10 @@
  * imposes nothing on a game beyond having a folder and a game.json.
  */
 
+import { deepen, inkOn } from './colour.js';
+import { pickLang } from './lang.js';
+import type { Lang } from './lang.js';
 import { startSky } from './sky.js';
-
-type Lang = 'en' | 'my';
 
 interface Localized {
   readonly en: string;
@@ -35,38 +36,7 @@ const TEXT = {
 
 const SWITCH: Readonly<Record<Lang, string>> = { en: 'မြန်မာ', my: 'English' };
 
-function detect(): Lang {
-  const tags = [navigator.language, ...navigator.languages];
-  return tags.some((tag) => tag?.toLowerCase().startsWith('my')) ? 'my' : 'en';
-}
-
-function parseHex(hex: string): readonly [number, number, number] {
-  const clean = hex.replace('#', '');
-  const full =
-    clean.length === 3
-      ? clean
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : clean;
-  const value = Number.parseInt(full, 16);
-  return Number.isNaN(value) ? [143, 166, 200] : [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff];
-}
-
-/** A darker partner for the accent, so a poster is a gradient and not a slab. */
-function deepen(hex: string): string {
-  const [r, g, b] = parseHex(hex);
-  const mix = (channel: number): number => Math.round(channel * 0.34 + 26 * 0.66);
-  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
-}
-
-/** Dark text on a light accent, light text on a dark one. */
-function inkOn(hex: string): string {
-  const [r, g, b] = parseHex(hex);
-  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55 ? '#171a24' : '#f4f7ff';
-}
-
-let lang: Lang = detect();
+let lang: Lang = pickLang([navigator.language, ...navigator.languages]);
 let games: readonly GameEntry[] = [];
 let problem: keyof typeof TEXT | null = null;
 

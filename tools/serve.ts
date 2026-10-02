@@ -13,39 +13,24 @@
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, normalize, resolve, sep } from 'node:path';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { mimeFor, resolveRequest } from './lib/request.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const PORT = Number(process.env['PORT'] ?? 5190);
 
-const MIME: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.map': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-};
-
 const server = createServer((request, response) => {
-  const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
-  const requested = decodeURIComponent(pathname.endsWith('/') ? `${pathname}index.html` : pathname);
-  const target = resolve(ROOT, normalize(requested).replace(/^[/\\]+/, ''));
-
-  // Never serve outside the project folder, however the path was spelled.
-  if (target !== ROOT && !target.startsWith(ROOT + sep)) {
+  const target = resolveRequest(ROOT, request.url ?? '/');
+  if (target === null) {
     response.writeHead(403, { 'content-type': 'text/plain' }).end('forbidden');
     return;
   }
 
   readFile(target)
     .then((body) => {
-      response.writeHead(200, {
-        'content-type': MIME[extname(target).toLowerCase()] ?? 'application/octet-stream',
-        'cache-control': 'no-store',
-      });
+      response.writeHead(200, { 'content-type': mimeFor(target), 'cache-control': 'no-store' });
       response.end(body);
     })
     .catch(() => {

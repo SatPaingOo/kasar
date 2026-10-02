@@ -137,12 +137,23 @@ entry in the same folder as the version it names.
 |---|---|
 | `lib` includes `DOM`, `types` is `[]` | runs in a browser, not Node |
 | Not Archetype B | see **Not a monorepo** above |
-| `tools/` outside `include` | avoids adding `@types/node` while S2 is young |
 | No direct commits to `main` | see **`main` is a deployment** above |
 | Tags are `<name>/v<semver>` | more than one version per repository |
 
+### Logic the tools decide is split from the scripts that run it
+
+`tools/lib/` holds what each tool judges — which file a request may have,
+what counts as a describable game, what belongs in the site — and the script
+beside it only reads arguments and writes output. The judgments are the part
+worth testing, and testing them through a socket or a build log would prove
+much less for much more work.
+
 ## 6. Known gaps
 
-- `tools/` is linted but not typechecked; that waits on `@types/node`
-- Only the rules are tested. The shell, the tools and everything that draws
-  have no tests, and the drawing is checked by looking at it
+- The drawing has no tests: the wizard, the sky, the scroll and the motes are
+  checked by looking at them. A canvas assertion needs a native canvas build,
+  and a pixel snapshot says something changed, not whether it looks right.
+- `src/shell/main.ts` wires the DOM and is not covered; the judgments it used
+  to hold were moved to `colour.ts` and `lang.ts`, which are.
+- No end-to-end test: that the shelf links to a game that loads is checked by
+  opening it.
