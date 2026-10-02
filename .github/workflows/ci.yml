@@ -19,11 +19,13 @@ jobs:
 
       - run: npm ci
 
-      # The shelf and every game, in one pass. A game that does not compile
-      # fails here and never reaches main.
+      # Canon 09 section 6: lint, typecheck and tests, all three, each one
+      # failing the build. A warning-only CI is decoration.
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm run typecheck
+      - run: npm test
 
+      # The shelf and every game compile, and the site can be assembled.
       - run: npm run build
-
-      # Proves the site can actually be assembled, not just compiled.
       - run: npm run stage

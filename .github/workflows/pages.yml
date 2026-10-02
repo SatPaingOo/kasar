@@ -31,7 +31,10 @@ jobs:
 
       # The same gate as ci.yml. main is what is live, so it is checked again
       # here rather than trusted because it passed somewhere else.
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm run typecheck
+      - run: npm test
       - run: npm run build
       - run: npm run stage
 

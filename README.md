@@ -25,6 +25,9 @@ npm run play      # build the shelf and every game, then serve on :5190
 | `npm run build:games` | compile every game, each with its own tsconfig |
 | `npm run stage` | collect only what the site is into `site/` |
 | `npm run typecheck` | check the shelf and every game at once |
+| `npm test` | the rules, headlessly |
+| `npm run lint` | ESLint |
+| `npm run format` / `format:check` | Prettier |
 
 ## Adding a game
 
@@ -56,8 +59,10 @@ merged there on purpose.
 feat/<slug>  →  dev  →  main  →  the site
 ```
 
-CI runs on both branches and on pull requests: typecheck, build, and stage. A
-game that does not compile fails there and never reaches `main`.
+CI runs on both branches and on pull requests: lint, format, typecheck,
+tests, build, and stage. Canon 09 wants all of lint, typecheck and tests or
+it is not CI. A game that does not compile, or whose rules have changed
+under it, fails there and never reaches `main`.
 
 Canon 09 allows direct commits to `main` in a solo project at S2, and that is
 deliberately not taken here: `main` is a deployment, not a working branch.
@@ -127,15 +132,29 @@ tools/serve.ts         dev static server, serves folder indexes
 |---|---|
 | [Tazaung](games/tazaung/README.md) | Relight a sky that is going out, before your own lantern does |
 
+## Tests
+
+`games/tazaung/tests/unit/` mirrors `games/tazaung/src/`, and each game keeps
+its own tests beside it for the same reason it keeps its own version.
+
+They cover the judgment calls rather than the happy path: a spark stopping at
+the first thing in its column, a chain lifting only what touches it and being
+charged for every husk it wakes, the pile packing down afterwards, each boon's
+effect, sunrise beating the dark on the same step, and the ramps that make the
+last stretch of the night unanswerable.
+
+None of them needs a clock or a seed, because `game.ts` takes its randomness
+as an argument. A scripted sequence covers the whole boon table instead of
+trusting a seed to wander through it.
+
 ## Stage notes
 
 S2 per [canon 02](../SPO/02-PROJECT-LIFECYCLE.md): git from the start. A single
 game could have stayed an S0 sketch, but this repository is what holds every
 game, so losing it loses more than one thing.
 
-Still missing for S2: `lint`, `format` and `test` scripts, and CI. `typecheck`
-is the only check wired up. `tools/` is outside `include`, so the build
-scripts are not typechecked until `@types/node` arrives.
+`tools/` is outside `include`, so the build scripts are typechecked by neither
+`tsc` nor the tests, only linted. That waits on `@types/node`.
 
 Two deliberate deviations from `SPO/tsconfig.base.json`, both because this runs
 in a browser rather than Node: `lib` includes `DOM`, and `types` is empty

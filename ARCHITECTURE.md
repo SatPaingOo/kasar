@@ -143,7 +143,6 @@ entry in the same folder as the version it names.
 
 ## 6. Known gaps
 
-- No `lint`, `format`, `test` or CI yet; `typecheck` is the only check
-- `tools/` is not typechecked
-- CI runs typecheck, build and stage; canon 09 also wants lint and tests,
-  and neither exists yet
+- `tools/` is linted but not typechecked; that waits on `@types/node`
+- Only the rules are tested. The shell, the tools and everything that draws
+  have no tests, and the drawing is checked by looking at it
