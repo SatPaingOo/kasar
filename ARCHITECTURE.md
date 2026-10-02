@@ -115,6 +115,22 @@ here becoming a published package.
 loads only its own files, so the count stays small per page. The trigger to
 revisit is a single game whose module count makes its first paint slow.
 
+### `main` is a deployment, not a working branch
+
+Canon 09 permits direct commits to `main` in a solo project at S2, on the
+grounds that a pull request to yourself is theatre. That reasoning is about
+review, and this is not about review: `main` is wired to a public site, so a
+commit to it is a publish. Work lands on `dev`, CI gates both, and reaching
+`main` is a decision rather than a side effect.
+
+### Tags carry the name in front of the version
+
+Canon 09 tags `v<semver>` because a repository has one version, held in one
+file. Here each game holds its own in its `game.json` and the shelf holds its
+own in `package.json`, so a bare `v0.1.0` would be ambiguous the moment there
+are two games. Tags are `<name>/v<semver>`, and each has a `CHANGELOG.md`
+entry in the same folder as the version it names.
+
 ## 5. Deviations from the canon
 
 | Deviation | Why |
@@ -122,9 +138,12 @@ revisit is a single game whose module count makes its first paint slow.
 | `lib` includes `DOM`, `types` is `[]` | runs in a browser, not Node |
 | Not Archetype B | see **Not a monorepo** above |
 | `tools/` outside `include` | avoids adding `@types/node` while S2 is young |
+| No direct commits to `main` | see **`main` is a deployment** above |
+| Tags are `<name>/v<semver>` | more than one version per repository |
 
 ## 6. Known gaps
 
 - No `lint`, `format`, `test` or CI yet; `typecheck` is the only check
 - `tools/` is not typechecked
-- No deployment workflow; the intent is GitHub Pages serving the tree as-is
+- CI runs typecheck, build and stage; canon 09 also wants lint and tests,
+  and neither exists yet
