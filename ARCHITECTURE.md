@@ -140,6 +140,23 @@ entry in the same folder as the version it names.
 | No direct commits to `main` | see **`main` is a deployment** above |
 | Tags are `<name>/v<semver>` | more than one version per repository |
 
+### The shelf may not borrow a game's visual language
+
+The first shelf was a night sky with drifting embers, a lantern glyph and a
+dusk-to-night gradient. All of that is Tazaung's, and with one game on the
+shelf it looked deliberate. With a second it would have been a frame fighting
+its contents, and a game whose colours clashed with the frame would have
+looked broken through no fault of its own.
+
+The shelf is therefore greyscale: a dark surface, a faint grid, mono metadata,
+and one neutral focus colour. **Every colour on the page comes from a game's
+own `accent` or its `poster.svg`,** and appears only inside that game's card.
+The mark is a cartridge slot with a play triangle, which belongs to a shelf
+rather than to anything on it.
+
+A game's own identity lives in `games/<id>/poster.svg`, where it cannot reach
+the page around it.
+
 ### Logic the tools decide is split from the scripts that run it
 
 `tools/lib/` holds what each tool judges — which file a request may have,

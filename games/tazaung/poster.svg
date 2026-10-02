@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="A stick-figure wizard raising a wand to relight the dead lights falling out of a dusk sky, a lantern hanging from his other hand">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#17203f"/>
+      <stop offset="0.45" stop-color="#3f4463"/>
+      <stop offset="0.78" stop-color="#8e7b82"/>
+      <stop offset="1" stop-color="#e8c08a"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe3a8" stop-opacity="0.95"/>
+      <stop offset="0.4" stop-color="#ffc24d" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#ffb02e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spark" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6de" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ffe9b0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="640" height="400" fill="url(#sky)"/>
+
+  <!-- lights already sent back up: the only score the game keeps -->
+  <g fill="#fff4d6">
+    <circle cx="62" cy="48" r="2.4" opacity="0.9"/>
+    <circle cx="152" cy="26" r="1.6" opacity="0.6"/>
+    <circle cx="238" cy="62" r="2" opacity="0.75"/>
+    <circle cx="330" cy="30" r="1.6" opacity="0.6"/>
+    <circle cx="428" cy="52" r="2.6" opacity="0.9"/>
+    <circle cx="512" cy="24" r="1.5" opacity="0.55"/>
+    <circle cx="588" cy="66" r="2.1" opacity="0.8"/>
+    <circle cx="376" cy="96" r="1.4" opacity="0.5"/>
+    <circle cx="108" cy="104" r="1.5" opacity="0.5"/>
+  </g>
+
+  <!-- husks: lanterns that have gone out, falling -->
+  <g>
+    <g transform="translate(96 128)">
+      <rect width="38" height="38" rx="10" fill="#242b45" stroke="#56628f" stroke-width="2.5"/>
+      <circle cx="19" cy="19" r="4.6" fill="#9aa3bd" opacity="0.6"/>
+    </g>
+    <g transform="translate(470 86)">
+      <rect width="34" height="34" rx="9" fill="#242b45" stroke="#56628f" stroke-width="2.5"/>
+      <circle cx="17" cy="17" r="4.2" fill="#9aa3bd" opacity="0.6"/>
+    </g>
+    <g transform="translate(556 196)">
+      <rect width="30" height="30" rx="8" fill="#242b45" stroke="#56628f" stroke-width="2.5"/>
+      <circle cx="15" cy="15" r="3.8" fill="#9aa3bd" opacity="0.6"/>
+    </g>
+    <g transform="translate(404 212)">
+      <rect width="32" height="32" rx="9" fill="#242b45" stroke="#56628f" stroke-width="2.5"/>
+      <circle cx="16" cy="16" r="4" fill="#9aa3bd" opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- one relit, climbing home -->
+  <circle cx="330" cy="150" r="44" fill="url(#spark)"/>
+  <ellipse cx="330" cy="150" rx="6.5" ry="11" fill="#fff3d2"/>
+
+  <!-- the spark still travelling up the wand's lane -->
+  <circle cx="330" cy="236" r="26" fill="url(#spark)" opacity="0.8"/>
+  <ellipse cx="330" cy="236" rx="4.2" ry="10" fill="#ffd98a"/>
+
+  <!-- ground -->
+  <line x1="24" y1="366" x2="616" y2="366" stroke="#1a1d28" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- the lantern's reach -->
+  <circle cx="232" cy="320" r="112" fill="url(#lamp)"/>
+
+  <!-- the wizard, drawn the way the game draws him: joints and lines -->
+  <g stroke="#13161d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M268 296 L246 332 L238 366"/>
+    <path d="M268 296 L292 332 L300 366"/>
+    <path d="M268 296 L268 240"/>
+    <path d="M268 252 L228 268 L206 296"/>
+    <path d="M268 252 L310 238 L326 206"/>
+    <path d="M206 296 L204 320" stroke-width="5"/>
+  </g>
+  <path d="M326 206 L366 156" stroke="#13161d" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+
+  <!-- head and hat -->
+  <circle cx="268" cy="214" r="22" fill="none" stroke="#13161d" stroke-width="8"/>
+  <path d="M240 204 L268 148 L296 204" fill="none" stroke="#13161d" stroke-width="8" stroke-linejoin="round"/>
+  <g fill="#13161d">
+    <circle cx="260" cy="212" r="3.4"/>
+    <circle cx="276" cy="212" r="3.4"/>
+  </g>
+  <path d="M258 224 Q268 232 278 224" stroke="#13161d" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- the lantern itself -->
+  <circle cx="204" cy="330" r="26" fill="url(#lamp)"/>
+  <circle cx="204" cy="330" r="10" fill="#ffc63f"/>
+</svg>

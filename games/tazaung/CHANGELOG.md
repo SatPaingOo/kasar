@@ -4,6 +4,11 @@ Keep a Changelog, newest first.
 
 ## [Unreleased]
 
+### Added
+
+- `poster.svg`: the wizard raising his wand under a dusk sky of falling husks,
+  drawn as line art so the game's identity travels with it onto the shelf.
+
 ## [0.1.0] — 2026-10-02
 
 ### Added

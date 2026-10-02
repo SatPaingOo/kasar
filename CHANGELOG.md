@@ -5,6 +5,19 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+### Changed
+
+- The shelf no longer borrows Tazaung's night sky, lantern glyph and drifting
+  embers. It is greyscale with a faint grid, and every colour on the page now
+  comes from a game's own accent and poster.
+- A masthead readout of how many games are on the shelf, and the remaining
+  rack slots drawn, so one game does not read as a page that half loaded.
+- Burmese is no longer upper-cased or letter-spaced, which mangles the script.
+
+### Removed
+
+- `src/shell/sky.ts`, the animated starfield.
+
 ## [0.1.0] — 2026-10-02
 
 ### Added

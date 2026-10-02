@@ -10,7 +10,6 @@
 import { deepen, inkOn } from './colour.js';
 import { pickLang } from './lang.js';
 import type { Lang } from './lang.js';
-import { startSky } from './sky.js';
 
 interface Localized {
   readonly en: string;
@@ -37,6 +36,12 @@ const TEXT = {
 
 const SWITCH: Readonly<Record<Lang, string>> = { en: 'မြန်မာ', my: 'English' };
 
+/** The shelf's readout, in the masthead: how much is on it. */
+function countLabel(n: number): string {
+  if (lang === 'my') return `ဂိမ်း ${n} ခု`;
+  return `${String(n).padStart(2, '0')} ${n === 1 ? 'game' : 'games'}`;
+}
+
 let lang: Lang = pickLang([navigator.language, ...navigator.languages]);
 let games: readonly GameEntry[] = [];
 let problem: keyof typeof TEXT | null = null;
@@ -44,8 +49,8 @@ let problem: keyof typeof TEXT | null = null;
 const shelf = document.querySelector<HTMLUListElement>('#shelf');
 const tagline = document.querySelector<HTMLParagraphElement>('#tagline');
 const langButton = document.querySelector<HTMLButtonElement>('#lang');
+const counter = document.querySelector<HTMLSpanElement>('#count');
 const byline = document.querySelector<HTMLAnchorElement>('#by');
-const sky = document.querySelector<HTMLCanvasElement>('#sky');
 
 function card(game: GameEntry): HTMLLIElement {
   const item = document.createElement('li');
@@ -83,7 +88,7 @@ function card(game: GameEntry): HTMLLIElement {
   const meta = document.createElement('p');
   meta.className = 'meta';
   const dot = document.createElement('span');
-  dot.className = 'dot';
+  dot.className = 'tick';
   const text = document.createElement('span');
   text.textContent = `v${game.version} · ${game.year}`;
   meta.append(dot, text);
@@ -97,6 +102,7 @@ function card(game: GameEntry): HTMLLIElement {
 function render(): void {
   if (tagline !== null) tagline.textContent = TEXT.tagline[lang];
   if (byline !== null) byline.textContent = TEXT.by[lang];
+  if (counter !== null) counter.textContent = countLabel(games.length);
   if (langButton !== null) langButton.textContent = SWITCH[lang];
   document.documentElement.lang = lang;
   if (shelf === null) return;
@@ -112,14 +118,21 @@ function render(): void {
   }
 
   for (const game of games) shelf.append(card(game));
+
+  // Draw the rest of the rack, so a shelf with one game on it looks like a
+  // shelf with room rather than a page that half loaded.
+  for (let i = games.length; i < 4; i += 1) {
+    const slot = document.createElement('li');
+    slot.className = 'slot';
+    slot.setAttribute('aria-hidden', 'true');
+    shelf.append(slot);
+  }
 }
 
 langButton?.addEventListener('click', () => {
   lang = lang === 'en' ? 'my' : 'en';
   render();
 });
-
-if (sky !== null) startSky(sky);
 
 try {
   const response = await fetch('./games.json', { cache: 'no-store' });
