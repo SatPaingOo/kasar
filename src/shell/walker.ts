@@ -12,7 +12,7 @@
  * there.
  */
 
-import { WALK, createWalker, stepWalker } from './walk.js';
+import { WALK, createWalker, footAt, stepWalker } from './walk.js';
 import type { WalkerState } from './walk.js';
 
 /** Limb lengths, in figure units, scaled once at draw time. */
@@ -107,8 +107,9 @@ function drawFigure(ctx: CanvasRenderingContext2D, state: WalkerState, gait: num
 
   for (let leg = 0; leg < 2; leg += 1) {
     const p = phase + leg * Math.PI;
-    const walkX = Math.cos(p) * FIGURE.stride * facing;
-    const walkLift = Math.max(0, Math.sin(p)) * FIGURE.footLift;
+    const step = footAt(p);
+    const walkX = step.reach * FIGURE.stride * facing;
+    const walkLift = step.lift * FIGURE.footLift;
     const standX = (leg === 0 ? 1 : -1) * FIGURE.stance * 0.5 * facing;
 
     const foot: Point = { x: gait * walkX + (1 - gait) * standX, y: -gait * walkLift };
