@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="A stick figure climbing a stair of stones out of a flooding shaft, one stone still falling">
+  <defs>
+    <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#20303f"/>
+      <stop offset="0.3" stop-color="#121c29"/>
+      <stop offset="1" stop-color="#0b1119"/>
+    </linearGradient>
+    <linearGradient id="deep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c5c78" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#113f54" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="400" fill="url(#shaft)"/>
+
+  <!-- the rim: the row he has to reach -->
+  <line x1="0" y1="46" x2="640" y2="46" stroke="#86b9cf" stroke-width="2.5" opacity="0.55"/>
+
+  <!-- the shaft's own grid, very faint -->
+  <g stroke="#17212f" stroke-width="1">
+    <line x1="56" y1="0" x2="56" y2="400"/>
+    <line x1="108" y1="0" x2="108" y2="400"/>
+    <line x1="160" y1="0" x2="160" y2="400"/>
+    <line x1="212" y1="0" x2="212" y2="400"/>
+    <line x1="264" y1="0" x2="264" y2="400"/>
+    <line x1="316" y1="0" x2="316" y2="400"/>
+    <line x1="368" y1="0" x2="368" y2="400"/>
+    <line x1="420" y1="0" x2="420" y2="400"/>
+    <line x1="472" y1="0" x2="472" y2="400"/>
+    <line x1="524" y1="0" x2="524" y2="400"/>
+    <line x1="576" y1="0" x2="576" y2="400"/>
+    <line x1="628" y1="0" x2="628" y2="400"/>
+    <line x1="0" y1="348" x2="640" y2="348"/>
+    <line x1="0" y1="296" x2="640" y2="296"/>
+    <line x1="0" y1="244" x2="640" y2="244"/>
+    <line x1="0" y1="192" x2="640" y2="192"/>
+    <line x1="0" y1="140" x2="640" y2="140"/>
+    <line x1="0" y1="88" x2="640" y2="88"/>
+    <line x1="0" y1="36" x2="640" y2="36"/>
+  </g>
+
+  <!-- the stair, which is the only thing worth building here -->
+  <g>
+    <rect x="58" y="350" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="58" y="350" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="110" y="350" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="110" y="350" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="110" y="298" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="110" y="298" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="162" y="350" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="162" y="350" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="162" y="298" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="162" y="298" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="162" y="246" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="162" y="246" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="214" y="350" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="214" y="350" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="214" y="298" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="214" y="298" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="214" y="246" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="214" y="246" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="214" y="194" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="214" y="194" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="266" y="350" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="266" y="350" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="266" y="298" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="266" y="298" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="266" y="246" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="266" y="246" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="266" y="194" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="266" y="194" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="266" y="142" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="266" y="142" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="318" y="350" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="318" y="350" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="318" y="298" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="318" y="298" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="318" y="246" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="318" y="246" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="318" y="194" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="318" y="194" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="318" y="142" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="318" y="142" width="48" height="9" rx="4" fill="#7f8d9d"/>
+    <rect x="318" y="90" width="48" height="48" rx="8" fill="#596675" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="318" y="90" width="48" height="9" rx="4" fill="#7f8d9d"/>
+  </g>
+
+  <!-- one stone still in the air, and the ghost of where it will land -->
+  <g opacity="0.22">
+    <rect x="370" y="192" width="48" height="48" rx="8" fill="#9db0c4"/>
+    <rect x="422" y="192" width="48" height="48" rx="8" fill="#9db0c4"/>
+  </g>
+  <g>
+    <rect x="370" y="64" width="48" height="48" rx="8" fill="#9db0c4" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="370" y="64" width="48" height="9" rx="4" fill="#c2d2e2"/>
+    <rect x="422" y="64" width="48" height="48" rx="8" fill="#9db0c4" stroke="#39434f" stroke-width="1.5"/>
+    <rect x="422" y="64" width="48" height="9" rx="4" fill="#c2d2e2"/>
+  </g>
+
+  <!-- him: one arm reaching for the next stone, one knee up, one foot planted.
+       Both arms raised read as cheering, and arms level with the head read as
+       whiskers; a climb is one arm high and the weight on one leg. -->
+  <g stroke="#eef3fa" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M196 196 L184 222 L180 244"/>
+    <path d="M196 196 L220 192 L214 216"/>
+    <path d="M196 196 L199 154"/>
+    <path d="M199 160 L224 140 L238 112"/>
+    <path d="M199 160 L180 180 L172 202"/>
+  </g>
+  <circle cx="200" cy="136" r="14.5" fill="none" stroke="#eef3fa" stroke-width="6"/>
+  <circle cx="207" cy="131" r="3" fill="#eef3fa"/>
+
+  <!-- the water, drawn over him, because that is how it gets you -->
+  <path d="M0 286 Q 40 279 80 286 T 160 286 T 240 286 T 320 286 T 400 286 T 480 286 T 560 286 T 640 286 L 640 400 L 0 400 Z" fill="url(#deep)"/>
+  <path d="M0 286 Q 40 279 80 286 T 160 286 T 240 286 T 320 286 T 400 286 T 480 286 T 560 286 T 640 286" fill="none" stroke="#86b9cf" stroke-width="2.5" opacity="0.9"/>
+</svg>
