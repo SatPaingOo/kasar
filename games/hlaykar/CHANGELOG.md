@@ -2,6 +2,29 @@
 
 Keep a Changelog, newest first.
 
+## [0.4.0] — 2026-10-03
+
+### Added
+
+- An ending for each of the four ways a run can finish, played before the
+  result card rather than behind it. Getting out is the long one: he steps off
+  the rim, walks away across it and fades as daylight floods down the shaft he
+  just climbed out of. The water closing over him sends up bubbles and keeps
+  rising until there is nothing but water. A stone pinning him shakes the
+  screen, throws a cloud of dust and darkens. Filling the shaft just puts the
+  light out, from the rim downwards.
+- `src/ending.ts`, which decides the shape of an ending over time and knows
+  nothing about canvas, so the timing can be tested.
+- A key already on its way down when the run ends no longer skips the ending.
+
+### Changed
+
+- Bubbles are drawn over the water rather than under it. Under it is where
+  they are, and where the water washed them out completely.
+- No row clearing, settled: a full row here is a flat row, a flat row is a
+  floor he paces on, and clearing one would lower the stack and so lower him.
+  The breaker is the release valve instead.
+
 ## [0.3.0] — 2026-10-03
 
 ### Added

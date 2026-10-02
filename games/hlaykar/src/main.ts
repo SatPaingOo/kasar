@@ -12,7 +12,7 @@ import { columnAt, draw, layout } from './render.js';
 import type { Phase, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
 import { createSound } from './sound.js';
-import { burst, stepMotes } from './dust.js';
+import { bubbles, burst, stepMotes } from './dust.js';
 import type { Mote } from './dust.js';
 
 const stage = document.querySelector<HTMLCanvasElement>('#stage');
@@ -37,6 +37,7 @@ let clock = 0;
 /** Rows per second of extra fall while the drop key is held. */
 let soft = 0;
 let motes: Mote[] = [];
+let overFor = 0;
 
 /**
  * Measured from the box the browser gives the canvas, never from the canvas's
@@ -63,6 +64,7 @@ function begin(): void {
   phase = 'playing';
   soft = 0;
   motes = [];
+  overFor = 0;
 }
 
 /**
@@ -83,6 +85,9 @@ function drain(): void {
 
 /** The one button the title and end screens have. */
 function advance(): void {
+  // A key already on its way down when the run ended would otherwise skip the
+  // ending entirely, and the player would never see what happened to him.
+  if (phase === 'over' && overFor < 0.6) return;
   if (phase === 'title' || phase === 'over') begin();
   else if (phase === 'paused') phase = 'playing';
 }
@@ -209,14 +214,33 @@ function frame(dt: number): void {
     step(game, dt);
     if (soft > 0) dropBy(game, soft * dt);
     drain();
-    if (game.outcome !== 'playing') phase = 'over';
+    if (game.outcome !== 'playing') {
+      phase = 'over';
+      overFor = 0;
+      // The two endings that happen to him, rather than to the shaft, get
+      // something in the air: dust where the stone caught him, bubbles where
+      // the water did.
+      const at = game.climber;
+      // Three cells' worth, because what crushed him was a stone landing on
+      // him, not a stone breaking: it should be the bigger cloud of the two.
+      if (game.outcome === 'crushed') {
+        burst(motes, [
+          [at.row, at.col],
+          [at.row, at.col],
+          [at.row - 1, at.col],
+        ]);
+      }
+      if (game.outcome === 'drowned') bubbles(motes, at.col, at.row);
+    }
+  } else if (phase === 'over') {
+    overFor += dt;
   }
   // The water is the only sound that never stops, and it climbs with itself.
   sound.ambience(phase === 'playing' ? (RULES.rows - game.waterRow) / RULES.rows : 0);
   // The wreckage keeps settling while the game is paused or over, which is
   // the one thing in here that outlives the run that made it.
   stepMotes(motes, dt);
-  draw(ctx, view, game, { lang, phase, time: clock, touch }, motes);
+  draw(ctx, view, game, { lang, phase, time: clock, touch, overFor }, motes);
 }
 
 function tick(now: number): void {

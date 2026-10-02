@@ -21,8 +21,8 @@ function rolls(): () => number {
 describe('a burst', () => {
   it('throws both chips and dust, because a breaking stone is both', () => {
     const motes = burst([], [[10, 4]], rolls());
-    expect(motes.some((m) => m.chip)).toBe(true);
-    expect(motes.some((m) => !m.chip)).toBe(true);
+    expect(motes.some((m) => m.kind === 'chip')).toBe(true);
+    expect(motes.some((m) => m.kind === 'dust')).toBe(true);
   });
 
   it('comes off the cells it was given and nowhere else', () => {

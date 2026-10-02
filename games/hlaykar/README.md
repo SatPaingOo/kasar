@@ -1,6 +1,6 @@
 # Hlaykar
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.3.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.4.0
 
 လှေကား — a stair.
 
@@ -68,6 +68,7 @@ Both are named on the next-stone preview as well as on the stone itself.
 | `src/strings.ts` | everything the player reads, in English and Burmese |
 | `src/sound.ts` | every sound, made from oscillators and one noise buffer |
 | `src/dust.ts` | the wreckage a breaker leaves, in grid coordinates so it survives a resize |
+| `src/ending.ts` | the shape of an ending over time. No canvas, so the timing is testable |
 | `src/main.ts` | the loop, the canvas and the input. The only file that knows this is a browser |
 | `tests/unit/` | the rules, headlessly |
 
@@ -92,6 +93,17 @@ buffer. The first set, picked by eye, put the step cue at 0.016 and the move
 cue at 0.029 — inaudible. Everything now lands above 0.05, and all thirteen
 cues fired on the same frame peak at 0.917, under the limiter's ceiling.
 
+## Endings
+
+Each of the four has its own beat, and the result card fades in behind it
+rather than on top of it — nothing is readable until the thing it reports has
+finished happening, which is the one property `ending.ts` is tested for.
+
+There is no row clearing and there will not be. A full row here is a flat row,
+a flat row is a floor he paces on rather than a stair he climbs, and clearing
+one would lower the stack and so lower him — a reward that moves the player
+away from the only goal in the game. The breaker does the job instead.
+
 ## Still to come
 
-- An ending worth watching when he gets over the rim.
+- Nothing pressing.

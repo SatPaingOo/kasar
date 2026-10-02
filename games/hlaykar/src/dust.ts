@@ -5,6 +5,9 @@
  * of the stone thrown out and falling, and dust, which hangs and spreads and
  * goes nowhere. Chips alone read as a firework; dust alone reads as smoke.
  *
+ * The same machinery carries the bubbles that come up when the water takes
+ * him, which are dust that happens to fall upwards.
+ *
  * Everything here is in grid coordinates — fractional columns and rows — not
  * pixels, so a burst looks the same on a phone as on a desktop and survives
  * the window being resized mid-flight.
@@ -25,8 +28,10 @@ export interface Mote {
   size: number;
   angle: number;
   spin: number;
-  chip: boolean;
+  kind: MoteKind;
 }
+
+export type MoteKind = 'chip' | 'dust' | 'bubble';
 
 const DUST = {
   chipsPerCell: 4,
@@ -34,6 +39,9 @@ const DUST = {
   /** Rows per second per second. Dust barely feels it; chips do. */
   chipGravity: 15,
   dustGravity: 1.6,
+  /** Bubbles fall upwards, and faster the longer they have been going. */
+  bubbleLift: -2.6,
+  bubbleWobble: 2.4,
   /** Dust slows as it spreads, chips do not. */
   dustDrag: 1.9,
   /**
@@ -61,7 +69,7 @@ export function burst(motes: Mote[], at: readonly Offset[], random: () => number
         size: 0.1 + random() * 0.14,
         angle: random() * Math.PI,
         spin: (random() - 0.5) * 14,
-        chip: true,
+        kind: 'chip',
       });
     }
     for (let i = 0; i < DUST.dustPerCell; i += 1) {
@@ -77,9 +85,31 @@ export function burst(motes: Mote[], at: readonly Offset[], random: () => number
         size: 0.16 + random() * 0.2,
         angle: 0,
         spin: 0,
-        chip: false,
+        kind: 'dust',
       });
     }
+  }
+  return motes;
+}
+
+/** The water closing over him: a column of bubbles going the other way. */
+export function bubbles(motes: Mote[], col: number, row: number, random: () => number = Math.random): Mote[] {
+  for (let i = 0; i < 14; i += 1) {
+    if (motes.length >= DUST.most) return motes;
+    const span = 0.7 + random() * 1.1;
+    motes.push({
+      col: col + 0.5 + (random() - 0.5) * 0.8,
+      row: row + 0.3 + random() * 0.7,
+      vcol: 0,
+      vrow: -0.6 - random() * 1.1,
+      life: span,
+      span,
+      size: 0.07 + random() * 0.11,
+      // Reused as the wobble's phase, so no two of them sway together.
+      angle: random() * Math.PI * 2,
+      spin: 0,
+      kind: 'bubble',
+    });
   }
   return motes;
 }
@@ -91,7 +121,18 @@ export function stepMotes(motes: Mote[], dt: number): Mote[] {
     mote.life -= dt;
     if (mote.life <= 0) continue;
 
-    if (mote.chip) {
+    if (mote.kind === 'bubble') {
+      mote.vrow += DUST.bubbleLift * dt;
+      mote.angle += dt * 5;
+      mote.vcol = Math.sin(mote.angle) * DUST.bubbleWobble * 0.25;
+      mote.col += mote.vcol * dt;
+      mote.row += mote.vrow * dt;
+      motes[kept] = mote;
+      kept += 1;
+      continue;
+    }
+
+    if (mote.kind === 'chip') {
       mote.vrow += DUST.chipGravity * dt;
       mote.angle += mote.spin * dt;
     } else {

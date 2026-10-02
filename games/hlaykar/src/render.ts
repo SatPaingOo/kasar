@@ -13,6 +13,7 @@
 import { RULES, breakCells, heightOf, restingRow, shapeOf, surfaceRow } from './game.js';
 import type { Game, Mark, Offset, Piece } from './game.js';
 import { CELLS_TALL, drawClimber } from './climber.js';
+import { beatOf } from './ending.js';
 import type { Mote } from './dust.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
@@ -44,6 +45,7 @@ const IRON = {
   inkDim: '#6d7c8e',
   veil: 'rgba(7, 11, 17, 0.84)',
   dust: '#8d9aab',
+  bubble: '#d8eef7',
 } as const;
 
 export interface View {
@@ -77,6 +79,8 @@ export interface Ui {
   readonly phase: Phase;
   readonly time: number;
   readonly touch: boolean;
+  /** Seconds since the run ended, which is what the ending is drawn from. */
+  readonly overFor: number;
 }
 
 const x = (view: View, col: number): number => view.originX + col * view.cell;
@@ -261,13 +265,26 @@ function drawGhost(ctx: CanvasRenderingContext2D, view: View, game: Game, piece:
  * Chips and dust from a broken stone. Drawn before the water so that a stone
  * broken under the surface comes apart under the surface.
  */
-function drawMotes(ctx: CanvasRenderingContext2D, view: View, motes: readonly Mote[]): void {
+function drawMotes(ctx: CanvasRenderingContext2D, view: View, motes: readonly Mote[], want: 'solid' | 'bubble'): void {
   for (const mote of motes) {
+    if ((mote.kind === 'bubble') !== (want === 'bubble')) continue;
     const fade = Math.max(0, Math.min(1, mote.life / mote.span));
     const px = x(view, mote.col);
     const py = y(view, mote.row);
 
-    if (mote.chip) {
+    if (mote.kind === 'bubble') {
+      // A ring, not a disc: a bubble is mostly the water behind it.
+      // Bright, because they are drawn under the water that tints them.
+      ctx.globalAlpha = fade * 0.85;
+      ctx.strokeStyle = IRON.bubble;
+      ctx.lineWidth = Math.max(1.2, view.cell * 0.06);
+      ctx.beginPath();
+      ctx.arc(px, py, mote.size * view.cell, 0, Math.PI * 2);
+      ctx.stroke();
+      continue;
+    }
+
+    if (mote.kind === 'chip') {
       const side = mote.size * view.cell;
       ctx.save();
       ctx.translate(px, py);
@@ -408,6 +425,11 @@ function centred(
 }
 
 export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui, motes: readonly Mote[] = []): void {
+  const beat = beatOf(ui.phase === 'over' ? game.outcome : 'playing', ui.overFor);
+
+  ctx.save();
+  if (beat.shake !== 0) ctx.translate(beat.shake, beat.shake * 0.4);
+
   const sky = ctx.createLinearGradient(0, 0, 0, view.height);
   sky.addColorStop(0, IRON.skyTop);
   sky.addColorStop(1, IRON.skyLow);
@@ -424,7 +446,8 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
     }
   }
 
-  if (game.piece !== null) {
+  // Nothing is still falling once the run is over.
+  if (game.piece !== null && ui.phase !== 'over') {
     drawGhost(ctx, view, game, game.piece);
     shape(ctx, view, game.piece.cells, game.piece.col, game.piece.row, game.piece.mark);
   }
@@ -434,25 +457,55 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   const col = climber.fromCol + (climber.col - climber.fromCol) * p;
   const row = climber.fromRow + (climber.row - climber.fromRow) * p;
   const climbing = climber.row < climber.fromRow ? 1 - Math.abs(p - 0.5) * 2 : 0;
+  // Walking out of the light, and out of the picture with it.
+  if (beat.stride > 0) ctx.globalAlpha = Math.max(0, 1 - beat.t * 1.25);
   drawClimber(
     ctx,
-    x(view, col + 0.5),
-    y(view, row + 1),
+    // Walking away over the rim once he is out, so he leaves sideways rather
+    // than straight up, where there is no room to show him.
+    x(view, col + 0.5 + beat.stride * climber.facing),
+    y(view, row + 1 - beat.rise),
     view.cell,
     {
       facing: climber.facing,
       gait: p < 1 ? 1 : 0,
-      climb: climbing,
+      // Over the rim he is walking away, not climbing any more.
+      climb: beat.stride > 0 ? Math.max(0, 1 - beat.t * 4) : climbing,
       progress: p,
       parity: (Math.abs(climber.fromCol) % 2) as 0 | 1,
       time: ui.time,
     },
     IRON.climber,
   );
+  ctx.globalAlpha = 1;
 
-  drawMotes(ctx, view, motes);
-  drawWater(ctx, view, game, ui.time);
+  drawMotes(ctx, view, motes, 'solid');
+  drawWater(ctx, view, { ...game, waterRow: game.waterRow - beat.swallow }, ui.time);
+  // Bubbles go over the water rather than under it. They are in it, which
+  // would argue for under — but under, the water washes them out entirely.
+  drawMotes(ctx, view, motes, 'bubble');
+
+  // Daylight over the rim, for the only ending that is a good one.
+  if (beat.glow > 0) {
+    const light = ctx.createLinearGradient(0, view.originY - view.cell, 0, view.originY + view.cell * 9);
+    light.addColorStop(0, `rgba(214, 238, 248, ${0.85 * beat.glow})`);
+    light.addColorStop(0.35, `rgba(134, 185, 207, ${0.3 * beat.glow})`);
+    light.addColorStop(1, 'rgba(134, 185, 207, 0)');
+    ctx.fillStyle = light;
+    ctx.fillRect(0, 0, view.width, view.height);
+  }
+
+  // And the dark coming the other way, for the two that are not.
+  if (beat.dark > 0) {
+    const shadow = ctx.createLinearGradient(0, view.originY, 0, view.originY + view.cell * RULES.rows);
+    shadow.addColorStop(0, `rgba(4, 7, 11, ${0.95 * beat.dark})`);
+    shadow.addColorStop(1, `rgba(4, 7, 11, ${0.15 * beat.dark})`);
+    ctx.fillStyle = shadow;
+    ctx.fillRect(0, 0, view.width, view.height);
+  }
+
   drawHud(ctx, view, game, ui);
+  ctx.restore();
 
   const t = TEXT[ui.lang];
   if (ui.phase === 'title') {
@@ -473,7 +526,11 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       [t.resume, Math.min(15, view.width * 0.042), IRON.inkDim],
     ]);
   } else if (ui.phase === 'over') {
+    // The card arrives behind the ending rather than on top of it: nothing is
+    // readable until what it is reporting has finished happening.
+    ctx.globalAlpha = beat.veil;
     veil(ctx, view);
+    ctx.globalAlpha = beat.text;
     const won = game.outcome === 'out';
     const ENDING: Readonly<Record<typeof game.outcome, string>> = {
       playing: t.drowned,
@@ -492,6 +549,9 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       [t.again, Math.min(18, view.width * 0.05), IRON.ink],
     ]);
   }
+
+  // The overlays fade in, so the next frame must not inherit their alpha.
+  ctx.globalAlpha = 1;
 }
 
 /** Exported for the one place main.ts needs it: aiming by pointer. */
