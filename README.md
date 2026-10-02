@@ -85,6 +85,10 @@ shelf's at the root, a game's beside its `game.json`.
 
 <https://satpaingoo.github.io/kasar/>
 
+It is listed as a project on the portfolio at
+<https://satpaingoo.github.io/portfolio/>, and links back to it from the
+shelf, so someone who arrives at a game can find out who made it.
+
 Published by `.github/workflows/pages.yml`, which builds, stages and uploads
 `site/`. Only built files go up — no sources, no `node_modules`. Every path in
 the shelf and the games is relative, so serving from a subpath needs no

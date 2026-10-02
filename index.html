@@ -263,6 +263,29 @@
         padding: 2.5rem 0;
       }
 
+      /* Who made these, for anyone who arrives at a game first. */
+      .by {
+        margin: 0.55rem 0 0;
+        font-size: 0.82rem;
+        color: var(--dim);
+      }
+
+      .by a {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid var(--faint);
+        padding-bottom: 1px;
+        transition:
+          color 0.18s ease,
+          border-color 0.18s ease;
+      }
+
+      .by a:hover,
+      .by a:focus-visible {
+        color: var(--ink);
+        border-color: currentColor;
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .card {
           transition: none;
@@ -299,6 +322,9 @@
           <div>
             <h1 id="title">Kasar</h1>
             <p class="tagline" id="tagline">Small games, one at a time.</p>
+            <p class="by">
+              <a href="https://satpaingoo.github.io/portfolio/" id="by">by Sat Paing Oo</a>
+            </p>
           </div>
         </div>
         <button id="lang" type="button">မြန်မာ</button>

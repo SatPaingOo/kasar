@@ -30,6 +30,7 @@ interface GameEntry {
 
 const TEXT = {
   tagline: { en: 'Small games, one at a time.', my: 'ဂိမ်းလေးများ၊ တစ်ခုချင်းစီ' },
+  by: { en: 'by Sat Paing Oo', my: 'Sat Paing Oo ရေးသားသည်' },
   empty: { en: 'No games on the shelf yet.', my: 'စင်ပေါ်မှာ ဂိမ်း မရှိသေးဘူး' },
   broken: { en: 'Could not read the shelf.', my: 'စင်ကို မဖတ်နိုင်ဘူး' },
 } as const;
@@ -43,6 +44,7 @@ let problem: keyof typeof TEXT | null = null;
 const shelf = document.querySelector<HTMLUListElement>('#shelf');
 const tagline = document.querySelector<HTMLParagraphElement>('#tagline');
 const langButton = document.querySelector<HTMLButtonElement>('#lang');
+const byline = document.querySelector<HTMLAnchorElement>('#by');
 const sky = document.querySelector<HTMLCanvasElement>('#sky');
 
 function card(game: GameEntry): HTMLLIElement {
@@ -94,6 +96,7 @@ function card(game: GameEntry): HTMLLIElement {
 
 function render(): void {
   if (tagline !== null) tagline.textContent = TEXT.tagline[lang];
+  if (byline !== null) byline.textContent = TEXT.by[lang];
   if (langButton !== null) langButton.textContent = SWITCH[lang];
   document.documentElement.lang = lang;
   if (shelf === null) return;
