@@ -54,5 +54,5 @@ const server = createServer((request, response) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`kasa dev server: http://localhost:${PORT}/`);
+  console.log(`kasar dev server: http://localhost:${PORT}/`);
 });

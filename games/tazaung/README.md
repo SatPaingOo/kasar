@@ -18,7 +18,7 @@ the first thing to defend when the scope starts to grow.
 
 ## Running it
 
-This game lives on the Kasa shelf, and the shelf owns the build:
+This game lives on the Kasar shelf, and the shelf owns the build:
 
 ```bash
 cd ../..          # the repository root

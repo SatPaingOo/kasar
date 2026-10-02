@@ -1,4 +1,4 @@
-# Kasa
+# Kasar
 
 **Status:** S2 Shaped · active · last reviewed 2026-10-02
 

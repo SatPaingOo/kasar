@@ -3,21 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Kasa</title>
+    <title>Kasar</title>
     <meta name="description" content="A shelf of small browser games." />
     <style>
       :root {
         color-scheme: dark;
-        --ink: #e7ecf8;
-        --dim: #9aa6c4;
-        --sky-top: #141a33;
-        --sky-bottom: #2a2440;
-        --line: rgba(231, 236, 248, 0.18);
+        --ink: #eef2fd;
+        --dim: #9fabc9;
+        --faint: rgba(238, 242, 253, 0.14);
+        --night-top: #0b1026;
+        --night-mid: #161a37;
+        --night-low: #2b2448;
         --font: "Myanmar Text", "Noto Sans Myanmar", "Padauk", system-ui, sans-serif;
       }
 
       * {
         box-sizing: border-box;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
       }
 
       html,
@@ -27,60 +32,99 @@
       }
 
       body {
-        background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
-        color: var(--ink);
-        font-family: var(--font);
+        position: relative;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
-        min-height: 100vh;
+        color: var(--ink);
+        font-family: var(--font);
+        background:
+          radial-gradient(120% 80% at 50% 110%, rgba(255, 176, 102, 0.16), transparent 60%),
+          linear-gradient(180deg, var(--night-top) 0%, var(--night-mid) 52%, var(--night-low) 100%);
+        background-attachment: fixed;
+      }
+
+      #sky {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .page {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 68rem;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
       }
 
       header {
         display: flex;
-        align-items: baseline;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: 1rem;
-        padding: 2.5rem 1.5rem 1rem;
-        max-width: 64rem;
-        width: 100%;
-        margin: 0 auto;
+        gap: 1.5rem;
+        padding: clamp(3rem, 11vh, 6rem) 0 clamp(2rem, 6vh, 3.5rem);
+      }
+
+      .mark {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+      }
+
+      .lamp {
+        flex: none;
+        width: clamp(2.1rem, 6vw, 2.9rem);
+        height: auto;
+        color: #ffc96b;
+        filter: drop-shadow(0 0 14px rgba(255, 190, 110, 0.45));
       }
 
       h1 {
         margin: 0;
-        font-size: clamp(1.9rem, 6vw, 2.6rem);
+        font-size: clamp(2.1rem, 7vw, 3.1rem);
         font-weight: 600;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.015em;
+        line-height: 1.05;
       }
 
       .tagline {
-        margin: 0.35rem 0 0;
+        margin: 0.45rem 0 0;
         color: var(--dim);
-        font-size: 0.95rem;
+        font-size: clamp(0.9rem, 2.6vw, 1rem);
+        line-height: 1.5;
       }
 
       button {
+        flex: none;
         font: inherit;
+        font-size: 0.86rem;
         color: var(--dim);
-        background: none;
-        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--faint);
         border-radius: 999px;
-        padding: 0.3rem 0.85rem;
+        padding: 0.4rem 0.95rem;
         cursor: pointer;
+        transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
       }
 
       button:hover,
       button:focus-visible {
         color: var(--ink);
-        border-color: var(--ink);
+        border-color: rgba(238, 242, 253, 0.45);
+        background: rgba(255, 255, 255, 0.08);
       }
 
       main {
         flex: 1;
-        width: 100%;
-        max-width: 64rem;
-        margin: 0 auto;
-        padding: 1rem 1.5rem 3rem;
+        padding-bottom: clamp(3rem, 12vh, 6rem);
       }
 
       #shelf {
@@ -88,91 +132,179 @@
         margin: 0;
         padding: 0;
         display: grid;
-        gap: 1.25rem;
-        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: clamp(1.1rem, 3vw, 1.8rem);
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
       }
 
       .card {
+        --accent: #8fa6c8;
+        --accent-deep: #39415c;
+        position: relative;
         display: flex;
         flex-direction: column;
-        border: 1px solid var(--line);
-        border-radius: 0.9rem;
+        border: 1px solid var(--faint);
+        border-radius: 1.1rem;
         overflow: hidden;
         text-decoration: none;
         color: inherit;
-        background: rgba(255, 255, 255, 0.03);
-        transition: border-color 0.15s ease, transform 0.15s ease;
+        background: rgba(255, 255, 255, 0.035);
+        transition:
+          transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1),
+          border-color 0.22s ease,
+          box-shadow 0.22s ease;
+      }
+
+      /* The glow each card gives off, in its own colour. */
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: -30% -10% 40%;
+        background: radial-gradient(60% 60% at 50% 30%, var(--accent), transparent 70%);
+        opacity: 0.12;
+        filter: blur(26px);
+        pointer-events: none;
+        transition: opacity 0.22s ease;
       }
 
       .card:hover,
       .card:focus-visible {
-        border-color: var(--ink);
-        transform: translateY(-2px);
+        transform: translateY(-4px);
+        border-color: rgba(238, 242, 253, 0.42);
+        box-shadow: 0 18px 44px -22px rgba(0, 0, 0, 0.85);
+        outline: none;
+      }
+
+      .card:hover::after,
+      .card:focus-visible::after {
+        opacity: 0.3;
+      }
+
+      .card:focus-visible {
+        border-color: var(--accent);
       }
 
       .poster {
+        position: relative;
         aspect-ratio: 16 / 10;
+        /* A lone card can be the full width of the shelf; without a ceiling
+           its poster becomes a slab taller than the rest of the card. */
+        max-block-size: 13rem;
         display: grid;
         place-items: center;
-        font-size: clamp(1.3rem, 4vw, 1.8rem);
+        padding: 1rem;
+        text-align: center;
+        font-size: clamp(1.25rem, 3.4vw, 1.7rem);
         font-weight: 600;
-        color: #16181f;
+        line-height: 1.15;
         background-size: cover;
         background-position: center;
+        background-image: linear-gradient(155deg, var(--accent), var(--accent-deep));
+      }
+
+      /* A thin frame inside the poster, the way the games draw their edges. */
+      .poster::before {
+        content: "";
+        position: absolute;
+        inset: 0.6rem;
+        border: 1px solid currentColor;
+        border-radius: 0.5rem;
+        opacity: 0.28;
+        pointer-events: none;
+      }
+
+      .poster span {
+        position: relative;
       }
 
       .body {
-        padding: 0.9rem 1rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 1rem 1.1rem 1.15rem;
       }
 
       .name {
         margin: 0;
-        font-size: 1.05rem;
+        font-size: 1.08rem;
         font-weight: 600;
+        letter-spacing: 0.01em;
       }
 
       .blurb {
-        margin: 0.35rem 0 0;
+        margin: 0;
         color: var(--dim);
         font-size: 0.9rem;
-        line-height: 1.45;
+        line-height: 1.5;
       }
 
       .meta {
-        margin-top: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.35rem 0 0;
         color: var(--dim);
-        font-size: 0.78rem;
-        letter-spacing: 0.04em;
+        font-size: 0.76rem;
+        letter-spacing: 0.05em;
+      }
+
+      .dot {
+        width: 0.3rem;
+        height: 0.3rem;
+        border-radius: 50%;
+        background: var(--accent);
+        flex: none;
       }
 
       .empty {
         color: var(--dim);
+        padding: 2.5rem 0;
       }
 
-      footer {
-        padding: 0 1.5rem 2rem;
-        max-width: 64rem;
-        width: 100%;
-        margin: 0 auto;
-        color: var(--dim);
-        font-size: 0.8rem;
+      @media (prefers-reduced-motion: reduce) {
+        .card {
+          transition: none;
+        }
+        .card:hover,
+        .card:focus-visible {
+          transform: none;
+        }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div>
-        <h1 id="title">Kasa</h1>
-        <p class="tagline" id="tagline">Small games, one at a time.</p>
-      </div>
-      <button id="lang" type="button">မြန်မာ</button>
-    </header>
+    <canvas id="sky" aria-hidden="true"></canvas>
 
-    <main>
-      <ul id="shelf"><li class="empty" id="loading">…</li></ul>
-    </main>
+    <div class="page">
+      <header>
+        <div class="mark">
+          <svg class="lamp" viewBox="0 0 40 52" fill="none" aria-hidden="true">
+            <path
+              d="M20 3v6M11 12h18M13 12l-2 6M27 12l2 6"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M11 18h18l3 20a4 4 0 0 1-4 4.5H12a4 4 0 0 1-4-4.5z"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linejoin="round"
+            />
+            <circle cx="20" cy="31" r="5.5" fill="currentColor" opacity="0.55" />
+          </svg>
+          <div>
+            <h1 id="title">Kasar</h1>
+            <p class="tagline" id="tagline">Small games, one at a time.</p>
+          </div>
+        </div>
+        <button id="lang" type="button">မြန်မာ</button>
+      </header>
 
-    <footer id="footer"></footer>
+      <main>
+        <ul id="shelf"><li class="empty" id="loading">…</li></ul>
+      </main>
+    </div>
 
     <script type="module" src="./dist/shell/main.js"></script>
   </body>

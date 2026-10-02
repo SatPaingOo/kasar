@@ -1,4 +1,4 @@
-# Kasa — Architecture
+# Kasar — Architecture
 
 Structure, decisions, and the reasons behind them. Naming and layout rules come
 from the SPO canon (`spo canon` shows where it is); this document covers what is
@@ -27,7 +27,7 @@ and synthesised in code. It has to deploy as static files.
 ## 2. Repo map
 
 ```text
-kasa/
+kasar/
 ├── index.html            # the shelf itself
 ├── games.json            # generated from games/*/game.json; gitignored
 ├── src/shell/            # reads games.json, renders cards — nothing else
