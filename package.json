@@ -1,0 +1,22 @@
+{
+  "name": "kasa",
+  "version": "0.1.0",
+  "description": "A shelf of small browser games, each one standing on its own.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "manifest": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/manifest.ts",
+    "build:shell": "tsc -p tsconfig.shell.json",
+    "build:games": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/build-games.ts",
+    "build": "npm run manifest && npm run build:shell && npm run build:games",
+    "serve": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/serve.ts",
+    "play": "npm run build && npm run serve",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Kasa</title>
+    <meta name="description" content="A shelf of small browser games." />
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #e7ecf8;
+        --dim: #9aa6c4;
+        --sky-top: #141a33;
+        --sky-bottom: #2a2440;
+        --line: rgba(231, 236, 248, 0.18);
+        --font: "Myanmar Text", "Noto Sans Myanmar", "Padauk", system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+        color: var(--ink);
+        font-family: var(--font);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 2.5rem 1.5rem 1rem;
+        max-width: 64rem;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.9rem, 6vw, 2.6rem);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      .tagline {
+        margin: 0.35rem 0 0;
+        color: var(--dim);
+        font-size: 0.95rem;
+      }
+
+      button {
+        font: inherit;
+        color: var(--dim);
+        background: none;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.3rem 0.85rem;
+        cursor: pointer;
+      }
+
+      button:hover,
+      button:focus-visible {
+        color: var(--ink);
+        border-color: var(--ink);
+      }
+
+      main {
+        flex: 1;
+        width: 100%;
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 1rem 1.5rem 3rem;
+      }
+
+      #shelf {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 0.9rem;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        background: rgba(255, 255, 255, 0.03);
+        transition: border-color 0.15s ease, transform 0.15s ease;
+      }
+
+      .card:hover,
+      .card:focus-visible {
+        border-color: var(--ink);
+        transform: translateY(-2px);
+      }
+
+      .poster {
+        aspect-ratio: 16 / 10;
+        display: grid;
+        place-items: center;
+        font-size: clamp(1.3rem, 4vw, 1.8rem);
+        font-weight: 600;
+        color: #16181f;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .body {
+        padding: 0.9rem 1rem 1.1rem;
+      }
+
+      .name {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+
+      .blurb {
+        margin: 0.35rem 0 0;
+        color: var(--dim);
+        font-size: 0.9rem;
+        line-height: 1.45;
+      }
+
+      .meta {
+        margin-top: 0.7rem;
+        color: var(--dim);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+      }
+
+      .empty {
+        color: var(--dim);
+      }
+
+      footer {
+        padding: 0 1.5rem 2rem;
+        max-width: 64rem;
+        width: 100%;
+        margin: 0 auto;
+        color: var(--dim);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1 id="title">Kasa</h1>
+        <p class="tagline" id="tagline">Small games, one at a time.</p>
+      </div>
+      <button id="lang" type="button">မြန်မာ</button>
+    </header>
+
+    <main>
+      <ul id="shelf"><li class="empty" id="loading">…</li></ul>
+    </main>
+
+    <footer id="footer"></footer>
+
+    <script type="module" src="./dist/shell/main.js"></script>
+  </body>
+</html>

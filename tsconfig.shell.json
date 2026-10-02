@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src/shell",
+    "outDir": "dist/shell",
+    "sourceMap": true
+  },
+  "include": ["src/shell"]
+}

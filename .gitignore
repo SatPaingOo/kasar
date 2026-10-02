@@ -1,0 +1,11 @@
+node_modules/
+dist/
+games/*/dist/
+
+# generated from each game's game.json
+games.json
+
+# agent working folders
+.claude/
+.cursor/
+.zcode/

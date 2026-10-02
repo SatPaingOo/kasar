@@ -1,0 +1,11 @@
+{
+  "id": "tazaung",
+  "version": "0.1.0",
+  "title": { "en": "Tazaung", "my": "တန်ဆောင်" },
+  "blurb": {
+    "en": "The sky is going out. Relight it before your lantern does.",
+    "my": "ကောင်းကင် ငြိမ်းနေပြီ။ ကိုယ့်မီးအိမ် မငြိမ်းခင် ပြန်ထွန်းပါ။"
+  },
+  "accent": "#f0d2a8",
+  "year": 2026
+}
