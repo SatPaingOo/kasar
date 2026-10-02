@@ -15,9 +15,20 @@
     "stage": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/stage.ts",
     "serve": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/serve.ts",
     "play": "npm run build && npm run serve",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^6.0.3"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
   }
 }

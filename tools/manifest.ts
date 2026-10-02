@@ -69,13 +69,11 @@ for (const folder of folders) {
   if (typeof version !== "string") fail(folder.name, "version must be a string");
   if (id !== folder.name) fail(folder.name, `id "${id}" does not match the folder name`);
 
-  let poster: string | null = null;
-  try {
-    await readFile(join(GAMES, folder.name, "poster.svg"));
-    poster = `games/${folder.name}/poster.svg`;
-  } catch {
-    poster = null;
-  }
+  const hasPoster = await readFile(join(GAMES, folder.name, "poster.svg")).then(
+    () => true,
+    () => false,
+  );
+  const poster = hasPoster ? `games/${folder.name}/poster.svg` : null;
 
   entries.push({
     id,

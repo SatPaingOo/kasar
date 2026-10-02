@@ -1,0 +1,9 @@
+# Files Prettier leaves alone: generated, owned by another tool, or written by hand
+dist/
+games/*/dist/
+site/
+build/
+coverage/
+package-lock.json
+*.md
+games.json
