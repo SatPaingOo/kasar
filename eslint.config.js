@@ -9,14 +9,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/site/**',
-      '**/build/**',
-      '**/coverage/**',
-      '**/.next/**',
-    ],
+    ignores: ['**/node_modules/**', '**/dist/**', '**/site/**', '**/build/**', '**/coverage/**', '**/.next/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

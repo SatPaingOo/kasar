@@ -12,7 +12,7 @@
  * nothing is built until `unlock` is called from a real input event.
  */
 
-import type { Boon, GameEvent } from "./game.js";
+import type { Boon, GameEvent } from './game.js';
 
 /**
  * Levels, measured rather than guessed: the whole mix was tapped at the master
@@ -56,7 +56,7 @@ let muted = false;
 /** Build the audio graph. Safe to call on every input; it only acts once. */
 export function unlock(): void {
   if (rig !== undefined) {
-    if (rig.context.state === "suspended") void rig.context.resume();
+    if (rig.context.state === 'suspended') void rig.context.resume();
     return;
   }
 
@@ -65,8 +65,8 @@ export function unlock(): void {
   // branch above only resumes on a *later* unlock, so without this a context
   // that started suspended would stay silent for the whole session.
   void context.resume();
-  context.addEventListener("statechange", () => {
-    if (context.state === "suspended") void context.resume();
+  context.addEventListener('statechange', () => {
+    if (context.state === 'suspended') void context.resume();
   });
 
   // A limiter on the end, so raising the cues cannot clip when several land
@@ -90,13 +90,13 @@ export function unlock(): void {
   // Two detuned oscillators beat slowly against each other, which reads as a
   // flame rather than a test tone.
   const droneLow = context.createOscillator();
-  droneLow.type = "sine";
+  droneLow.type = 'sine';
   droneLow.frequency.value = 110;
   droneLow.connect(droneGain);
   droneLow.start();
 
   const droneHigh = context.createOscillator();
-  droneHigh.type = "triangle";
+  droneHigh.type = 'triangle';
   droneHigh.frequency.value = 165.5;
   const droneHighGain = context.createGain();
   droneHighGain.gain.value = 0.35;
@@ -122,7 +122,7 @@ export function playScroll(): void {
   source.playbackRate.value = 0.7;
 
   const filter = context.createBiquadFilter();
-  filter.type = "bandpass";
+  filter.type = 'bandpass';
   filter.Q.value = 1.2;
   filter.frequency.setValueAtTime(900, now);
   filter.frequency.exponentialRampToValueAtTime(2600, now + 0.45);
@@ -164,25 +164,25 @@ export function playEvents(events: readonly GameEvent[]): void {
   if (rig === undefined) return;
   for (const event of events) {
     switch (event.kind) {
-      case "shot":
-        blip(660, 0.07, MIX.shot, "square", -220);
+      case 'shot':
+        blip(660, 0.07, MIX.shot, 'square', -220);
         break;
-      case "relit":
+      case 'relit':
         chime([523.25, 783.99], 0.3, MIX.relight);
         break;
-      case "boon":
+      case 'boon':
         playBoon(event.boon);
         break;
-      case "landed":
+      case 'landed':
         thud();
         break;
-      case "chain":
+      case 'chain':
         chime([261.63, 392, 523.25, 659.25].slice(0, 2 + Math.min(2, event.size / 3)), 0.9, MIX.chain);
         break;
-      case "ended":
+      case 'ended':
         fadeOut();
         break;
-      case "dawn":
+      case 'dawn':
         chime([392, 493.88, 587.33, 783.99], 2.4, MIX.dawn);
         break;
       default:
@@ -194,27 +194,27 @@ export function playEvents(events: readonly GameEvent[]): void {
 /** One voice per boon, so you hear which light you caught before you see it. */
 function playBoon(boon: Boon): void {
   switch (boon) {
-    case "ember":
+    case 'ember':
       // Bright and fast: it makes the wand hot.
       chime([659.25, 987.77, 1318.51], 0.5, MIX.boon);
-      blip(1200, 0.12, MIX.boon * 0.4, "sawtooth", 500);
+      blip(1200, 0.12, MIX.boon * 0.4, 'sawtooth', 500);
       return;
-    case "beacon":
+    case 'beacon':
       // Wide and bell-like: it reaches every column at once.
       chime([392, 587.33, 880, 1174.66], 1.3, MIX.boon);
       return;
-    case "hush":
+    case 'hush':
       // Downward and soft: the sky slows.
       sweepDown(620, 190, 1.1, MIX.boon * 0.9);
       return;
-    case "bloom":
+    case 'bloom':
       // A rising arpeggio: the whole pile goes home.
       arpeggio([329.63, 415.3, 493.88, 659.25, 830.61], 0.11, 0.7, MIX.boon * 0.8);
       return;
-    case "ward":
+    case 'ward':
       // Two hard, glassy strikes: something closes around the lantern.
       chime([1046.5, 1567.98], 0.9, MIX.boon * 0.75);
-      blip(2093, 0.08, MIX.boon * 0.25, "sine", -200);
+      blip(2093, 0.08, MIX.boon * 0.25, 'sine', -200);
       return;
     default:
       return;
@@ -228,7 +228,7 @@ function sweepDown(from: number, to: number, seconds: number, level: number): vo
   const now = context.currentTime;
 
   const osc = context.createOscillator();
-  osc.type = "sine";
+  osc.type = 'sine';
   osc.frequency.setValueAtTime(from, now);
   osc.frequency.exponentialRampToValueAtTime(to, now + seconds);
 
@@ -243,12 +243,7 @@ function sweepDown(from: number, to: number, seconds: number, level: number): vo
 }
 
 /** Notes one after another rather than together — used for the bloom. */
-function arpeggio(
-  notes: readonly number[],
-  stepSeconds: number,
-  tail: number,
-  level: number,
-): void {
+function arpeggio(notes: readonly number[], stepSeconds: number, tail: number, level: number): void {
   if (rig === undefined) return;
   const { context, master } = rig;
   const base = context.currentTime;
@@ -256,7 +251,7 @@ function arpeggio(
   notes.forEach((frequency, index) => {
     const start = base + index * stepSeconds;
     const osc = context.createOscillator();
-    osc.type = "triangle";
+    osc.type = 'triangle';
     osc.frequency.value = frequency;
 
     const gain = context.createGain();
@@ -270,13 +265,7 @@ function arpeggio(
   });
 }
 
-function blip(
-  frequency: number,
-  seconds: number,
-  level: number,
-  shape: OscillatorType,
-  sweep: number,
-): void {
+function blip(frequency: number, seconds: number, level: number, shape: OscillatorType, sweep: number): void {
   if (rig === undefined) return;
   const { context, master } = rig;
   const now = context.currentTime;
@@ -304,7 +293,7 @@ function chime(partials: readonly number[], seconds: number, level: number): voi
 
   partials.forEach((frequency, index) => {
     const osc = context.createOscillator();
-    osc.type = index === 0 ? "sine" : "triangle";
+    osc.type = index === 0 ? 'sine' : 'triangle';
     osc.frequency.value = frequency;
 
     const gain = context.createGain();
@@ -330,7 +319,7 @@ function thud(): void {
   source.buffer = noise;
 
   const filter = context.createBiquadFilter();
-  filter.type = "lowpass";
+  filter.type = 'lowpass';
   filter.frequency.setValueAtTime(420, now);
   filter.frequency.exponentialRampToValueAtTime(110, now + 0.18);
 

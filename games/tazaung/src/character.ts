@@ -10,9 +10,9 @@
  * light, stooping as it fails, sitting down when it goes out.
  */
 
-import { RULES } from "./game.js";
-import type { GameEvent, GameState } from "./game.js";
-import type { Viewport } from "./render.js";
+import { RULES } from './game.js';
+import type { GameEvent, GameState } from './game.js';
+import type { Viewport } from './render.js';
 
 export interface Point {
   x: number;
@@ -110,19 +110,19 @@ export function updateWizard(
   time: number,
 ): void {
   wizard.column = approach(wizard.column, state.wizardColumn, 14, dt);
-  wizard.stoop = approach(wizard.stoop, state.phase === "ended" ? 1 : 1 - state.light, 3, dt);
+  wizard.stoop = approach(wizard.stoop, state.phase === 'ended' ? 1 : 1 - state.light, 3, dt);
   wizard.recoil = Math.max(0, wizard.recoil - dt * 6);
   wizard.flinch = Math.max(0, wizard.flinch - dt * 4);
   wizard.flourish = Math.max(0, wizard.flourish - dt * 1.6);
-  wizard.sit = approach(wizard.sit, state.phase === "ended" ? 1 : 0, 1.6, dt);
-  wizard.salute = approach(wizard.salute, state.phase === "dawn" ? 1 : 0, 1.4, dt);
+  wizard.sit = approach(wizard.sit, state.phase === 'ended' ? 1 : 0, 1.6, dt);
+  wizard.salute = approach(wizard.salute, state.phase === 'dawn' ? 1 : 0, 1.4, dt);
 
   for (const event of events) {
-    if (event.kind === "shot") wizard.recoil = 1;
-    if (event.kind === "landed" && Math.abs(event.column - state.wizardColumn) <= 1) {
+    if (event.kind === 'shot') wizard.recoil = 1;
+    if (event.kind === 'landed' && Math.abs(event.column - state.wizardColumn) <= 1) {
       wizard.flinch = 1;
     }
-    if (event.kind === "boon" || event.kind === "dawn") wizard.flourish = 1;
+    if (event.kind === 'boon' || event.kind === 'dawn') wizard.flourish = 1;
   }
 
   const frame = measure(wizard, view, time);
@@ -134,7 +134,7 @@ export function updateWizard(
   wizard.previousHand = { x: hand.x, y: hand.y };
 
   const gravity = 42;
-  const push = -wizard.handVelocity / Math.max(view.cell, 1) * 0.5;
+  const push = (-wizard.handVelocity / Math.max(view.cell, 1)) * 0.5;
   wizard.swingVelocity += (-gravity * Math.sin(wizard.swingAngle) + push) * dt;
   wizard.swingVelocity *= Math.exp(-2.2 * dt);
   wizard.swingAngle += wizard.swingVelocity * dt;
@@ -194,10 +194,7 @@ function measure(wizard: Wizard, view: Viewport, time: number): Frame {
   const throwUp = (1 - Math.min(1, wizard.recoil * 1.6)) * 0.0 + Math.min(1, wizard.recoil) * 0.45;
   const wandHand = {
     x: neck.x + scale * (0.52 - fold * 0.24 - cheer * 0.18 - sit * 0.08),
-    y:
-      neck.y -
-      scale * (0.3 + throwUp * 0.45 - fold * 0.35 + cheer * 0.5) +
-      scale * sit * 0.72,
+    y: neck.y - scale * (0.3 + throwUp * 0.45 - fold * 0.35 + cheer * 0.5) + scale * sit * 0.72,
   };
 
   // The lantern arm drops and pulls in as the light fails.
@@ -209,8 +206,7 @@ function measure(wizard: Wizard, view: Viewport, time: number): Frame {
   };
 
   const wandLength = scale * 0.72;
-  const wandAngle =
-    -Math.PI / 2 + 0.3 + fold * 0.5 - Math.min(1, wizard.recoil) * 0.18 + sit * 1.45;
+  const wandAngle = -Math.PI / 2 + 0.3 + fold * 0.5 - Math.min(1, wizard.recoil) * 0.18 + sit * 1.45;
   const wandTip = {
     x: wandHand.x + Math.cos(wandAngle) * wandLength,
     y: wandHand.y + Math.sin(wandAngle) * wandLength,
@@ -254,8 +250,8 @@ function paintFigure(
   ctx.strokeStyle = ink;
   ctx.fillStyle = ink;
   ctx.lineWidth = Math.max(1.6, scale * 0.075) * weight;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
 
   // Legs: feet planted, knees worked out by IK, so a stoop bends them for us.
   // Feet forward of the hips while sitting, so the knees come up in front.
@@ -295,13 +291,7 @@ function paintFigure(
   ctx.restore();
 }
 
-function drawFace(
-  ctx: CanvasRenderingContext2D,
-  head: Point,
-  radius: number,
-  wizard: Wizard,
-  ink: string,
-): void {
+function drawFace(ctx: CanvasRenderingContext2D, head: Point, radius: number, wizard: Wizard, ink: string): void {
   const worry = Math.min(1, wizard.stoop + wizard.flinch * 0.5);
   const eye = radius * 0.17;
 

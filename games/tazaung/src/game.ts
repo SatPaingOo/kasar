@@ -96,10 +96,7 @@ export const RULES = {
 
 /** Seconds between husks, falling away as the sky empties faster. */
 export const spawnIntervalAt = (elapsed: number): number =>
-  Math.max(
-    RULES.spawnIntervalMin,
-    RULES.spawnIntervalStart * Math.exp(-elapsed / RULES.spawnDecaySeconds),
-  );
+  Math.max(RULES.spawnIntervalMin, RULES.spawnIntervalStart * Math.exp(-elapsed / RULES.spawnDecaySeconds));
 
 /** Rows per second a husk falls, rising with elapsed time. */
 export const huskSpeedAt = (elapsed: number): number =>
@@ -115,9 +112,9 @@ export const huskSpeedAt = (elapsed: number): number =>
  * - `bloom`  the entire pile lights and lifts off, free
  * - `ward`   a glass round the lantern: nothing drains it
  */
-export type Boon = "ember" | "beacon" | "hush" | "bloom" | "ward";
+export type Boon = 'ember' | 'beacon' | 'hush' | 'bloom' | 'ward';
 
-export const BOONS: readonly Boon[] = ["ember", "beacon", "hush", "bloom", "ward"];
+export const BOONS: readonly Boon[] = ['ember', 'beacon', 'hush', 'bloom', 'ward'];
 
 export interface Husk {
   readonly id: number;
@@ -143,19 +140,19 @@ export interface Rising {
 }
 
 export type GameEvent =
-  | { readonly kind: "shot"; readonly column: number }
-  | { readonly kind: "relit"; readonly column: number; readonly row: number }
-  | { readonly kind: "boon"; readonly boon: Boon; readonly column: number; readonly row: number }
-  | { readonly kind: "dawn" }
-  | { readonly kind: "chain"; readonly column: number; readonly row: number; readonly size: number }
-  | { readonly kind: "landed"; readonly column: number; readonly row: number }
-  | { readonly kind: "ended" };
+  | { readonly kind: 'shot'; readonly column: number }
+  | { readonly kind: 'relit'; readonly column: number; readonly row: number }
+  | { readonly kind: 'boon'; readonly boon: Boon; readonly column: number; readonly row: number }
+  | { readonly kind: 'dawn' }
+  | { readonly kind: 'chain'; readonly column: number; readonly row: number; readonly size: number }
+  | { readonly kind: 'landed'; readonly column: number; readonly row: number }
+  | { readonly kind: 'ended' };
 
 /**
  * `intro` waits on the scroll before the night starts; it is also what gives
  * the browser the gesture it needs before any audio can be built.
  */
-export type Phase = "intro" | "playing" | "paused" | "ended" | "dawn";
+export type Phase = 'intro' | 'playing' | 'paused' | 'ended' | 'dawn';
 
 export interface GameState {
   phase: Phase;
@@ -209,7 +206,7 @@ export const pileCount = (pile: readonly boolean[]): number =>
 
 export function createGame(random: () => number = Math.random): GameState {
   return {
-    phase: "intro",
+    phase: 'intro',
     light: RULES.lightStart,
     elapsed: 0,
     saved: 0,
@@ -234,32 +231,31 @@ export function createGame(random: () => number = Math.random): GameState {
 
 /** Leave the scroll and start the night. */
 export function begin(state: GameState): void {
-  if (state.phase !== "intro") return;
-  state.phase = "playing";
+  if (state.phase !== 'intro') return;
+  state.phase = 'playing';
 }
 
 /** Stop the clock. A real phase, so the scroll and the audio agree with it. */
 export function pause(state: GameState): void {
-  if (state.phase !== "playing") return;
-  state.phase = "paused";
+  if (state.phase !== 'playing') return;
+  state.phase = 'paused';
   state.fireRequested = false;
 }
 
 export function resumePlay(state: GameState): void {
-  if (state.phase !== "paused") return;
-  state.phase = "playing";
+  if (state.phase !== 'paused') return;
+  state.phase = 'playing';
 }
 
-const clampColumn = (column: number): number =>
-  Math.min(RULES.columns - 1, Math.max(0, Math.round(column)));
+const clampColumn = (column: number): number => Math.min(RULES.columns - 1, Math.max(0, Math.round(column)));
 
 export function moveWizard(state: GameState, delta: number): void {
-  if (state.phase !== "playing") return;
+  if (state.phase !== 'playing') return;
   state.targetColumn = clampColumn(state.wizardColumn + delta);
 }
 
 export function aimWizard(state: GameState, column: number): void {
-  if (state.phase !== "playing") return;
+  if (state.phase !== 'playing') return;
   state.targetColumn = clampColumn(column);
 }
 
@@ -277,7 +273,7 @@ function advanceWizard(state: GameState, dt: number): void {
  * them cleared by the step that followed.
  */
 export function requestFire(state: GameState): void {
-  if (state.phase !== "playing") return;
+  if (state.phase !== 'playing') return;
   state.fireRequested = true;
 }
 
@@ -290,12 +286,12 @@ function releaseSpark(state: GameState): void {
   state.fireCooldown = RULES.fireDelay * (state.surge > 0 ? RULES.surgeFireScale : 1);
   state.sparks.push({ id: state.nextId, column: state.wizardColumn, y: RULES.wizardRow - 0.5 });
   state.nextId += 1;
-  state.events.push({ kind: "shot", column: state.wizardColumn });
+  state.events.push({ kind: 'shot', column: state.wizardColumn });
 }
 
 export function step(state: GameState, dt: number): void {
   state.events.length = 0;
-  if (state.phase !== "playing") {
+  if (state.phase !== 'playing') {
     state.fireRequested = false;
     return;
   }
@@ -323,8 +319,8 @@ export function step(state: GameState, dt: number): void {
 
   // Sunrise beats the dark: reaching it on the same step is a win, not a loss.
   if (state.elapsed >= RULES.nightSeconds) {
-    state.phase = "dawn";
-    state.events.push({ kind: "dawn" });
+    state.phase = 'dawn';
+    state.events.push({ kind: 'dawn' });
     return;
   }
   checkEnd(state);
@@ -362,12 +358,7 @@ function advanceSparks(state: GameState, dt: number): void {
 }
 
 /** The husk nearest the wand within the span a spark crossed this step. */
-function lowestHuskBetween(
-  state: GameState,
-  column: number,
-  low: number,
-  high: number,
-): Husk | undefined {
+function lowestHuskBetween(state: GameState, column: number, low: number, high: number): Husk | undefined {
   let found: Husk | undefined;
   for (const husk of state.husks) {
     if (husk.column !== column) continue;
@@ -386,11 +377,11 @@ function relight(state: GameState, husk: Husk): void {
 
   const gain = husk.boon === null ? RULES.relightGain : RULES.boonGain;
   state.light = Math.min(RULES.lightMax, state.light + gain);
-  state.events.push({ kind: "relit", column: husk.column, row: Math.round(husk.y) });
+  state.events.push({ kind: 'relit', column: husk.column, row: Math.round(husk.y) });
 
   if (husk.boon === null) return;
   applyBoon(state, husk.boon);
-  state.events.push({ kind: "boon", boon: husk.boon, column: husk.column, row: Math.round(husk.y) });
+  state.events.push({ kind: 'boon', boon: husk.boon, column: husk.column, row: Math.round(husk.y) });
 }
 
 /**
@@ -399,23 +390,23 @@ function relight(state: GameState, husk: Husk): void {
  */
 function applyBoon(state: GameState, boon: Boon): void {
   switch (boon) {
-    case "ember":
+    case 'ember':
       state.surge = RULES.surgeSeconds;
       return;
-    case "hush":
+    case 'hush':
       state.hush = RULES.hushSeconds;
       return;
-    case "ward":
+    case 'ward':
       state.ward = RULES.wardSeconds;
       return;
-    case "beacon":
+    case 'beacon':
       // A free spark up every column at once, paid for by the light itself.
       for (let column = 0; column < RULES.columns; column += 1) {
         state.sparks.push({ id: state.nextId, column, y: RULES.wizardRow - 0.5 });
         state.nextId += 1;
       }
       return;
-    case "bloom":
+    case 'bloom':
       // The whole pile wakes and goes home. The only free way out of a mess.
       liftWholePile(state);
       return;
@@ -469,7 +460,7 @@ function chain(state: GameState, column: number, row: number): void {
 
   settle(state);
   state.light -= RULES.chainCostPerHusk * cluster.length;
-  state.events.push({ kind: "chain", column, row, size: cluster.length });
+  state.events.push({ kind: 'chain', column, row, size: cluster.length });
 }
 
 /** Every column keeps its husks packed against the floor. */
@@ -497,7 +488,7 @@ function advanceHusks(state: GameState, dt: number): void {
     state.husks.splice(i, 1);
     if (resting < 0) continue;
     state.pile[cellIndex(husk.column, resting)] = true;
-    state.events.push({ kind: "landed", column: husk.column, row: resting });
+    state.events.push({ kind: 'landed', column: husk.column, row: resting });
   }
 }
 
@@ -514,8 +505,7 @@ function advanceRisings(state: GameState, dt: number): void {
   }
 }
 
-const pickBoon = (roll: number): Boon =>
-  BOONS[Math.min(BOONS.length - 1, Math.floor(roll * BOONS.length))] ?? "ember";
+const pickBoon = (roll: number): Boon => BOONS[Math.min(BOONS.length - 1, Math.floor(roll * BOONS.length))] ?? 'ember';
 
 function spawnHusks(state: GameState, dt: number): void {
   state.spawnTimer -= dt;
@@ -533,17 +523,16 @@ function spawnHusks(state: GameState, dt: number): void {
 }
 
 /** 0 at dusk, 1 at sunrise. The sky draws itself from this. */
-export const nightProgress = (state: GameState): number =>
-  Math.min(1, state.elapsed / RULES.nightSeconds);
+export const nightProgress = (state: GameState): number => Math.min(1, state.elapsed / RULES.nightSeconds);
 
 function checkEnd(state: GameState): void {
-  const buried = Array.from({ length: RULES.columns }, (_unused, column) =>
-    surfaceRow(state.pile, column),
-  ).some((row) => row <= RULES.buriedRow);
+  const buried = Array.from({ length: RULES.columns }, (_unused, column) => surfaceRow(state.pile, column)).some(
+    (row) => row <= RULES.buriedRow,
+  );
 
   if (state.light > 0 && !buried) return;
 
   state.light = 0;
-  state.phase = "ended";
-  state.events.push({ kind: "ended" });
+  state.phase = 'ended';
+  state.events.push({ kind: 'ended' });
 }

@@ -43,10 +43,10 @@ function populate(width: number, height: number): void {
 }
 
 export function startSky(canvas: HTMLCanvasElement): void {
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
   if (ctx === null) return;
 
-  motion = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let width = 0;
   let height = 0;
@@ -86,9 +86,9 @@ export function startSky(canvas: HTMLCanvasElement): void {
       height * 1.05,
       Math.max(width, height) * 0.75,
     );
-    horizon.addColorStop(0, "rgba(255, 198, 120, 0.16)");
-    horizon.addColorStop(0.45, "rgba(255, 170, 110, 0.05)");
-    horizon.addColorStop(1, "rgba(255, 170, 110, 0)");
+    horizon.addColorStop(0, 'rgba(255, 198, 120, 0.16)');
+    horizon.addColorStop(0.45, 'rgba(255, 170, 110, 0.05)');
+    horizon.addColorStop(1, 'rgba(255, 170, 110, 0)');
     ctx.fillStyle = horizon;
     ctx.fillRect(0, 0, width, height);
 
@@ -100,12 +100,12 @@ export function startSky(canvas: HTMLCanvasElement): void {
       }
 
       const twinkle = 0.45 + 0.55 * Math.sin(frame * 0.012 + star.phase);
-      const colour = star.warm ? "255, 214, 150" : "226, 234, 255";
+      const colour = star.warm ? '255, 214, 150' : '226, 234, 255';
 
       if (star.warm) {
         const halo = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 7);
         halo.addColorStop(0, `rgba(${colour}, ${(0.33 * twinkle).toFixed(3)})`);
-        halo.addColorStop(1, "rgba(255, 214, 150, 0)");
+        halo.addColorStop(1, 'rgba(255, 214, 150, 0)');
         ctx.fillStyle = halo;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size * 7, 0, Math.PI * 2);

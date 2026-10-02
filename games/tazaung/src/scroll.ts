@@ -11,8 +11,8 @@
  * words fade in once it has opened.
  */
 
-import { fontStack } from "./strings.js";
-import type { Viewport } from "./render.js";
+import { fontStack } from './strings.js';
+import type { Viewport } from './render.js';
 
 export interface ScrollLine {
   readonly text: string;
@@ -37,12 +37,7 @@ export interface Rect {
  */
 export interface ScrollArt {
   readonly rows: number;
-  readonly draw: (
-    ctx: CanvasRenderingContext2D,
-    band: Rect,
-    ink: string,
-    time: number,
-  ) => void;
+  readonly draw: (ctx: CanvasRenderingContext2D, band: Rect, ink: string, time: number) => void;
 }
 
 const EASE_OUT = (t: number): number => 1 - Math.pow(1 - t, 3);
@@ -79,8 +74,8 @@ export function drawScroll(
   const rollerR = view.cell * 0.17;
 
   ctx.save();
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   ctx.strokeStyle = ink;
   ctx.lineWidth = Math.max(1.6, view.cell * 0.055);
 
@@ -98,7 +93,7 @@ export function drawScroll(
     ctx.quadraticCurveTo(cx, bottom + sag, cx - half, bottom);
     ctx.closePath();
 
-    ctx.fillStyle = "rgba(248, 239, 219, 0.2)";
+    ctx.fillStyle = 'rgba(248, 239, 219, 0.2)';
     ctx.fill();
     ctx.globalAlpha = 0.7;
     ctx.stroke();
@@ -160,7 +155,7 @@ function drawRoller(
   spin: number,
 ): void {
   // The roll itself: one capsule, filled so it sits in front of the sheet.
-  ctx.fillStyle = "rgba(240, 228, 203, 0.3)";
+  ctx.fillStyle = 'rgba(240, 228, 203, 0.3)';
   ctx.beginPath();
   ctx.roundRect(x - radius, y - reach, radius * 2, reach * 2, radius);
   ctx.fill();
@@ -192,8 +187,8 @@ function drawLines(
 ): void {
   const step = height / (lines.length + 1);
   ctx.save();
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillStyle = ink;
 
   lines.forEach((line, index) => {
@@ -220,8 +215,8 @@ function drawLine(
 ): void {
   const size = view.cell * 0.34 * line.scale;
   ctx.save();
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillStyle = ink;
   ctx.font = fontStack(size, line.scale > 1.4 ? 600 : 400);
   const breathe = line.pulse === true ? 0.65 + 0.35 * Math.sin(time * 3) : 1;

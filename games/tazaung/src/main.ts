@@ -5,21 +5,12 @@
  * drawing left on whatever frame rate the browser gives us.
  */
 
-import {
-  aimWizard,
-  begin,
-  createGame,
-  moveWizard,
-  pause,
-  requestFire,
-  resumePlay,
-  step,
-} from "./game.js";
-import type { GameEvent } from "./game.js";
-import { advanceVisuals, columnAt, draw, layout } from "./render.js";
-import { playBegin, playEvents, playScroll, toggleMute, unlock, updateSound } from "./sound.js";
-import { detectLang, setLang, toggleLang } from "./strings.js";
-import type { Viewport } from "./render.js";
+import { aimWizard, begin, createGame, moveWizard, pause, requestFire, resumePlay, step } from './game.js';
+import type { GameEvent } from './game.js';
+import { advanceVisuals, columnAt, draw, layout } from './render.js';
+import { playBegin, playEvents, playScroll, toggleMute, unlock, updateSound } from './sound.js';
+import { detectLang, setLang, toggleLang } from './strings.js';
+import type { Viewport } from './render.js';
 
 const STEP = 1 / 120;
 /** Never simulate more than this after a stall; drop the time instead. */
@@ -31,8 +22,8 @@ function required<T>(value: T | null, missing: string): T {
   return value;
 }
 
-const canvas = required(document.querySelector<HTMLCanvasElement>("#stage"), "missing #stage canvas");
-const ctx = required(canvas.getContext("2d"), "2d canvas context unavailable");
+const canvas = required(document.querySelector<HTMLCanvasElement>('#stage'), 'missing #stage canvas');
+const ctx = required(canvas.getContext('2d'), '2d canvas context unavailable');
 
 let state = createGame();
 let view: Viewport = layout(1, 1);
@@ -64,11 +55,11 @@ let scrollOpen = 1;
  * on `H` after that. Nobody is made to read them twice, and nobody has to
  * guess what a pile does on their first run.
  */
-const SEEN_KEY = "tazaung.seen";
+const SEEN_KEY = 'tazaung.seen';
 
 function hasPlayedBefore(): boolean {
   try {
-    return window.localStorage.getItem(SEEN_KEY) === "1";
+    return window.localStorage.getItem(SEEN_KEY) === '1';
   } catch {
     // Private windows and blocked storage: just show the rules.
     return false;
@@ -77,7 +68,7 @@ function hasPlayedBefore(): boolean {
 
 function rememberPlayed(): void {
   try {
-    window.localStorage.setItem(SEEN_KEY, "1");
+    window.localStorage.setItem(SEEN_KEY, '1');
   } catch {
     // Nothing to do; the rules simply show again next time.
   }
@@ -85,7 +76,7 @@ function rememberPlayed(): void {
 
 let showHow = !hasPlayedBefore();
 
-const beatSeconds = (): number => (state.phase === "dawn" ? BEAT_DAWN : BEAT_DARK);
+const beatSeconds = (): number => (state.phase === 'dawn' ? BEAT_DAWN : BEAT_DARK);
 
 function restart(): void {
   state = createGame();
@@ -95,28 +86,28 @@ function restart(): void {
 
 /** Any press or tap: open the night, carry on from a pause, or start again. */
 function advancePhase(): void {
-  if (state.phase === "intro") {
+  if (state.phase === 'intro') {
     begin(state);
     rememberPlayed();
     showHow = false;
     playBegin();
     return;
   }
-  if (state.phase === "paused") {
+  if (state.phase === 'paused') {
     resumePlay(state);
     return;
   }
-  if (state.phase !== "playing" && scrollOpen > 0.9) restart();
+  if (state.phase !== 'playing' && scrollOpen > 0.9) restart();
 }
 
 function togglePause(): void {
-  if (state.phase === "playing") {
-    held.delete("fire");
+  if (state.phase === 'playing') {
+    held.delete('fire');
     pause(state);
     playScroll();
     return;
   }
-  if (state.phase === "paused") resumePlay(state);
+  if (state.phase === 'paused') resumePlay(state);
 }
 
 /**
@@ -124,50 +115,50 @@ function togglePause(): void {
  * a split view, a flex layout. Listening only to window resize left the
  * backing store stale and the whole scene stretched and cropped.
  */
-if (typeof ResizeObserver === "function") {
+if (typeof ResizeObserver === 'function') {
   new ResizeObserver(() => {
     resize();
   }).observe(canvas);
 } else {
-  window.addEventListener("resize", resize);
+  window.addEventListener('resize', resize);
 }
 
-window.addEventListener("keydown", (event) => {
+window.addEventListener('keydown', (event) => {
   unlock();
   switch (event.key) {
-    case "ArrowLeft":
-    case "a":
+    case 'ArrowLeft':
+    case 'a':
       moveWizard(state, -1);
       break;
-    case "ArrowRight":
-    case "d":
+    case 'ArrowRight':
+    case 'd':
       moveWizard(state, 1);
       break;
-    case " ":
-    case "ArrowUp":
-    case "w":
-      held.add("fire");
+    case ' ':
+    case 'ArrowUp':
+    case 'w':
+      held.add('fire');
       event.preventDefault();
       break;
-    case "r":
+    case 'r':
       restart();
       break;
-    case "m":
+    case 'm':
       unlock();
       toggleMute();
       break;
-    case "l":
+    case 'l':
       toggleLang();
       break;
-    case "h":
-      if (state.phase === "intro") showHow = !showHow;
+    case 'h':
+      if (state.phase === 'intro') showHow = !showHow;
       break;
-    case "p":
-    case "Escape":
+    case 'p':
+    case 'Escape':
       unlock();
       togglePause();
       break;
-    case "Enter":
+    case 'Enter':
       advancePhase();
       break;
     default:
@@ -175,29 +166,29 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("keyup", (event) => {
-  if (event.key === " " || event.key === "ArrowUp" || event.key === "w") held.delete("fire");
+window.addEventListener('keyup', (event) => {
+  if (event.key === ' ' || event.key === 'ArrowUp' || event.key === 'w') held.delete('fire');
 });
 
 // Touch and mouse: aim at a column and keep firing while held.
-canvas.addEventListener("pointerdown", (event) => {
+canvas.addEventListener('pointerdown', (event) => {
   unlock();
   canvas.setPointerCapture(event.pointerId);
-  if (state.phase !== "playing") {
+  if (state.phase !== 'playing') {
     advancePhase();
     return;
   }
   aimWizard(state, columnAt(view, event.offsetX));
-  held.add("fire");
+  held.add('fire');
 });
 
-canvas.addEventListener("pointermove", (event) => {
-  if (!held.has("fire")) return;
+canvas.addEventListener('pointermove', (event) => {
+  if (!held.has('fire')) return;
   aimWizard(state, columnAt(view, event.offsetX));
 });
 
-canvas.addEventListener("pointerup", () => held.delete("fire"));
-canvas.addEventListener("pointercancel", () => held.delete("fire"));
+canvas.addEventListener('pointerup', () => held.delete('fire'));
+canvas.addEventListener('pointercancel', () => held.delete('fire'));
 
 let accumulator = 0;
 let last = performance.now();
@@ -214,15 +205,15 @@ function frame(now: number): void {
 
   frameEvents.length = 0;
   while (accumulator >= STEP) {
-    if (held.has("fire")) requestFire(state);
+    if (held.has('fire')) requestFire(state);
     step(state, STEP);
     frameEvents.push(...state.events);
     accumulator -= STEP;
   }
 
-  if (state.phase === "intro" || state.phase === "paused") {
+  if (state.phase === 'intro' || state.phase === 'paused') {
     scrollOpen = Math.min(1, scrollOpen + delta / UNROLL_SECONDS);
-  } else if (state.phase === "playing") {
+  } else if (state.phase === 'playing') {
     endedAt = Number.POSITIVE_INFINITY;
     scrollOpen = Math.max(0, scrollOpen - delta / UNROLL_SECONDS);
   } else {
@@ -235,7 +226,7 @@ function frame(now: number): void {
   }
 
   playEvents(frameEvents);
-  updateSound(state.light, state.phase === "playing");
+  updateSound(state.light, state.phase === 'playing');
 
   advanceVisuals(state, frameEvents, view, Math.max(delta, 1 / 240), now / 1000);
   draw(ctx, state, view, now / 1000, scrollOpen, showHow);
@@ -265,11 +256,11 @@ setInterval(() => {
 
 // Going away pauses; coming back never un-pauses on its own, or hiding a
 // paused game would toggle it straight back into play.
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && state.phase === "playing") togglePause();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && state.phase === 'playing') togglePause();
 });
-window.addEventListener("blur", () => {
-  if (state.phase === "playing") togglePause();
+window.addEventListener('blur', () => {
+  if (state.phase === 'playing') togglePause();
 });
 
 setLang(detectLang());

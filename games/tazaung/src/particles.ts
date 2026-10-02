@@ -10,9 +10,9 @@
  * bounded amount of work, not whatever the board happens to contain.
  */
 
-import { RULES } from "./game.js";
-import type { Boon, GameEvent } from "./game.js";
-import type { Viewport } from "./render.js";
+import { RULES } from './game.js';
+import type { Boon, GameEvent } from './game.js';
+import type { Viewport } from './render.js';
 
 export interface Mote {
   x: number;
@@ -33,16 +33,16 @@ export interface Mote {
 /** Past this, the oldest are dropped rather than the newest refused. */
 const CAP = 420;
 
-const WARM = "#ffd98a";
-const BRIGHT = "#fff3d2";
-const COLD = "#9aa3bd";
+const WARM = '#ffd98a';
+const BRIGHT = '#fff3d2';
+const COLD = '#9aa3bd';
 
 const BOON_MOTE: Readonly<Record<Boon, string>> = {
-  ember: "#ffb14d",
-  beacon: "#b9f0ff",
-  hush: "#cfc6ff",
-  bloom: "#c9ffb8",
-  ward: "#ffeaa0",
+  ember: '#ffb14d',
+  beacon: '#b9f0ff',
+  hush: '#cfc6ff',
+  bloom: '#c9ffb8',
+  ward: '#ffeaa0',
 };
 
 interface BurstOptions {
@@ -103,66 +103,114 @@ export function emitForEvents(
 
   for (const event of events) {
     switch (event.kind) {
-      case "shot": {
+      case 'shot': {
         burst(motes, wandTip.x, wandTip.y, {
-          count: 4, color: WARM, warm: true, speed: cell * 1.4, spread: cell * 0.1,
-          life: 0.22, size: cell * 0.045, gravity: cell * 0.6, drag: 2.4,
-          direction: -Math.PI / 2, arc: Math.PI * 0.9,
+          count: 4,
+          color: WARM,
+          warm: true,
+          speed: cell * 1.4,
+          spread: cell * 0.1,
+          life: 0.22,
+          size: cell * 0.045,
+          gravity: cell * 0.6,
+          drag: 2.4,
+          direction: -Math.PI / 2,
+          arc: Math.PI * 0.9,
         });
         break;
       }
-      case "relit": {
+      case 'relit': {
         // The husk does not vanish, it comes apart and the pieces drift.
         const at = centreOf(view, event.column, event.row);
         burst(motes, at.x, at.y, {
-          count: 14, color: BRIGHT, warm: true, speed: cell * 2.2, spread: cell * 0.3,
-          life: 0.75, size: cell * 0.06, gravity: -cell * 0.35, drag: 1.5,
-          direction: -Math.PI / 2, arc: Math.PI * 2,
+          count: 14,
+          color: BRIGHT,
+          warm: true,
+          speed: cell * 2.2,
+          spread: cell * 0.3,
+          life: 0.75,
+          size: cell * 0.06,
+          gravity: -cell * 0.35,
+          drag: 1.5,
+          direction: -Math.PI / 2,
+          arc: Math.PI * 2,
         });
         break;
       }
-      case "landed": {
+      case 'landed': {
         const at = centreOf(view, event.column, event.row);
         burst(motes, at.x, at.y + cell * 0.35, {
-          count: 10, color: COLD, warm: false, speed: cell * 1.7, spread: cell * 0.5,
-          life: 0.5, size: cell * 0.05, gravity: cell * 3.4, drag: 2.8,
-          direction: -Math.PI / 2, arc: Math.PI * 1.1,
+          count: 10,
+          color: COLD,
+          warm: false,
+          speed: cell * 1.7,
+          spread: cell * 0.5,
+          life: 0.5,
+          size: cell * 0.05,
+          gravity: cell * 3.4,
+          drag: 2.8,
+          direction: -Math.PI / 2,
+          arc: Math.PI * 1.1,
         });
         shake = Math.max(shake, cell * 0.07);
         break;
       }
-      case "chain": {
+      case 'chain': {
         const at = centreOf(view, event.column, event.row);
         burst(motes, at.x, at.y, {
-          count: Math.min(50, 10 + event.size * 4), color: BRIGHT, warm: true,
-          speed: cell * 3.4, spread: cell * 0.8, life: 1, size: cell * 0.07,
-          gravity: -cell * 0.6, drag: 1.2, direction: -Math.PI / 2, arc: Math.PI * 2,
+          count: Math.min(50, 10 + event.size * 4),
+          color: BRIGHT,
+          warm: true,
+          speed: cell * 3.4,
+          spread: cell * 0.8,
+          life: 1,
+          size: cell * 0.07,
+          gravity: -cell * 0.6,
+          drag: 1.2,
+          direction: -Math.PI / 2,
+          arc: Math.PI * 2,
         });
         shake = Math.max(shake, cell * (0.06 + Math.min(0.22, event.size * 0.022)));
         break;
       }
-      case "boon": {
+      case 'boon': {
         const at = centreOf(view, event.column, event.row);
         burst(motes, at.x, at.y, {
-          count: 28, color: BOON_MOTE[event.boon], warm: true, speed: cell * 4,
-          spread: cell * 0.2, life: 0.9, size: cell * 0.065, gravity: 0, drag: 2.2,
-          direction: 0, arc: Math.PI * 2,
+          count: 28,
+          color: BOON_MOTE[event.boon],
+          warm: true,
+          speed: cell * 4,
+          spread: cell * 0.2,
+          life: 0.9,
+          size: cell * 0.065,
+          gravity: 0,
+          drag: 2.2,
+          direction: 0,
+          arc: Math.PI * 2,
         });
         shake = Math.max(shake, cell * 0.1);
         break;
       }
-      case "dawn": {
+      case 'dawn': {
         for (let column = 0; column < RULES.columns; column += 1) {
           const at = centreOf(view, column, RULES.rows - 1);
           burst(motes, at.x, at.y, {
-            count: 10, color: BRIGHT, warm: true, speed: cell * 2.6, spread: cell * 0.5,
-            life: 2.2, size: cell * 0.06, gravity: -cell * 0.5, drag: 0.7,
-            direction: -Math.PI / 2, arc: Math.PI * 0.6,
+            count: 10,
+            color: BRIGHT,
+            warm: true,
+            speed: cell * 2.6,
+            spread: cell * 0.5,
+            life: 2.2,
+            size: cell * 0.06,
+            gravity: -cell * 0.5,
+            drag: 0.7,
+            direction: -Math.PI / 2,
+            arc: Math.PI * 0.6,
           });
         }
         break;
       }
-      case "ended": {
+      case 'ended': {
         shake = Math.max(shake, cell * 0.18);
         break;
       }
@@ -174,17 +222,20 @@ export function emitForEvents(
 }
 
 /** A rising light leaves a trail, so a cluster going up reads as one movement. */
-export function trailRising(
-  motes: Mote[],
-  view: Viewport,
-  column: number,
-  y: number,
-): void {
+export function trailRising(motes: Mote[], view: Viewport, column: number, y: number): void {
   const at = centreOf(view, column, y);
   burst(motes, at.x, at.y, {
-    count: 1, color: WARM, warm: true, speed: view.cell * 0.25, spread: view.cell * 0.18,
-    life: 0.4, size: view.cell * 0.04, gravity: 0, drag: 3,
-    direction: Math.PI / 2, arc: Math.PI * 0.6,
+    count: 1,
+    color: WARM,
+    warm: true,
+    speed: view.cell * 0.25,
+    spread: view.cell * 0.18,
+    life: 0.4,
+    size: view.cell * 0.04,
+    gravity: 0,
+    drag: 3,
+    direction: Math.PI / 2,
+    arc: Math.PI * 0.6,
   });
 }
 
@@ -215,7 +266,7 @@ export function drawMotes(ctx: CanvasRenderingContext2D, motes: readonly Mote[])
   for (const mote of motes) {
     const fade = mote.life / mote.maxLife;
     if (mote.warm !== additive) {
-      ctx.globalCompositeOperation = mote.warm ? "lighter" : "source-over";
+      ctx.globalCompositeOperation = mote.warm ? 'lighter' : 'source-over';
       additive = mote.warm;
     }
     ctx.globalAlpha = mote.warm ? fade : fade * 0.55;

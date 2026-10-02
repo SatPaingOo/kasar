@@ -7,9 +7,9 @@
  * imposes nothing on a game beyond having a folder and a game.json.
  */
 
-import { startSky } from "./sky.js";
+import { startSky } from './sky.js';
 
-type Lang = "en" | "my";
+type Lang = 'en' | 'my';
 
 interface Localized {
   readonly en: string;
@@ -28,26 +28,26 @@ interface GameEntry {
 }
 
 const TEXT = {
-  tagline: { en: "Small games, one at a time.", my: "ဂိမ်းလေးများ၊ တစ်ခုချင်းစီ" },
-  empty: { en: "No games on the shelf yet.", my: "စင်ပေါ်မှာ ဂိမ်း မရှိသေးဘူး" },
-  broken: { en: "Could not read the shelf.", my: "စင်ကို မဖတ်နိုင်ဘူး" },
+  tagline: { en: 'Small games, one at a time.', my: 'ဂိမ်းလေးများ၊ တစ်ခုချင်းစီ' },
+  empty: { en: 'No games on the shelf yet.', my: 'စင်ပေါ်မှာ ဂိမ်း မရှိသေးဘူး' },
+  broken: { en: 'Could not read the shelf.', my: 'စင်ကို မဖတ်နိုင်ဘူး' },
 } as const;
 
-const SWITCH: Readonly<Record<Lang, string>> = { en: "မြန်မာ", my: "English" };
+const SWITCH: Readonly<Record<Lang, string>> = { en: 'မြန်မာ', my: 'English' };
 
 function detect(): Lang {
   const tags = [navigator.language, ...navigator.languages];
-  return tags.some((tag) => tag?.toLowerCase().startsWith("my")) ? "my" : "en";
+  return tags.some((tag) => tag?.toLowerCase().startsWith('my')) ? 'my' : 'en';
 }
 
 function parseHex(hex: string): readonly [number, number, number] {
-  const clean = hex.replace("#", "");
+  const clean = hex.replace('#', '');
   const full =
     clean.length === 3
       ? clean
-          .split("")
+          .split('')
           .map((c) => c + c)
-          .join("")
+          .join('')
       : clean;
   const value = Number.parseInt(full, 16);
   return Number.isNaN(value) ? [143, 166, 200] : [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff];
@@ -63,56 +63,56 @@ function deepen(hex: string): string {
 /** Dark text on a light accent, light text on a dark one. */
 function inkOn(hex: string): string {
   const [r, g, b] = parseHex(hex);
-  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55 ? "#171a24" : "#f4f7ff";
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55 ? '#171a24' : '#f4f7ff';
 }
 
 let lang: Lang = detect();
 let games: readonly GameEntry[] = [];
 let problem: keyof typeof TEXT | null = null;
 
-const shelf = document.querySelector<HTMLUListElement>("#shelf");
-const tagline = document.querySelector<HTMLParagraphElement>("#tagline");
-const langButton = document.querySelector<HTMLButtonElement>("#lang");
-const sky = document.querySelector<HTMLCanvasElement>("#sky");
+const shelf = document.querySelector<HTMLUListElement>('#shelf');
+const tagline = document.querySelector<HTMLParagraphElement>('#tagline');
+const langButton = document.querySelector<HTMLButtonElement>('#lang');
+const sky = document.querySelector<HTMLCanvasElement>('#sky');
 
 function card(game: GameEntry): HTMLLIElement {
-  const item = document.createElement("li");
+  const item = document.createElement('li');
 
-  const link = document.createElement("a");
-  link.className = "card";
+  const link = document.createElement('a');
+  link.className = 'card';
   link.href = game.href;
-  link.style.setProperty("--accent", game.accent);
-  link.style.setProperty("--accent-deep", deepen(game.accent));
+  link.style.setProperty('--accent', game.accent);
+  link.style.setProperty('--accent-deep', deepen(game.accent));
 
-  const poster = document.createElement("div");
-  poster.className = "poster";
+  const poster = document.createElement('div');
+  poster.className = 'poster';
   poster.style.color = inkOn(game.accent);
   if (game.poster !== null) {
     poster.style.backgroundImage = `url("${game.poster}")`;
   } else {
     // No poster is a normal state, not a gap: the title on the game's own
     // colour is a card, and nothing has to be drawn or kept up to date.
-    const label = document.createElement("span");
+    const label = document.createElement('span');
     label.textContent = game.title[lang];
     poster.append(label);
   }
 
-  const body = document.createElement("div");
-  body.className = "body";
+  const body = document.createElement('div');
+  body.className = 'body';
 
-  const name = document.createElement("h2");
-  name.className = "name";
+  const name = document.createElement('h2');
+  name.className = 'name';
   name.textContent = game.title[lang];
 
-  const blurb = document.createElement("p");
-  blurb.className = "blurb";
+  const blurb = document.createElement('p');
+  blurb.className = 'blurb';
   blurb.textContent = game.blurb[lang];
 
-  const meta = document.createElement("p");
-  meta.className = "meta";
-  const dot = document.createElement("span");
-  dot.className = "dot";
-  const text = document.createElement("span");
+  const meta = document.createElement('p');
+  meta.className = 'meta';
+  const dot = document.createElement('span');
+  dot.className = 'dot';
+  const text = document.createElement('span');
   text.textContent = `v${game.version} · ${game.year}`;
   meta.append(dot, text);
 
@@ -131,9 +131,9 @@ function render(): void {
   shelf.replaceChildren();
 
   if (problem !== null || games.length === 0) {
-    const note = document.createElement("li");
-    note.className = "empty";
-    note.textContent = TEXT[problem ?? "empty"][lang];
+    const note = document.createElement('li');
+    note.className = 'empty';
+    note.textContent = TEXT[problem ?? 'empty'][lang];
     shelf.append(note);
     return;
   }
@@ -141,20 +141,20 @@ function render(): void {
   for (const game of games) shelf.append(card(game));
 }
 
-langButton?.addEventListener("click", () => {
-  lang = lang === "en" ? "my" : "en";
+langButton?.addEventListener('click', () => {
+  lang = lang === 'en' ? 'my' : 'en';
   render();
 });
 
 if (sky !== null) startSky(sky);
 
 try {
-  const response = await fetch("./games.json", { cache: "no-store" });
+  const response = await fetch('./games.json', { cache: 'no-store' });
   if (!response.ok) throw new Error(String(response.status));
   const data = (await response.json()) as { games?: readonly GameEntry[] };
   games = data.games ?? [];
 } catch {
-  problem = "broken";
+  problem = 'broken';
 }
 
 render();

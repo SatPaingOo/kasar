@@ -14,7 +14,7 @@
         --night-top: #0b1026;
         --night-mid: #161a37;
         --night-low: #2b2448;
-        --font: "Myanmar Text", "Noto Sans Myanmar", "Padauk", system-ui, sans-serif;
+        --font: 'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', system-ui, sans-serif;
       }
 
       * {
@@ -112,7 +112,10 @@
         border-radius: 999px;
         padding: 0.4rem 0.95rem;
         cursor: pointer;
-        transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        transition:
+          color 0.18s ease,
+          border-color 0.18s ease,
+          background 0.18s ease;
       }
 
       button:hover,
@@ -156,7 +159,7 @@
 
       /* The glow each card gives off, in its own colour. */
       .card::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: -30% -10% 40%;
         background: radial-gradient(60% 60% at 50% 30%, var(--accent), transparent 70%);
@@ -203,7 +206,7 @@
 
       /* A thin frame inside the poster, the way the games draw their edges. */
       .poster::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0.6rem;
         border: 1px solid currentColor;
@@ -302,7 +305,9 @@
       </header>
 
       <main>
-        <ul id="shelf"><li class="empty" id="loading">…</li></ul>
+        <ul id="shelf">
+          <li class="empty" id="loading">…</li>
+        </ul>
       </main>
     </div>
 
