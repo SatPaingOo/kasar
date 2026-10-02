@@ -157,6 +157,13 @@ rather than to anything on it.
 A game's own identity lives in `games/<id>/poster.svg`, where it cannot reach
 the page around it.
 
+The shelf's stick figure in `src/shell/walker.ts` is the first real test of
+that rule. Tazaung has a stick figure already, and lifting its `character.ts`
+would have been half an hour's work; the shelf's is written separately and
+shares nothing — no hat, no wand, no lantern, no colour, a different walk, and
+no import across the boundary. Taking the idea is allowed. Taking the file is
+how the night sky got here.
+
 ### Logic the tools decide is split from the scripts that run it
 
 `tools/lib/` holds what each tool judges — which file a request may have,

@@ -10,6 +10,7 @@
 import { deepen, inkOn } from './colour.js';
 import { pickLang } from './lang.js';
 import type { Lang } from './lang.js';
+import { startWalker } from './walker.js';
 
 interface Localized {
   readonly en: string;
@@ -133,6 +134,11 @@ langButton?.addEventListener('click', () => {
   lang = lang === 'en' ? 'my' : 'en';
   render();
 });
+
+// He has nothing to do with the shelf's contents, so he starts before the
+// fetch and keeps going whether or not it succeeds.
+const walkway = document.querySelector<HTMLCanvasElement>('#walker');
+if (walkway !== null) startWalker(walkway);
 
 try {
   const response = await fetch('./games.json', { cache: 'no-store' });
