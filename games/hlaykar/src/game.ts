@@ -132,7 +132,7 @@ export type Outcome = 'playing' | 'out' | 'drowned' | 'crushed' | 'buried';
 
 export type Event =
   | { readonly kind: 'land'; readonly cells: number }
-  | { readonly kind: 'shatter'; readonly col: number; readonly row: number; readonly cells: number }
+  | { readonly kind: 'shatter'; readonly at: readonly Offset[] }
   | { readonly kind: 'step'; readonly climbed: boolean }
   | { readonly kind: 'blocked' }
   | { readonly kind: 'knocked' }
@@ -361,11 +361,11 @@ export function breakCells(game: Game, col: number): readonly Offset[] {
   return taken;
 }
 
-/** Take the top off a column and its neighbours. Returns how much went. */
-function shatter(game: Game, col: number): number {
+/** Take the top off a column and its neighbours. Returns what went. */
+function shatter(game: Game, col: number): readonly Offset[] {
   const taken = breakCells(game, col);
   for (const [row, col2] of taken) game.cells[index(row, col2)] = false;
-  return taken.length;
+  return taken;
 }
 
 /** If the ground has gone from under him, he comes down with it. */
@@ -433,8 +433,9 @@ function land(game: Game): void {
   const row = Math.floor(piece.row);
 
   if (piece.mark === 'breaker') {
-    const removed = shatter(game, piece.col);
-    game.events.push({ kind: 'shatter', col: piece.col, row, cells: removed });
+    // The event carries the cells themselves rather than a count: the dust has
+    // to come off the stones that actually went.
+    game.events.push({ kind: 'shatter', at: shatter(game, piece.col) });
     game.piece = null;
     game.spawnIn = RULES.spawnDelay;
     settle(game);

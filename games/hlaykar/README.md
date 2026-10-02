@@ -1,6 +1,6 @@
 # Hlaykar
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.2.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.3.0
 
 လှေကား — a stair.
 
@@ -67,6 +67,7 @@ Both are named on the next-stone preview as well as on the stone itself.
 | `src/render.ts` | reads the game and paints it; decides the layout and nothing else |
 | `src/strings.ts` | everything the player reads, in English and Burmese |
 | `src/sound.ts` | every sound, made from oscillators and one noise buffer |
+| `src/dust.ts` | the wreckage a breaker leaves, in grid coordinates so it survives a resize |
 | `src/main.ts` | the loop, the canvas and the input. The only file that knows this is a browser |
 | `tests/unit/` | the rules, headlessly |
 
@@ -94,5 +95,3 @@ cues fired on the same frame peak at 0.917, under the limiter's ceiling.
 ## Still to come
 
 - An ending worth watching when he gets over the rim.
-- Dust and debris when a breaker goes off. The sound carries it for now, but
-  the stones simply vanish.

@@ -2,6 +2,24 @@
 
 Keep a Changelog, newest first.
 
+## [0.3.0] — 2026-10-03
+
+### Added
+
+- Dust and chips when a breaker goes off. Two things, because a breaking stone
+  is two things: chips of the stone thrown out and falling, and dust that
+  hangs and spreads and goes nowhere. Chips alone read as a firework and dust
+  alone reads as smoke.
+- The wreckage keeps settling through a pause and past the end of a run, which
+  is the only thing in the game that outlives the run that made it.
+
+### Changed
+
+- The shatter event now carries the cells that went rather than a count of
+  them, so the dust comes off the stones that actually broke.
+- Chips are drawn a shade lighter than the stones they came off, because at
+  the stones' own colour they vanished into the stack they were flying over.
+
 ## [0.2.0] — 2026-10-03
 
 ### Added

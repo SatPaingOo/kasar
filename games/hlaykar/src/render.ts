@@ -13,6 +13,7 @@
 import { RULES, breakCells, heightOf, restingRow, shapeOf, surfaceRow } from './game.js';
 import type { Game, Mark, Offset, Piece } from './game.js';
 import { CELLS_TALL, drawClimber } from './climber.js';
+import type { Mote } from './dust.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
 
@@ -42,6 +43,7 @@ const IRON = {
   ink: '#c9d5e4',
   inkDim: '#6d7c8e',
   veil: 'rgba(7, 11, 17, 0.84)',
+  dust: '#8d9aab',
 } as const;
 
 export interface View {
@@ -255,6 +257,44 @@ function drawGhost(ctx: CanvasRenderingContext2D, view: View, game: Game, piece:
   }
 }
 
+/**
+ * Chips and dust from a broken stone. Drawn before the water so that a stone
+ * broken under the surface comes apart under the surface.
+ */
+function drawMotes(ctx: CanvasRenderingContext2D, view: View, motes: readonly Mote[]): void {
+  for (const mote of motes) {
+    const fade = Math.max(0, Math.min(1, mote.life / mote.span));
+    const px = x(view, mote.col);
+    const py = y(view, mote.row);
+
+    if (mote.chip) {
+      const side = mote.size * view.cell;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(mote.angle);
+      ctx.globalAlpha = Math.min(1, fade * 1.4);
+      // A shade lighter than the stones they came off, or they vanish into
+      // the stack they are flying over.
+      ctx.fillStyle = IRON.stoneTop;
+      ctx.fillRect(-side / 2, -side / 2, side, side);
+      ctx.fillStyle = IRON.fallingTop;
+      ctx.fillRect(-side / 2, -side / 2, side, Math.max(1, side * 0.32));
+      ctx.restore();
+      continue;
+    }
+
+    // Dust spreads as it dies, which is what makes it read as dust rather
+    // than as more small stones.
+    const spread = mote.size * view.cell * (1 + (1 - fade) * 1.7);
+    ctx.globalAlpha = fade * fade * 0.45;
+    ctx.fillStyle = IRON.dust;
+    ctx.beginPath();
+    ctx.arc(px, py, spread, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
 function drawHud(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui): void {
   const t = TEXT[ui.lang];
   const base = Math.max(11, Math.min(15, view.cell * 0.42));
@@ -367,7 +407,7 @@ function centred(
   }
 }
 
-export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui): void {
+export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui, motes: readonly Mote[] = []): void {
   const sky = ctx.createLinearGradient(0, 0, 0, view.height);
   sky.addColorStop(0, IRON.skyTop);
   sky.addColorStop(1, IRON.skyLow);
@@ -410,6 +450,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
     IRON.climber,
   );
 
+  drawMotes(ctx, view, motes);
   drawWater(ctx, view, game, ui.time);
   drawHud(ctx, view, game, ui);
 

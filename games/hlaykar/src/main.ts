@@ -12,6 +12,8 @@ import { columnAt, draw, layout } from './render.js';
 import type { Phase, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
 import { createSound } from './sound.js';
+import { burst, stepMotes } from './dust.js';
+import type { Mote } from './dust.js';
 
 const stage = document.querySelector<HTMLCanvasElement>('#stage');
 const context = stage?.getContext('2d') ?? null;
@@ -34,6 +36,7 @@ let phase: Phase = 'title';
 let clock = 0;
 /** Rows per second of extra fall while the drop key is held. */
 let soft = 0;
+let motes: Mote[] = [];
 
 /**
  * Measured from the box the browser gives the canvas, never from the canvas's
@@ -59,6 +62,7 @@ function begin(): void {
   game = createGame();
   phase = 'playing';
   soft = 0;
+  motes = [];
 }
 
 /**
@@ -70,7 +74,10 @@ function begin(): void {
  * than leaving it to be collected later and silently thrown away.
  */
 function drain(): void {
-  for (const event of game.events) sound.play(event);
+  for (const event of game.events) {
+    sound.play(event);
+    if (event.kind === 'shatter') burst(motes, event.at);
+  }
   game.events = [];
 }
 
@@ -206,7 +213,10 @@ function frame(dt: number): void {
   }
   // The water is the only sound that never stops, and it climbs with itself.
   sound.ambience(phase === 'playing' ? (RULES.rows - game.waterRow) / RULES.rows : 0);
-  draw(ctx, view, game, { lang, phase, time: clock, touch });
+  // The wreckage keeps settling while the game is paused or over, which is
+  // the one thing in here that outlives the run that made it.
+  stepMotes(motes, dt);
+  draw(ctx, view, game, { lang, phase, time: clock, touch }, motes);
 }
 
 function tick(now: number): void {
