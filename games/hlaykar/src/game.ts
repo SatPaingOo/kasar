@@ -8,7 +8,9 @@
  * down, and turns around at anything else. So a flat wall is useless to him
  * and a two-high step is a wall — what he needs is a stair, and building one
  * out of the shapes you are given, ahead of a man who is already walking, is
- * the game. Clearing a row does nothing here. There are no rows to clear.
+ * the game. There are no rows to clear, and there deliberately is no reward
+ * for filling one: a full row is a flat row, and a flat row is a floor he
+ * paces on rather than a stair he climbs.
  *
  * This module is pure: no canvas, no DOM, no timers, no Math.random unless the
  * caller hands one in. Everything the renderer needs is readable state.
@@ -32,24 +34,52 @@ export const RULES = {
   reach: 1,
 
   /**
+   * One stone in roughly this many breaks instead of stacking, taking the top
+   * off the column it lands in and off each of its neighbours.
+   *
+   * This is the release valve, and it is a digging tool rather than a tidying
+   * one on purpose: what it is for is knocking a two-high wall down to a step
+   * he can take, or opening the pit he is stuck in. It also costs you height
+   * wherever you use it, and it will drop him if you break the ground he is
+   * standing on.
+   */
+  breakerChance: 0.1,
+  breakOwn: 2,
+  breakNeighbour: 1,
+
+  /** One stone in roughly this many comes down fast. */
+  swiftChance: 0.16,
+  swiftScale: 2.6,
+
+  /**
    * The water holds off this long at the start, so the first stone is a
    * decision rather than a scramble.
    */
   waterDelay: 5,
   /** Rows per second the water rises once it starts. */
-  riseRate: 0.11,
+  riseRate: 0.09,
   /**
-   * And it quickens: by the end of a long run it is rising at about twice
-   * this. A constant rise made the last third of a good run a formality —
-   * once you were ahead of it you stayed ahead of it.
+   * And it quickens hard: by the end of a long run it is climbing about four
+   * times as fast as it started. A gentle opening is what lets a new player
+   * work out what the climber wants; the acceleration is what stops a good
+   * one coasting, because once the stair is going well the water was the only
+   * thing still in the way.
    */
-  riseAccel: 0.0015,
+  riseAccel: 0.0045,
 } as const;
 
 export type PieceKind = 'single' | 'bar' | 'corner' | 'square';
 
+/** What is odd about this stone, if anything. */
+export type Mark = 'plain' | 'breaker' | 'swift';
+
 /** [row, column], before the piece is placed anywhere. */
 export type Offset = readonly [number, number];
+
+export interface Stone {
+  readonly kind: PieceKind;
+  readonly mark: Mark;
+}
 
 /**
  * Singles are the stair-maker, so they are the rare one. A bag of nothing but
@@ -78,6 +108,7 @@ const SHAPES: Readonly<Record<PieceKind, readonly Offset[]>> = {
 
 export interface Piece {
   readonly kind: PieceKind;
+  readonly mark: Mark;
   cells: readonly Offset[];
   /** Column of the shape's left edge. */
   col: number;
@@ -97,21 +128,25 @@ export interface Climber {
   progress: number;
 }
 
-export type Outcome = 'playing' | 'out' | 'drowned';
+export type Outcome = 'playing' | 'out' | 'drowned' | 'crushed' | 'buried';
 
 export type Event =
   | { readonly kind: 'land'; readonly cells: number }
+  | { readonly kind: 'shatter'; readonly col: number; readonly row: number; readonly cells: number }
   | { readonly kind: 'step'; readonly climbed: boolean }
   | { readonly kind: 'blocked' }
   | { readonly kind: 'knocked' }
+  | { readonly kind: 'fell'; readonly rows: number }
   | { readonly kind: 'out' }
-  | { readonly kind: 'drowned' };
+  | { readonly kind: 'drowned' }
+  | { readonly kind: 'crushed' }
+  | { readonly kind: 'buried' };
 
 export interface Game {
   /** rows × columns, row 0 at the rim. True where there is stone. */
   readonly cells: boolean[];
   piece: Piece | null;
-  next: PieceKind;
+  next: Stone;
   spawnIn: number;
   climber: Climber;
   /** Row of the water's surface. Everything below it is under water. */
@@ -181,16 +216,26 @@ export function fits(game: Game, cells: readonly Offset[], col: number, row: num
   return true;
 }
 
-function drawKind(random: () => number): PieceKind {
-  return BAG[Math.min(BAG.length - 1, Math.floor(random() * BAG.length))] ?? 'single';
+export function shapeOf(kind: PieceKind): readonly Offset[] {
+  return SHAPES[kind];
+}
+
+function drawStone(random: () => number): Stone {
+  const kind = BAG[Math.min(BAG.length - 1, Math.floor(random() * BAG.length))] ?? 'single';
+  const roll = random();
+  // A breaker is always one cell, so that what it digs out is exactly where
+  // you aimed it.
+  if (roll < RULES.breakerChance) return { kind: 'single', mark: 'breaker' };
+  if (roll < RULES.breakerChance + RULES.swiftChance) return { kind, mark: 'swift' };
+  return { kind, mark: 'plain' };
 }
 
 export function createGame(random: () => number = Math.random): Game {
   const climberCol = Math.floor(RULES.columns / 2);
-  const game: Game = {
+  return {
     cells: new Array<boolean>(RULES.rows * RULES.columns).fill(false),
     piece: null,
-    next: drawKind(random),
+    next: drawStone(random),
     spawnIn: RULES.spawnDelay,
     climber: {
       col: climberCol,
@@ -207,21 +252,34 @@ export function createGame(random: () => number = Math.random): Game {
     outcome: 'playing',
     events: [],
   };
-  return game;
 }
 
+/**
+ * The next stone, or the end of the run if there is no longer room at the rim
+ * to put one. Filling the shaft to the top is its own way to lose, and without
+ * this the stone simply vanished into the rows above the rim.
+ */
 function spawn(game: Game, random: () => number): void {
-  const kind = game.next;
-  const cells = SHAPES[kind];
+  const stone = game.next;
+  const cells = SHAPES[stone.kind];
+  const col = Math.max(0, Math.floor((RULES.columns - widthOf(cells)) / 2));
+
+  if (!fits(game, cells, col, 0)) {
+    game.outcome = 'buried';
+    game.events.push({ kind: 'buried' });
+    return;
+  }
+
   game.piece = {
-    kind,
+    kind: stone.kind,
+    mark: stone.mark,
     cells,
-    col: Math.max(0, Math.floor((RULES.columns - widthOf(cells)) / 2)),
+    col,
     // Starting above the rim, so a stone is never on top of the player before
     // they have seen it.
     row: -1,
   };
-  game.next = drawKind(random);
+  game.next = drawStone(random);
 }
 
 /** Slide the falling stone. Refused rather than clamped, so a wall feels solid. */
@@ -280,29 +338,90 @@ export function dropBy(game: Game, rows: number): void {
 }
 
 /**
+ * Which stones a breaker landing in this column would take: the top few of
+ * that column and one off each neighbour.
+ *
+ * The renderer shows these before the stone lands and `shatter` removes
+ * exactly this list, so what is shown and what happens cannot drift apart.
+ */
+export function breakCells(game: Game, col: number): readonly Offset[] {
+  const taken: Offset[] = [];
+  const gone = new Set<number>();
+  for (let c = col - 1; c <= col + 1; c += 1) {
+    if (c < 0 || c >= RULES.columns) continue;
+    const depth = c === col ? RULES.breakOwn : RULES.breakNeighbour;
+    for (let i = 0; i < depth; i += 1) {
+      let row = 0;
+      while (row < RULES.rows && (!cellAt(game, row, c) || gone.has(index(row, c)))) row += 1;
+      if (row >= RULES.rows) break;
+      gone.add(index(row, c));
+      taken.push([row, c]);
+    }
+  }
+  return taken;
+}
+
+/** Take the top off a column and its neighbours. Returns how much went. */
+function shatter(game: Game, col: number): number {
+  const taken = breakCells(game, col);
+  for (const [row, col2] of taken) game.cells[index(row, col2)] = false;
+  return taken.length;
+}
+
+/** If the ground has gone from under him, he comes down with it. */
+function settle(game: Game): void {
+  const climber = game.climber;
+  const landing = surfaceRow(game, climber.col) - 1;
+  if (landing <= climber.row) return;
+  const rows = landing - climber.row;
+  climber.row = landing;
+  climber.fromRow = landing;
+  climber.fromCol = climber.col;
+  climber.progress = 1;
+  game.events.push({ kind: 'fell', rows });
+}
+
+/**
  * Where a climber knocked off his feet by a landing stone ends up: off the
  * side that is lower, and the way he was already walking when it is a tie.
  *
  * Being shoved is the one thing that can cost him height, and it is the only
  * reason not to simply drop every stone on his head — which would otherwise
  * carry him up the shaft on a one-wide tower without a stair at all.
+ *
+ * He can only be shoved somewhere he could have stepped, which means the same
+ * one row of reach. Standing in a pit with walls on both sides there is
+ * nowhere for him to go, and the stone pins him. That is what makes dropping
+ * near him a decision rather than a free nudge.
  */
 function knockAside(game: Game): void {
   const climber = game.climber;
-  const left = climber.col - 1;
-  const right = climber.col + 1;
-  const leftRow = left < 0 ? -Infinity : surfaceRow(game, left);
-  const rightRow = right >= RULES.columns ? -Infinity : surfaceRow(game, right);
+  const sides: { readonly col: number; readonly row: number }[] = [];
+  for (const col of [climber.col - 1, climber.col + 1]) {
+    if (col < 0 || col >= RULES.columns) continue;
+    const landing = surfaceRow(game, col) - 1;
+    if (landing >= climber.row - RULES.reach) sides.push({ col, row: landing });
+  }
 
-  let col: number;
-  if (leftRow === rightRow) col = climber.col + climber.facing;
-  else col = leftRow > rightRow ? left : right;
-  if (col < 0 || col >= RULES.columns) col = climber.col - climber.facing;
+  const first = sides[0];
+  if (first === undefined) {
+    game.outcome = 'crushed';
+    game.events.push({ kind: 'crushed' });
+    return;
+  }
 
-  climber.col = Math.max(0, Math.min(RULES.columns - 1, col));
-  climber.row = surfaceRow(game, climber.col) - 1;
-  climber.fromCol = climber.col;
-  climber.fromRow = climber.row;
+  const second = sides[1];
+  let chosen = first;
+  if (second !== undefined) {
+    // The lower side is the one he falls off; a tie goes the way he was going.
+    if (second.row > first.row) chosen = second;
+    else if (second.row === first.row && second.col === climber.col + climber.facing) chosen = second;
+  }
+
+  climber.col = chosen.col;
+  climber.row = chosen.row;
+  climber.fromCol = chosen.col;
+  climber.fromRow = chosen.row;
   climber.progress = 1;
   climber.facing = climber.facing === 1 ? -1 : 1;
   game.events.push({ kind: 'knocked' });
@@ -312,8 +431,17 @@ function land(game: Game): void {
   const piece = game.piece;
   if (piece === null) return;
   const row = Math.floor(piece.row);
-  let onTheClimber = false;
 
+  if (piece.mark === 'breaker') {
+    const removed = shatter(game, piece.col);
+    game.events.push({ kind: 'shatter', col: piece.col, row, cells: removed });
+    game.piece = null;
+    game.spawnIn = RULES.spawnDelay;
+    settle(game);
+    return;
+  }
+
+  let onTheClimber = false;
   for (const [r, c] of piece.cells) {
     const rr = row + r;
     const cc = piece.col + c;
@@ -379,8 +507,11 @@ export function step(game: Game, dt: number, random: () => number = Math.random)
     game.spawnIn -= dt;
     if (game.spawnIn <= 0) spawn(game, random);
   } else {
-    dropBy(game, RULES.fallRate * dt);
+    const rate = RULES.fallRate * (game.piece.mark === 'swift' ? RULES.swiftScale : 1);
+    dropBy(game, rate * dt);
   }
+
+  if (game.outcome !== 'playing') return game;
 
   const climber = game.climber;
   climber.progress = Math.min(1, climber.progress + dt / RULES.stepSeconds);

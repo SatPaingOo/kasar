@@ -20,6 +20,7 @@ interface Text {
   readonly premise: string;
   readonly howRule: string;
   readonly howMove: string;
+  readonly howStones: string;
   readonly howKeys: string;
   readonly howTouch: string;
   readonly begin: string;
@@ -28,7 +29,9 @@ interface Text {
   readonly paused: string;
   readonly resume: string;
   readonly drowned: string;
-  readonly drownedWhy: string;
+  readonly crushed: string;
+  readonly buried: string;
+  readonly reached: string;
   readonly out: string;
   readonly outWhy: string;
   readonly again: string;
@@ -40,7 +43,8 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     premise: 'The water is rising, and he cannot swim.',
     howRule: 'He climbs by himself. One step up is all he can manage — two is a wall.',
     howMove: 'He never goes back down, so a stair you build stays built.',
-    howKeys: '← → move · ↑ turn · ␣ drop · P pause',
+    howStones: 'Marked stones break instead of stacking. Some come down fast.',
+    howKeys: '← → move · ↑ turn · ␣ drop · P pause · M mute',
     howTouch: 'Drag to aim · tap to turn · let go to drop',
     begin: 'Begin',
     height: 'height',
@@ -48,7 +52,9 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     paused: 'Paused',
     resume: 'Press P or tap to go on',
     drowned: 'The water took him',
-    drownedWhy: 'He got as high as',
+    crushed: 'A stone pinned him',
+    buried: 'The shaft filled to the rim',
+    reached: 'He got as high as',
     out: 'He is over the rim',
     outWhy: 'Out, with the water at',
     again: 'Again',
@@ -58,7 +64,8 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     premise: 'ရေတက်နေပြီ၊ သူကလည်း ရေမကူးတတ်ဘူး။',
     howRule: 'သူ့ဘာသူ တက်ပါတယ်။ တစ်ထစ်ပဲ တက်နိုင်တယ် — နှစ်ထစ်ဆိုရင် နံရံပဲ။',
     howMove: 'သူ ဘယ်တော့မှ ပြန်မဆင်းဘူး၊ ဒါကြောင့် စီထားတဲ့ လှေကား အလကား မဖြစ်ဘူး။',
-    howKeys: '← → ရွှေ့ · ↑ လှည့် · ␣ ချ · P ခဏရပ်',
+    howStones: 'အမှတ်အသားပါတဲ့ တုံးက မစီဘဲ ကွဲတယ်။ တချို့က မြန်မြန် ကျတယ်။',
+    howKeys: '← → ရွှေ့ · ↑ လှည့် · ␣ ချ · P ရပ် · M အသံပိတ်',
     howTouch: 'ဆွဲပြီး ချိန် · ထိပြီး လှည့် · လွှတ်လိုက်ရင် ကျ',
     begin: 'စမယ်',
     height: 'အမြင့်',
@@ -66,7 +73,9 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     paused: 'ခဏရပ်ထားတယ်',
     resume: 'P နှိပ် ဒါမှမဟုတ် ထိပြီး ဆက်ပါ',
     drowned: 'ရေက သူ့ကို သိမ်းသွားပြီ',
-    drownedWhy: 'အမြင့်ဆုံး ရောက်ခဲ့တာက',
+    crushed: 'ကျောက်တုံးက သူ့ကို ဖိမိသွားပြီ',
+    buried: 'တွင်းက အပေါ်ထိ ပြည့်သွားပြီ',
+    reached: 'အမြင့်ဆုံး ရောက်ခဲ့တာက',
     out: 'သူ အပေါ်ကို ရောက်သွားပြီ',
     outWhy: 'လွတ်သွားပြီ၊ ရေက',
     again: 'ထပ်ကစားမယ်',

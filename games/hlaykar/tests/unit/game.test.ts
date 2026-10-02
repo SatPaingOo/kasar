@@ -19,6 +19,7 @@ import {
   restingRow,
   rotate,
   rotatePiece,
+  shapeOf,
   step,
   surfaceRow,
   widthOf,
@@ -142,7 +143,7 @@ describe('a stone landing on him', () => {
   it('shoves him off his feet instead of carrying him', () => {
     const game = createGame(never);
     stand(game, 4, 1);
-    game.piece = { kind: 'single', cells: [[0, 0]], col: 4, row: 0 };
+    game.piece = { kind: 'single', mark: 'plain', cells: [[0, 0]], col: 4, row: 0 };
     hardDrop(game);
     expect(game.climber.col).not.toBe(4);
     expect(game.events.some((e) => e.kind === 'knocked')).toBe(true);
@@ -157,7 +158,7 @@ describe('a stone landing on him', () => {
     const game = createGame(never);
     stand(game, 4, 1);
     for (let i = 0; i < STONES; i += 1) {
-      game.piece = { kind: 'single', cells: [[0, 0]], col: game.climber.col, row: 0 };
+      game.piece = { kind: 'single', mark: 'plain', cells: [[0, 0]], col: game.climber.col, row: 0 };
       hardDrop(game);
     }
     paces(game, 60);
@@ -181,13 +182,19 @@ describe('a falling stone', () => {
   it('comes to rest on top of what is already there', () => {
     const game = createGame(never);
     fill(game, 3, 4);
-    const piece = { kind: 'single' as const, cells: [[0, 0]] as readonly Offset[], col: 3, row: 0 };
+    const piece = {
+      kind: 'single' as const,
+      mark: 'plain' as const,
+      cells: [[0, 0]] as readonly Offset[],
+      col: 3,
+      row: 0,
+    };
     expect(restingRow(game, piece)).toBe(RULES.rows - 5);
   });
 
   it('refuses a sideways move into a wall rather than sliding along it', () => {
     const game = createGame(never);
-    game.piece = { kind: 'single', cells: [[0, 0]], col: 0, row: 2 };
+    game.piece = { kind: 'single', mark: 'plain', cells: [[0, 0]], col: 0, row: 2 };
     expect(movePiece(game, -1)).toBe(false);
     expect(game.piece.col).toBe(0);
     expect(movePiece(game, 1)).toBe(true);
@@ -198,6 +205,7 @@ describe('a falling stone', () => {
     const game = createGame(never);
     game.piece = {
       kind: 'corner',
+      mark: 'plain',
       cells: [
         [0, 0],
         [1, 0],
@@ -247,6 +255,7 @@ describe('turning a stone', () => {
     const game = createGame(never);
     game.piece = {
       kind: 'bar',
+      mark: 'plain',
       cells: rotate([
         [0, 0],
         [0, 1],
@@ -255,7 +264,7 @@ describe('turning a stone', () => {
       row: 2,
     };
     expect(rotatePiece(game)).toBe(true);
-    expect(game.piece.col).toBe(RULES.columns - 2);
+    expect(game.piece?.col).toBe(RULES.columns - 2);
   });
 
   it('refuses a turn with no room for it at all', () => {
@@ -264,6 +273,7 @@ describe('turning a stone', () => {
     // Standing bar in a one-row gap: no rotation and no nudge can fit.
     game.piece = {
       kind: 'bar',
+      mark: 'plain',
       cells: rotate([
         [0, 0],
         [0, 1],
@@ -333,5 +343,127 @@ describe('getting out', () => {
     step(game, 0, never);
     expect(game.outcome).toBe('out');
     expect(game.best).toBe(heightOf(RULES.exitRow));
+  });
+});
+
+describe('a breaker', () => {
+  it('takes the top off the column it lands in, and one off each neighbour', () => {
+    const game = createGame(never);
+    for (const col of [2, 3, 4]) fill(game, col, 5);
+    game.piece = { kind: 'single', mark: 'breaker', cells: [[0, 0]], col: 3, row: 0 };
+    hardDrop(game);
+    expect(RULES.rows - surfaceRow(game, 3)).toBe(5 - RULES.breakOwn);
+    expect(RULES.rows - surfaceRow(game, 2)).toBe(5 - RULES.breakNeighbour);
+    expect(RULES.rows - surfaceRow(game, 4)).toBe(5 - RULES.breakNeighbour);
+  });
+
+  it('leaves no stone of its own behind', () => {
+    const game = createGame(never);
+    const before = game.cells.filter(Boolean).length;
+    game.piece = { kind: 'single', mark: 'breaker', cells: [[0, 0]], col: 3, row: 0 };
+    hardDrop(game);
+    expect(game.cells.filter(Boolean).length).toBe(before);
+    expect(game.events.some((e) => e.kind === 'shatter')).toBe(true);
+  });
+
+  it('knocks a two-high wall down to a step he can take, which is what it is for', () => {
+    const game = createGame(never);
+    fill(game, 5, 2);
+    stand(game, 4, 1);
+    paces(game, 1);
+    expect(game.climber.col).toBe(4); // turned away from the wall
+
+    game.piece = { kind: 'single', mark: 'breaker', cells: [[0, 0]], col: 5, row: 0 };
+    hardDrop(game);
+    stand(game, 4, 1);
+    paces(game, 1);
+    expect(game.climber.col).toBe(5);
+  });
+
+  it('brings him down with the ground if he is standing on what it breaks', () => {
+    const game = createGame(never);
+    fill(game, 4, 6);
+    stand(game, 4, 1);
+    const was = game.climber.row;
+    game.piece = { kind: 'single', mark: 'breaker', cells: [[0, 0]], col: 4, row: 0 };
+    hardDrop(game);
+    expect(game.climber.row).toBeGreaterThan(was);
+    expect(game.climber.row).toBe(surfaceRow(game, 4) - 1);
+    expect(game.events.some((e) => e.kind === 'fell')).toBe(true);
+  });
+
+  it('never leaves him standing on air', () => {
+    const game = createGame(never);
+    for (let col = 0; col < RULES.columns; col += 1) fill(game, col, 4 + (col % 3));
+    for (let col = 0; col < RULES.columns; col += 1) {
+      stand(game, col, 1);
+      game.piece = { kind: 'single', mark: 'breaker', cells: [[0, 0]], col, row: 0 };
+      hardDrop(game);
+      expect(game.climber.row).toBe(surfaceRow(game, game.climber.col) - 1);
+    }
+  });
+});
+
+describe('losing', () => {
+  it('pins him when a stone lands on him in a pit with no way out', () => {
+    const game = createGame(never);
+    // Walls two high on both sides: nowhere he could have stepped to.
+    fill(game, 3, 2);
+    fill(game, 5, 2);
+    stand(game, 4, 1);
+    game.piece = { kind: 'single', mark: 'plain', cells: [[0, 0]], col: 4, row: 0 };
+    hardDrop(game);
+    expect(game.outcome).toBe('crushed');
+    expect(game.events.some((e) => e.kind === 'crushed')).toBe(true);
+  });
+
+  it('only shoves him when one side is within his reach', () => {
+    const game = createGame(never);
+    fill(game, 3, 2);
+    fill(game, 5, 1); // a step he could have taken
+    stand(game, 4, 1);
+    game.piece = { kind: 'single', mark: 'plain', cells: [[0, 0]], col: 4, row: 0 };
+    hardDrop(game);
+    expect(game.outcome).toBe('playing');
+    expect(game.climber.col).toBe(5);
+  });
+
+  it('ends the run when the shaft is full to the rim', () => {
+    const game = createGame(never);
+    for (let col = 0; col < RULES.columns; col += 1) fill(game, col, RULES.rows);
+    game.piece = null;
+    game.spawnIn = 0.001;
+    step(game, 0.01, never);
+    expect(game.outcome).toBe('buried');
+    expect(game.events.some((e) => e.kind === 'buried')).toBe(true);
+  });
+
+  it('does not bury him while there is still room at the rim', () => {
+    const game = createGame(never);
+    for (let col = 0; col < RULES.columns; col += 1) fill(game, col, RULES.rows - 3);
+    game.piece = null;
+    game.spawnIn = 0.001;
+    step(game, 0.01, never);
+    expect(game.outcome).toBe('playing');
+    expect(game.piece).not.toBeNull();
+  });
+});
+
+describe('a swift stone', () => {
+  it('comes down faster than an ordinary one', () => {
+    const plain = createGame(never);
+    plain.piece = { kind: 'single', mark: 'plain', cells: [[0, 0]], col: 4, row: 0 };
+    step(plain, 0.1, never);
+
+    const swift = createGame(never);
+    swift.piece = { kind: 'single', mark: 'swift', cells: [[0, 0]], col: 4, row: 0 };
+    step(swift, 0.1, never);
+
+    expect(swift.piece?.row).toBeGreaterThan(plain.piece?.row ?? 0);
+  });
+
+  it('is still the shape it says it is', () => {
+    expect(shapeOf('square')).toHaveLength(4);
+    expect(shapeOf('single')).toHaveLength(1);
   });
 });

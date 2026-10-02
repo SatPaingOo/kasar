@@ -10,8 +10,8 @@
  * looks like being caught by it.
  */
 
-import { RULES, heightOf, restingRow, surfaceRow } from './game.js';
-import type { Game, Offset, Piece } from './game.js';
+import { RULES, breakCells, heightOf, restingRow, shapeOf, surfaceRow } from './game.js';
+import type { Game, Mark, Offset, Piece } from './game.js';
 import { CELLS_TALL, drawClimber } from './climber.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
@@ -27,6 +27,13 @@ const IRON = {
   stoneEdge: '#39434f',
   falling: '#9db0c4',
   fallingTop: '#c2d2e2',
+  // A breaker is warm against a cold shaft, so it reads as different before
+  // you have looked at the mark on it.
+  breaker: '#c98f5e',
+  breakerTop: '#e6b98a',
+  swift: '#7fa9c6',
+  swiftTop: '#bfe3f2',
+  glyph: '#101820',
   ghost: 'rgba(157, 176, 196, 0.2)',
   water: 'rgba(28, 92, 120, 0.62)',
   waterLine: '#86b9cf',
@@ -73,7 +80,53 @@ export interface Ui {
 const x = (view: View, col: number): number => view.originX + col * view.cell;
 const y = (view: View, row: number): number => view.originY + row * view.cell;
 
-function stone(ctx: CanvasRenderingContext2D, view: View, col: number, row: number, face: string, top: string): void {
+/** The mark on a stone that is not an ordinary one. */
+function glyph(ctx: CanvasRenderingContext2D, view: View, col: number, row: number, mark: Mark): void {
+  if (mark === 'plain') return;
+  const c = view.cell;
+  const cx = x(view, col) + c / 2;
+  const cy = y(view, row) + c / 2;
+  const r = c * 0.24;
+
+  ctx.strokeStyle = IRON.glyph;
+  ctx.lineWidth = Math.max(1.2, c * 0.06);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (mark === 'breaker') {
+    // Four points of a break: this one comes apart instead of stacking.
+    for (let i = 0; i < 4; i += 1) {
+      const a = (i * Math.PI) / 2 + Math.PI / 4;
+      ctx.moveTo(cx + Math.cos(a) * r * 0.3, cy + Math.sin(a) * r * 0.3);
+      ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    }
+  } else {
+    // Two chevrons: this one is already coming down.
+    for (const dy of [-r * 0.55, r * 0.2]) {
+      ctx.moveTo(cx - r * 0.72, cy + dy);
+      ctx.lineTo(cx, cy + dy + r * 0.62);
+      ctx.lineTo(cx + r * 0.72, cy + dy);
+    }
+  }
+  ctx.stroke();
+}
+
+/** The face a stone wears, which is the first thing that says what it is. */
+function faceOf(mark: Mark): readonly [string, string] {
+  if (mark === 'breaker') return [IRON.breaker, IRON.breakerTop];
+  if (mark === 'swift') return [IRON.swift, IRON.swiftTop];
+  return [IRON.falling, IRON.fallingTop];
+}
+
+function stone(
+  ctx: CanvasRenderingContext2D,
+  view: View,
+  col: number,
+  row: number,
+  face: string,
+  top: string,
+  mark: Mark = 'plain',
+): void {
   const c = view.cell;
   const px = x(view, col);
   const py = y(view, row);
@@ -95,6 +148,8 @@ function stone(ctx: CanvasRenderingContext2D, view: View, col: number, row: numb
   ctx.beginPath();
   ctx.roundRect(px + inset, py + inset, c - inset * 2, c - inset * 2, c * 0.16);
   ctx.stroke();
+
+  glyph(ctx, view, col, row, mark);
 }
 
 function shape(
@@ -103,10 +158,10 @@ function shape(
   cells: readonly Offset[],
   col: number,
   row: number,
-  face: string,
-  top: string,
+  mark: Mark,
 ): void {
-  for (const [r, c] of cells) stone(ctx, view, col + c, row + r, face, top);
+  const [face, top] = faceOf(mark);
+  for (const [r, c] of cells) stone(ctx, view, col + c, row + r, face, top, mark);
 }
 
 function drawShaft(ctx: CanvasRenderingContext2D, view: View): void {
@@ -174,6 +229,21 @@ function drawWater(ctx: CanvasRenderingContext2D, view: View, game: Game, time: 
 }
 
 function drawGhost(ctx: CanvasRenderingContext2D, view: View, game: Game, piece: Piece): void {
+  // A breaker shows what it will take rather than where it will sit: where it
+  // sits is nowhere, and what it takes is the only thing worth aiming.
+  if (piece.mark === 'breaker') {
+    ctx.strokeStyle = IRON.breakerTop;
+    ctx.lineWidth = Math.max(1.5, view.cell * 0.07);
+    ctx.globalAlpha = 0.75;
+    for (const [r, c] of breakCells(game, piece.col)) {
+      ctx.beginPath();
+      ctx.roundRect(x(view, c) + 2, y(view, r) + 2, view.cell - 4, view.cell - 4, view.cell * 0.16);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+
   const row = restingRow(game, piece);
   ctx.fillStyle = IRON.ghost;
   for (const [r, c] of piece.cells) {
@@ -208,36 +278,23 @@ function drawHud(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui):
 
   // The next stone, drawn small in the corner rather than named.
   const mini: View = { ...view, cell: Math.min(11, view.cell * 0.42) };
-  const cells = SHAPE_PREVIEW[game.next];
+  const cells = shapeOf(game.next.kind);
+  const [preface] = faceOf(game.next.mark);
   const wide = Math.max(...cells.map(([, c]) => c)) + 1;
   for (const [r, c] of cells) {
     const px = right - (wide - c) * mini.cell;
     const py = HUD * 0.52 + r * mini.cell;
-    ctx.fillStyle = IRON.falling;
+    ctx.fillStyle = preface;
     ctx.beginPath();
     ctx.roundRect(px + 1, py + 1, mini.cell - 2, mini.cell - 2, mini.cell * 0.2);
     ctx.fill();
   }
+  // The same mark it will wear when it arrives, so the plan can start now.
+  if (game.next.mark !== 'plain') {
+    const anchor: View = { ...mini, originX: right - wide * mini.cell, originY: HUD * 0.52 };
+    glyph(ctx, anchor, 0, 0, game.next.mark);
+  }
 }
-
-const SHAPE_PREVIEW: Readonly<Record<Game['next'], readonly Offset[]>> = {
-  single: [[0, 0]],
-  bar: [
-    [0, 0],
-    [0, 1],
-  ],
-  corner: [
-    [0, 0],
-    [1, 0],
-    [1, 1],
-  ],
-  square: [
-    [0, 0],
-    [0, 1],
-    [1, 0],
-    [1, 1],
-  ],
-};
 
 function veil(ctx: CanvasRenderingContext2D, view: View): void {
   ctx.fillStyle = IRON.veil;
@@ -329,7 +386,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
 
   if (game.piece !== null) {
     drawGhost(ctx, view, game, game.piece);
-    shape(ctx, view, game.piece.cells, game.piece.col, game.piece.row, IRON.falling, IRON.fallingTop);
+    shape(ctx, view, game.piece.cells, game.piece.col, game.piece.row, game.piece.mark);
   }
 
   const climber = game.climber;
@@ -364,6 +421,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       [t.premise, Math.min(16, view.width * 0.045), IRON.inkDim],
       [t.howRule, Math.min(15, view.width * 0.042), IRON.ink],
       [t.howMove, Math.min(15, view.width * 0.042), IRON.inkDim],
+      [t.howStones, Math.min(14, view.width * 0.04), IRON.breakerTop],
       [ui.touch ? t.howTouch : t.howKeys, Math.min(14, view.width * 0.04), IRON.rim],
       [t.begin, Math.min(18, view.width * 0.05), IRON.ink],
     ]);
@@ -376,10 +434,17 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   } else if (ui.phase === 'over') {
     veil(ctx, view);
     const won = game.outcome === 'out';
+    const ENDING: Readonly<Record<typeof game.outcome, string>> = {
+      playing: t.drowned,
+      out: t.out,
+      drowned: t.drowned,
+      crushed: t.crushed,
+      buried: t.buried,
+    };
     centred(ctx, view, [
-      [won ? t.out : t.drowned, Math.min(30, view.width * 0.085), won ? IRON.rim : IRON.ink],
+      [ENDING[game.outcome], Math.min(30, view.width * 0.085), won ? IRON.rim : IRON.ink],
       [
-        won ? `${t.outWhy} ${Math.max(0, Math.round(heightOf(game.waterRow)))}` : `${t.drownedWhy} ${game.best}`,
+        won ? `${t.outWhy} ${Math.max(0, Math.round(heightOf(game.waterRow)))}` : `${t.reached} ${game.best}`,
         Math.min(16, view.width * 0.045),
         IRON.inkDim,
       ],

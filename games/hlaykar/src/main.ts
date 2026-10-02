@@ -11,6 +11,7 @@ import type { Game } from './game.js';
 import { columnAt, draw, layout } from './render.js';
 import type { Phase, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
+import { createSound } from './sound.js';
 
 const stage = document.querySelector<HTMLCanvasElement>('#stage');
 const context = stage?.getContext('2d') ?? null;
@@ -24,6 +25,8 @@ const lang = pickLang([navigator.language, ...navigator.languages]);
 document.documentElement.lang = lang;
 document.title = TEXT[lang].title;
 
+const sound = createSound();
+let last = performance.now();
 let touch = false;
 let view: View = layout(1, 1);
 let game: Game = createGame();
@@ -58,6 +61,19 @@ function begin(): void {
   soft = 0;
 }
 
+/**
+ * Hand the rules' events to the ear and clear them.
+ *
+ * Anything the player does between frames — a hard drop, a turn — lands its
+ * events outside `step`, and `step` empties the list at the top of the next
+ * frame. So every path that can produce one drains it straight away rather
+ * than leaving it to be collected later and silently thrown away.
+ */
+function drain(): void {
+  for (const event of game.events) sound.play(event);
+  game.events = [];
+}
+
 /** The one button the title and end screens have. */
 function advance(): void {
   if (phase === 'title' || phase === 'over') begin();
@@ -71,6 +87,12 @@ function pause(): void {
 
 window.addEventListener('keydown', (event) => {
   const key = event.key;
+  sound.unlock();
+  if (key === 'm' || key === 'M') {
+    sound.toggle();
+    event.preventDefault();
+    return;
+  }
   if (key === 'p' || key === 'P') {
     pause();
     event.preventDefault();
@@ -84,12 +106,18 @@ window.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (key === 'ArrowLeft') movePiece(game, -1);
-  else if (key === 'ArrowRight') movePiece(game, 1);
-  else if (key === 'ArrowUp' || key === 'z' || key === 'Z') rotatePiece(game);
-  else if (key === 'ArrowDown') soft = RULES.fallRate * 7;
-  else if (key === ' ') hardDrop(game);
-  else return;
+  if (key === 'ArrowLeft') {
+    if (movePiece(game, -1)) sound.play({ kind: 'move' });
+  } else if (key === 'ArrowRight') {
+    if (movePiece(game, 1)) sound.play({ kind: 'move' });
+  } else if (key === 'ArrowUp' || key === 'z' || key === 'Z') {
+    if (rotatePiece(game)) sound.play({ kind: 'turn' });
+  } else if (key === 'ArrowDown') {
+    soft = RULES.fallRate * 7;
+  } else if (key === ' ') {
+    hardDrop(game);
+    drain();
+  } else return;
   event.preventDefault();
 });
 
@@ -108,6 +136,7 @@ let moved = false;
 
 canvas.addEventListener('pointerdown', (event) => {
   touch = event.pointerType === 'touch';
+  sound.unlock();
   if (phase !== 'playing') {
     advance();
     return;
@@ -125,17 +154,24 @@ canvas.addEventListener('pointermove', (event) => {
   const want = columnAt(view, event.clientX);
   // Walk it across rather than teleporting, so a wall still stops it.
   let guard = RULES.columns;
+  let shifted = false;
   while (guard-- > 0 && game.piece.col !== want) {
     if (!movePiece(game, game.piece.col < want ? 1 : -1)) break;
+    shifted = true;
   }
+  if (shifted) sound.play({ kind: 'move' });
 });
 
 canvas.addEventListener('pointerup', (event) => {
   if (!aiming) return;
   aiming = false;
   if (phase !== 'playing') return;
-  if (moved) hardDrop(game);
-  else rotatePiece(game);
+  if (moved) {
+    hardDrop(game);
+    drain();
+  } else if (rotatePiece(game)) {
+    sound.play({ kind: 'turn' });
+  }
   event.preventDefault();
 });
 
@@ -145,17 +181,34 @@ canvas.addEventListener('pointercancel', () => {
 
 canvas.addEventListener('contextmenu', (event) => event.preventDefault());
 
+/*
+ * A hidden page gets no animation frames at all, so the loop simply stops —
+ * which is right, nobody wants the water rising while they are reading
+ * something else. What is not right is coming back to find the run already
+ * lost, so going away pauses it properly and the clock is restarted on the
+ * way back in rather than being handed one enormous frame.
+ */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && phase === 'playing') phase = 'paused';
+  last = performance.now();
+});
+window.addEventListener('blur', () => {
+  if (phase === 'playing') phase = 'paused';
+});
+
 function frame(dt: number): void {
   clock += dt;
   if (phase === 'playing') {
     step(game, dt);
     if (soft > 0) dropBy(game, soft * dt);
+    drain();
     if (game.outcome !== 'playing') phase = 'over';
   }
+  // The water is the only sound that never stops, and it climbs with itself.
+  sound.ambience(phase === 'playing' ? (RULES.rows - game.waterRow) / RULES.rows : 0);
   draw(ctx, view, game, { lang, phase, time: clock, touch });
 }
 
-let last = performance.now();
 function tick(now: number): void {
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
