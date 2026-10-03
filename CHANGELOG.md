@@ -5,28 +5,53 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-03
+
+All of this was already live — `main` deploys as it lands — and was still
+filed under Unreleased, with the version at 0.1.0. The shelf walker was not
+in here at all.
+
 ### Added
 
-- `npm run e2e` — plays Hman end to end in the installed Firefox and Chrome,
-  over their own remote protocols, with no dependency.
+- Someone lives on the shelf: a stick figure that walks along the bottom of
+  it by himself and steps out of the cursor's way. Written for the shelf and
+  sharing nothing with any game's figure.
+- The shelf credits its author and links back to the portfolio.
+- `npm run e2e`. It smoke-tests the shelf and every game on it — each one
+  opens without an error, draws, keeps drawing, survives a click and a key,
+  and fits a phone — and then plays Hman through, in the installed Firefox
+  and Chrome, over their own remote protocols, with no dependency.
 - CI runs it as a job of its own, with `--all` so a missing browser fails
   rather than being skipped, and keeps the screenshots when it fails.
+- Tests for the shelf and the tools, and a typecheck of everything, tools and
+  tests included.
 
 ### Changed
 
-- The README lists all four games on the shelf. It still listed only the
-  first.
-
+- Deploying waits for every check. It was its own workflow, started by the
+  same push and racing CI rather than waiting for it — it repeated lint and
+  the unit tests but not the end-to-end run, and nothing stopped it when CI
+  failed. It is now the last job of CI, on `main` only, needing all the
+  others to pass.
 - The shelf no longer borrows Tazaung's night sky, lantern glyph and drifting
   embers. It is greyscale with a faint grid, and every colour on the page now
-  comes from a game's own accent and poster.
+  comes from a game's own accent and poster. Tazaung has a poster of its own.
 - A masthead readout of how many games are on the shelf, and the remaining
   rack slots drawn, so one game does not read as a page that half loaded.
 - Burmese is no longer upper-cased or letter-spaced, which mangles the script.
+- The README lists all four games on the shelf. It still listed only the
+  first.
+- Everything is formatted with the canon Prettier config.
+
+### Fixed
+
+- The walker moonwalked: his feet lifted on the wrong half of the stride, so
+  he walked backwards while going forwards.
 
 ### Removed
 
 - `src/shell/sky.ts`, the animated starfield.
+- `.github/workflows/pages.yml`, folded into CI as its deploy job.
 
 ## [0.1.0] — 2026-10-02
 
