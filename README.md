@@ -66,7 +66,8 @@ feat/<slug>  →  dev  →  main  →  the site
 ```
 
 CI runs on both branches and on pull requests: lint, format, typecheck,
-tests, build, and stage. Canon 09 wants all of lint, typecheck and tests or
+tests, build, and stage — and, as a second job beside them, Hman played end
+to end in Firefox and Chrome. Canon 09 wants all of lint, typecheck and tests or
 it is not CI. A game that does not compile, or whose rules have changed
 under it, fails there and never reaches `main`.
 
@@ -203,8 +204,12 @@ own remote protocols — WebDriver BiDi for Firefox, the DevTools protocol for
 Chrome — with nothing but Node's built-in WebSocket, so it adds no
 dependency. That is also the reason it can run here at all: Smart App Control
 refuses the unsigned test builds a browser-automation package downloads, and
-lets the signed installed ones run. It is not in CI yet; it runs where the
-browsers are.
+lets the signed installed ones run.
+
+CI runs it as its own job, beside lint, typecheck and the unit tests, in the
+Firefox and Chrome the runner already has. There it is run with `--all`, so a
+browser that is missing fails the job instead of being quietly skipped, and
+the screenshots are kept as an artifact whenever it fails.
 
 ## Stage notes
 

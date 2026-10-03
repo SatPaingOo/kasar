@@ -9,6 +9,8 @@ keeps its own, because each game carries its own version.
 
 - `npm run e2e` — plays Hman end to end in the installed Firefox and Chrome,
   over their own remote protocols, with no dependency.
+- CI runs it as a job of its own, with `--all` so a missing browser fails
+  rather than being skipped, and keeps the screenshots when it fails.
 
 ### Changed
 

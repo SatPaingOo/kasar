@@ -179,6 +179,6 @@ much less for much more work.
   and a pixel snapshot says something changed, not whether it looks right.
 - `src/shell/main.ts` wires the DOM and is not covered; the judgments it used
   to hold were moved to `colour.ts` and `lang.ts`, which are.
-- End to end covers Hman only (`npm run e2e`, in the installed Firefox and
-  Chrome, locally — not in CI). That the shelf links to a game that loads, and
-  the other three games, are still checked by opening them.
+- End to end covers Hman only (`npm run e2e`, in Firefox and Chrome, locally
+  and as a CI job). That the shelf links to a game that loads, and the other
+  three games, are still checked by opening them.

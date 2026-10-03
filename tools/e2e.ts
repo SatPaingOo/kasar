@@ -4,11 +4,13 @@
  *   npm run e2e                 build, then every installed browser
  *   npm run e2e -- firefox      one engine only (firefox or chromium)
  *   npm run e2e -- --url <base> against a running site instead, e.g. the live one
+ *   npm run e2e -- --all        every engine must be found, as CI runs it
  *
  * Uses the Firefox and Chrome already installed — see tools/lib/browsers.ts
  * for why never a downloaded one — driven over their own remote protocols
- * with nothing but Node. A browser that is not installed is skipped and named;
- * at least one has to run. Screenshots go to the temp folder and their paths
+ * with nothing but Node. A browser that is not installed is skipped and named,
+ * and at least one has to run — except with --all, where a missing one fails:
+ * on a CI runner a skipped browser would otherwise read as a passed one. Screenshots go to the temp folder and their paths
  * are printed, because whether the colour lines up under the text is a thing
  * to look at.
  */
@@ -232,6 +234,7 @@ async function main(): Promise<void> {
   const given = urlAt >= 0 ? args[urlAt + 1] : undefined;
   const only = args.filter((a): a is Engine => (ENGINES as readonly string[]).includes(a));
   const engines = only.length > 0 ? only : ENGINES;
+  const every = args.includes('--all');
 
   const manifest = JSON.parse(await readFile(join(ROOT, 'games', 'hman', 'game.json'), 'utf8')) as { version: string };
   const local = given === undefined ? await serve() : null;
@@ -240,14 +243,24 @@ async function main(): Promise<void> {
 
   let ran = 0;
   let failed = 0;
+  const missing: Engine[] = [];
   for (const engine of engines) {
     const path = pick(candidates(engine, process.platform, process.env), present);
     if (path === null) {
-      console.log(`\n${engine}: not installed — skipped`);
+      console.log(`\n${engine}: not installed — ${every ? 'and it is required' : 'skipped'}`);
+      missing.push(engine);
       continue;
     }
     const started = Date.now();
-    const driver = await launch(engine, path);
+    let driver: Driver;
+    try {
+      driver = await launch(engine, path);
+    } catch (err) {
+      // A browser that is there and will not start is a failure, not a skip.
+      console.log(`\n${engine} at ${path} would not start: ${err instanceof Error ? err.message : String(err)}`);
+      failed += 1;
+      continue;
+    }
     console.log(`\n${driver.name} — ${site}`);
     try {
       const outcomes = await playHman(driver, site, manifest.version, engine);
@@ -266,6 +279,10 @@ async function main(): Promise<void> {
   console.log(`\nscreenshots: ${SHOTS}`);
   if (ran === 0) {
     console.log('no browser was found to run in');
+    process.exit(1);
+  }
+  if (every && missing.length > 0) {
+    console.log(`required but not installed: ${missing.join(', ')}`);
     process.exit(1);
   }
   console.log(failed === 0 ? `all checks passed in ${ran} browser(s)` : `${failed} check(s) failed`);

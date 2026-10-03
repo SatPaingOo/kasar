@@ -29,3 +29,30 @@ jobs:
       # The shelf and every game compile, and the site can be assembled.
       - run: npm run build
       - run: npm run stage
+
+  # Hman played end to end, in the Firefox and Chrome the runner already has.
+  # Its own job, so it runs beside the checks rather than after them and a red
+  # one says which half failed. --all makes a missing browser a failure: on a
+  # runner, a skipped browser would otherwise read as a passed one.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run e2e -- --all
+
+      # What the colour under the text looked like, when something went wrong.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: /tmp/kasar-e2e
+          if-no-files-found: ignore
