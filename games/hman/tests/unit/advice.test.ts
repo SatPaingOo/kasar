@@ -86,6 +86,12 @@ describe('why an answer was wrong', () => {
     expect(whyMissed({ got: null, type: 'undefined', error: 'x is not defined' }, list, code).kind).toBe('threw');
   });
 
+  it('calls running out of stack what it is', () => {
+    const deep = { got: null, type: 'undefined', error: 'Maximum call stack size exceeded' };
+    expect(whyMissed(deep, list, code).kind).toBe('deep');
+    expect(whyMissed({ ...deep, error: 'too much recursion' }, list, code).kind).toBe('deep');
+  });
+
   it('calls undefined a missing return only when there is no return', () => {
     expect(whyMissed({ got: null, type: 'undefined', error: null }, list, 'parts[0];').kind).toBe('noReturn');
     expect(whyMissed({ got: null, type: 'undefined', error: null }, list, '// return\nparts[0];').kind).toBe(
@@ -127,5 +133,19 @@ describe('whether the code returns anything', () => {
 
   it('does not count a word that only contains it', () => {
     expect(returnsSomething('const returned = 1;')).toBe(false);
+  });
+
+  it('does not count a return with nothing after it', () => {
+    expect(returnsSomething('return ')).toBe(false);
+    expect(returnsSomething('return;')).toBe(false);
+    expect(returnsSomething('if (x) { return }')).toBe(false);
+  });
+
+  it('does not count a return whose value is on the next line, which JavaScript cuts short', () => {
+    expect(returnsSomething('return\n  parts[0];')).toBe(false);
+  });
+
+  it('counts a string being returned, though the string is blanked out to look inside', () => {
+    expect(returnsSomething("return 'a';")).toBe(true);
   });
 });

@@ -298,7 +298,8 @@ function showRung(): void {
   shownEl.append(label);
   for (const one of level.shown) {
     const bit = document.createElement('span');
-    bit.textContent = `${callOf(one.args)} → ${show(one.want)}`;
+    // In full: a record or a grid cut in the middle is no example at all.
+    bit.textContent = `${callOf(one.args, 400)} → ${show(one.want, 400)}`;
     shownEl.append(bit);
   }
 
@@ -356,6 +357,9 @@ function explainMiss(source: string): void {
       say(`${call} — ${t.threw}${at}: ${missed.error ?? ''}`, 'bad');
       return;
     }
+    case 'deep':
+      say(`${call} — ${t.deep}`, 'bad');
+      return;
     case 'noReturn':
       say(`${call} — ${t.noReturn}`, 'bad');
       return;

@@ -54,6 +54,7 @@ interface Text {
   readonly fromStart: string;
   readonly pick: string;
   readonly noReturn: string;
+  readonly deep: string;
   readonly notThere: string;
   readonly nan: string;
   readonly carryOn: (rung: number) => string;
@@ -102,7 +103,9 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     nextChapter: 'Next chapter:',
     fromStart: 'From the first rung',
     pick: 'Or go to a rung',
-    noReturn: 'Nothing came back — that is undefined. There is no return, so the function just ends.',
+    deep: 'It called itself and never stopped. Is the base case missing — or does each call not get any smaller?',
+    noReturn:
+      'Nothing came back — that is undefined. Nothing is returned: write return, then what to give back, on the same line.',
     notThere: 'undefined came back — what was returned is not there. An index past the end, or a property spelt wrong?',
     nan: "NaN came back — 'not a number'. It is nearly always a number added to undefined: a part that is not there, like parts[parts.length].",
     carryOn: (rung) => `Carry on — rung ${rung}`,
@@ -149,7 +152,9 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     nextChapter: 'နောက်အခန်း:',
     fromStart: 'ပထမ အဆင့်ကနေ',
     pick: 'ဒါမှမဟုတ် အဆင့် တစ်ခု ရွေးပါ',
-    noReturn: 'ဘာမှ ပြန်မလာဘူး — အဲဒါ undefined။ return မပါလို့ function က ဘာမှမပေးဘဲ ပြီးသွားတယ်။',
+    deep: 'ကိုယ့်ကိုယ်ကို ပြန်ခေါ်ပြီး ဘယ်တော့မှ မရပ်ဘူး။ base case ကျန်ခဲ့လား — ဒါမှမဟုတ် ခေါ်တိုင်း မသေးသွားဘူးလား?',
+    noReturn:
+      'ဘာမှ ပြန်မလာဘူး — အဲဒါ undefined။ ဘာမှ return မလုပ်ထားဘူး: return ပြီးရင် ပြန်ပေးမယ့်အရာကို စာကြောင်းတစ်ကြောင်းတည်းမှာ ရေးပါ။',
     notThere:
       'undefined ပြန်လာတယ် — return လုပ်လိုက်တဲ့ အရာက မရှိဘူး။ အဆုံးကို ကျော်သွားတဲ့ index လား၊ စာလုံးပေါင်း မှားနေတဲ့ property လား?',
     nan: 'NaN ပြန်လာတယ် — "ဂဏန်း မဟုတ်" လို့ ဆိုလိုတယ်။ များသောအားဖြင့် ဂဏန်း တစ်ခုကို undefined နဲ့ ပေါင်းမိလို့ ဖြစ်တာ: parts[parts.length] လို မရှိတဲ့ အပိုင်း တစ်ခု။',

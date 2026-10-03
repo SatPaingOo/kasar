@@ -12,26 +12,45 @@
  * - the return type, so that an answer of the wrong *shape* can be called a
  *   broken promise in TypeScript's own words rather than just "wrong".
  *
- * Only the handful of types the ladder uses are understood. Anything else
- * parses as null and is simply not checked, which is the safe way round: an
- * unchecked type never blames a right answer.
+ * Only the types the ladder uses are understood. Anything else parses as null
+ * and is simply not checked, which is the safe way round: an unchecked type
+ * never blames a right answer.
  *
  * String work only, so it is testable.
  */
 
 import type { Value } from './values.js';
 
+export interface Field {
+  readonly name: string;
+  readonly type: Type;
+  /** Written `name?:` — it may be missing altogether. */
+  readonly optional: boolean;
+}
+
 export type Type =
   | { readonly kind: 'number' | 'string' | 'boolean' }
+  /** `unknown`, `any`, and a generic's `T`: anything at all keeps it. */
+  | { readonly kind: 'unknown' }
+  | { readonly kind: 'literal'; readonly value: string | number | boolean }
   | { readonly kind: 'list'; readonly of: Type }
-  | { readonly kind: 'object'; readonly fields: readonly (readonly [string, Type])[] }
-  | { readonly kind: 'record'; readonly of: Type };
+  | { readonly kind: 'tuple'; readonly of: readonly Type[] }
+  | { readonly kind: 'union'; readonly of: readonly Type[] }
+  | { readonly kind: 'object'; readonly fields: readonly Field[] }
+  | { readonly kind: 'record'; readonly of: Type }
+  /**
+   * An alias that mentions itself — `type Nested = number | Nested[]` — read
+   * lazily, because reading it eagerly never finishes.
+   */
+  | { readonly kind: 'ref'; readonly name: string; readonly resolve: () => Type | null };
 
 export interface Param {
   readonly name: string;
   /** As written, for showing. */
   readonly text: string;
   readonly type: Type | null;
+  /** Written `name?:` — a call may leave it out. */
+  readonly optional: boolean;
 }
 
 export interface Signature {
@@ -47,15 +66,22 @@ export interface Signature {
 
 const OPEN = '([{<';
 const CLOSE = ')]}>';
+const NAME = /^[A-Za-z_$][\w$]*$/;
 
-/** Split on a separator, but only where no bracket is open. */
+/** Split on a separator, but only where no bracket is open and no quote. */
 function splitTop(text: string, separators: string): string[] {
   const out: string[] = [];
   let depth = 0;
+  let quote = '';
   let from = 0;
   for (let i = 0; i < text.length; i += 1) {
     const ch = text[i] ?? '';
-    if (OPEN.includes(ch)) depth += 1;
+    if (quote !== '') {
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === "'" || ch === '"') quote = ch;
+    else if (OPEN.includes(ch)) depth += 1;
     else if (CLOSE.includes(ch)) depth -= 1;
     else if (depth === 0 && separators.includes(ch)) {
       out.push(text.slice(from, i));
@@ -80,51 +106,90 @@ function closing(text: string, at: number): number {
   return -1;
 }
 
+const wraps = (text: string, open: string): boolean => text.startsWith(open) && closing(text, 0) === text.length - 1;
+
 /**
- * Read one type. Understands `number`, `string`, `boolean`, `T[]`,
- * `readonly T[]`, `{ a: T; b: U }`, `Record<string, T>`, `(T)` and the names
- * of aliases declared above the function. Anything else is null.
+ * Read one type. Understands `number`, `string`, `boolean`, `unknown`,
+ * literals like `'up'`, `T[]`, `readonly T[]`, tuples `[A, B]`, unions
+ * `A | B`, `{ a: T; b?: U }`, `Record<string, T>`, `(T)`, the names of
+ * aliases declared above the function — including ones that mention
+ * themselves — and the function's own generic names. Anything else is null.
  */
-export function parseType(raw: string, aliases: Readonly<Record<string, string>> = {}, depth: number = 0): Type | null {
-  if (depth > 12) return null;
-  let text = raw.trim();
-  if (text.startsWith('readonly ')) text = text.slice('readonly '.length).trim();
-  if (text.length === 0) return null;
-  if (splitTop(text, '|').length > 1) return null;
+export function parseType(
+  raw: string,
+  aliases: Readonly<Record<string, string>> = {},
+  generics: readonly string[] = [],
+): Type | null {
+  const table: Record<string, Type | null> = {};
+  const reading = new Set<string>();
 
-  if (text.endsWith('[]')) {
-    const of = parseType(text.slice(0, -2), aliases, depth + 1);
-    return of === null ? null : { kind: 'list', of };
-  }
-  if (text.startsWith('(') && closing(text, 0) === text.length - 1) {
-    return parseType(text.slice(1, -1), aliases, depth + 1);
-  }
-  if (text === 'number' || text === 'string' || text === 'boolean') return { kind: text };
+  const alias = (name: string): Type | null => {
+    if (Object.hasOwn(table, name)) return table[name] ?? null;
+    if (reading.has(name)) return { kind: 'ref', name, resolve: () => table[name] ?? null };
+    reading.add(name);
+    const type = parse(aliases[name] ?? '', 0);
+    reading.delete(name);
+    table[name] = type;
+    return type;
+  };
 
-  if (text.startsWith('{') && closing(text, 0) === text.length - 1) {
-    const fields: (readonly [string, Type])[] = [];
-    for (const field of splitTop(text.slice(1, -1), ';,')) {
-      const colon = field.indexOf(':');
-      if (colon < 0) return null;
-      const name = field
-        .slice(0, colon)
-        .trim()
-        .replace(/^readonly\s+/, '');
-      const type = parseType(field.slice(colon + 1), aliases, depth + 1);
-      if (type === null || !/^[A-Za-z_$][\w$]*$/.test(name)) return null;
-      fields.push([name, type]);
+  const parse = (source: string, depth: number): Type | null => {
+    if (depth > 24) return null;
+    let text = source.trim();
+    if (text.startsWith('readonly ')) text = text.slice('readonly '.length).trim();
+    if (text.length === 0) return null;
+
+    const members = splitTop(text, '|');
+    if (members.length > 1) {
+      const of = members.map((one) => parse(one, depth + 1));
+      return of.some((one) => one === null) ? null : { kind: 'union', of: of as Type[] };
     }
-    return { kind: 'object', fields };
-  }
 
-  const record = /^Record<\s*string\s*,([\s\S]*)>$/.exec(text);
-  if (record !== null) {
-    const of = parseType(record[1] ?? '', aliases, depth + 1);
-    return of === null ? null : { kind: 'record', of };
-  }
+    if (text.endsWith('[]')) {
+      const of = parse(text.slice(0, -2), depth + 1);
+      return of === null ? null : { kind: 'list', of };
+    }
+    if (wraps(text, '(')) return parse(text.slice(1, -1), depth + 1);
+    if (wraps(text, '[')) {
+      const of = splitTop(text.slice(1, -1), ',').map((one) => parse(one, depth + 1));
+      return of.some((one) => one === null) ? null : { kind: 'tuple', of: of as Type[] };
+    }
 
-  const alias = aliases[text];
-  return alias === undefined ? null : parseType(alias, aliases, depth + 1);
+    if (text === 'number' || text === 'string' || text === 'boolean') return { kind: text };
+    if (text === 'unknown' || text === 'any' || generics.includes(text)) return { kind: 'unknown' };
+    if (text === 'true' || text === 'false') return { kind: 'literal', value: text === 'true' };
+    if (/^-?\d+(\.\d+)?$/.test(text)) return { kind: 'literal', value: Number(text) };
+    const quoted = /^(['"])(.*)\1$/.exec(text);
+    if (quoted !== null) return { kind: 'literal', value: quoted[2] ?? '' };
+
+    if (wraps(text, '{')) {
+      const fields: Field[] = [];
+      for (const field of splitTop(text.slice(1, -1), ';,')) {
+        const colon = field.indexOf(':');
+        if (colon < 0) return null;
+        let name = field
+          .slice(0, colon)
+          .trim()
+          .replace(/^readonly\s+/, '');
+        const optional = name.endsWith('?');
+        if (optional) name = name.slice(0, -1).trim();
+        const type = parse(field.slice(colon + 1), depth + 1);
+        if (type === null || !NAME.test(name)) return null;
+        fields.push({ name, type, optional });
+      }
+      return { kind: 'object', fields };
+    }
+
+    const record = /^Record<\s*string\s*,([\s\S]*)>$/.exec(text);
+    if (record !== null) {
+      const of = parse(record[1] ?? '', depth + 1);
+      return of === null ? null : { kind: 'record', of };
+    }
+
+    return Object.hasOwn(aliases, text) ? alias(text) : null;
+  };
+
+  return parse(raw, 0);
 }
 
 /** Read the whole signature: aliases above, then `function strike(…): T`. */
@@ -144,6 +209,10 @@ export function readSignature(text: string): Signature {
     if (/^\s*function\s/.test(line)) head = line.trim().replace(/\s*\{\s*$/, '');
   }
 
+  // `function strike<T, U>(…)` — the names in the angle brackets keep any value.
+  const generic = /^function\s+[A-Za-z_$][\w$]*\s*<([^>]*)>/.exec(head);
+  const generics = generic === null ? [] : splitTop(generic[1] ?? '', ',').map((one) => one.split(/\s/)[0] ?? '');
+
   const open = head.indexOf('(');
   const shut = open < 0 ? -1 : closing(head, open);
   const params: Param[] = [];
@@ -151,36 +220,54 @@ export function readSignature(text: string): Signature {
   if (open >= 0 && shut > open) {
     for (const one of splitTop(head.slice(open + 1, shut), ',')) {
       const colon = one.indexOf(':');
-      const name = (colon < 0 ? one : one.slice(0, colon)).trim();
+      let name = (colon < 0 ? one : one.slice(0, colon)).trim();
+      const optional = name.endsWith('?');
+      if (optional) name = name.slice(0, -1).trim();
       const typeText = colon < 0 ? '' : one.slice(colon + 1).trim();
-      params.push({ name, text: typeText, type: parseType(typeText, aliases) });
+      params.push({ name, text: typeText, type: parseType(typeText, aliases, generics), optional });
     }
     const after = head.slice(shut + 1).trim();
     returnsText = after.startsWith(':') ? after.slice(1).trim() : '';
   }
 
-  return { above, head, params, returnsText, returns: parseType(returnsText, aliases) };
+  return { above, head, params, returnsText, returns: parseType(returnsText, aliases, generics) };
 }
 
+const isRecord = (value: Value): value is { readonly [key: string]: Value } =>
+  typeof value === 'object' && !Array.isArray(value);
+
 /** Whether a value keeps the promise a type makes. A null type promises nothing. */
-export function fits(value: Value | null, type: Type | null): boolean {
-  if (type === null) return true;
+export function fits(value: Value | null, type: Type | null, depth: number = 0): boolean {
+  if (type === null || depth > 64) return true;
   if (value === null) return false;
   switch (type.kind) {
     case 'number':
     case 'string':
     case 'boolean':
       return typeof value === type.kind;
+    case 'unknown':
+      return true;
+    case 'literal':
+      return value === type.value;
     case 'list':
-      return Array.isArray(value) && (value as readonly Value[]).every((item) => fits(item, type.of));
+      return Array.isArray(value) && (value as readonly Value[]).every((item) => fits(item, type.of, depth + 1));
+    case 'tuple':
+      return (
+        Array.isArray(value) &&
+        value.length === type.of.length &&
+        type.of.every((one, i) => fits((value as readonly Value[])[i] ?? null, one, depth + 1))
+      );
+    case 'union':
+      return type.of.some((one) => fits(value, one, depth + 1));
     case 'object': {
-      if (typeof value !== 'object' || Array.isArray(value)) return false;
-      const record = value as { readonly [key: string]: Value };
-      return type.fields.every(([name, field]) => Object.hasOwn(record, name) && fits(record[name] ?? null, field));
+      if (!isRecord(value)) return false;
+      return type.fields.every((field) =>
+        Object.hasOwn(value, field.name) ? fits(value[field.name] ?? null, field.type, depth + 1) : field.optional,
+      );
     }
-    case 'record': {
-      if (typeof value !== 'object' || Array.isArray(value)) return false;
-      return Object.values(value as { readonly [key: string]: Value }).every((item) => fits(item, type.of));
-    }
+    case 'record':
+      return isRecord(value) && Object.values(value).every((item) => fits(item, type.of, depth + 1));
+    case 'ref':
+      return fits(value, type.resolve(), depth + 1);
   }
 }

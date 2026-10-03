@@ -261,8 +261,11 @@ describe('hints', () => {
  * change the ladder's own data under the next case.
  */
 function runBody(params: readonly string[], body: string, args: readonly Value[]): Value | null {
-  const fn = new Function(...params, `"use strict";\n${body}`) as (...given: unknown[]) => unknown;
-  return clean(fn(...structuredClone(args)));
+  // Named `strike`, as it is in the worker, so a rung that calls itself can.
+  const make = new Function(
+    `"use strict";\nconst strike = function (${params.join(', ')}) {\n${body}\n};\nreturn strike;`,
+  ) as () => (...given: unknown[]) => unknown;
+  return clean(make()(...structuredClone(args)));
 }
 
 describe('every rung', () => {
@@ -314,7 +317,10 @@ describe('every rung', () => {
       const sig = readSignature(level.signature);
       for (const one of [...level.shown, ...level.cases]) {
         expect(fits(one.want, sig.returns), `${level.id} wants ${JSON.stringify(one.want)}`).toBe(true);
-        expect(one.args, level.id).toHaveLength(sig.params.length);
+        // An optional parameter may be left out of a call, and only that.
+        const required = sig.params.filter((p) => !p.optional).length;
+        expect(one.args.length, level.id).toBeGreaterThanOrEqual(required);
+        expect(one.args.length, level.id).toBeLessThanOrEqual(sig.params.length);
         one.args.forEach((arg, i) => {
           expect(fits(arg, sig.params[i]?.type ?? null), `${level.id} arg ${i}`).toBe(true);
         });

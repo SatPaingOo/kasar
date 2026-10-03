@@ -82,23 +82,37 @@ export interface Missed {
  */
 export type Why =
   | { readonly kind: 'threw' }
+  | { readonly kind: 'deep' }
   | { readonly kind: 'noReturn' }
   | { readonly kind: 'notThere' }
   | { readonly kind: 'nan' }
   | { readonly kind: 'promise' }
   | { readonly kind: 'value' };
 
-/** Whether the code says `return` anywhere outside a comment or a string. */
+/**
+ * Whether the code returns something somewhere: `return`, outside a comment
+ * or a string, with something after it *on the same line*.
+ *
+ * A bare `return` gives back undefined — and so does `return` with the value
+ * on the next line, because JavaScript puts a semicolon in straight after it.
+ * Both look like a return to the person who wrote them and both are the
+ * missing-return mistake, so both count as not returning.
+ */
 export function returnsSomething(source: string): boolean {
   const bare = source
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/.*$/gm, '')
-    .replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '');
-  return /\breturn\b/.test(bare);
+    .replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '""');
+  return /\breturn\b[ \t]*[^\s;}]/.test(bare);
 }
 
 export function whyMissed(missed: Missed, returns: Type | null, source: string): Why {
-  if (missed.error !== null) return { kind: 'threw' };
+  // A function that calls itself with no way to stop runs out of stack, and
+  // the engine says so in words that mention neither the base case nor
+  // getting smaller — which are the two things to check.
+  if (missed.error !== null) {
+    return /call stack|too much recursion/i.test(missed.error) ? { kind: 'deep' } : { kind: 'threw' };
+  }
   if (missed.type === 'undefined') return { kind: returnsSomething(source) ? 'notThere' : 'noReturn' };
   if (/\bNaN\b/.test(missed.type)) return { kind: 'nan' };
   if (!fits(missed.got, returns)) return { kind: 'promise' };
