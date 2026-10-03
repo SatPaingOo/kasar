@@ -289,6 +289,7 @@ let onDesk = -1;
 function showRung(): void {
   const level = levelAt(game.level);
   if (level === undefined) return;
+  describeScene();
   if (onDesk === game.level) {
     drawHints();
     return;
@@ -428,6 +429,7 @@ async function strike(): Promise<void> {
   }
 
   resolve(game, outcome.results);
+  describeScene();
   const level = levelAt(game.level);
   // Read from the events rather than the phase: the guard at the top has
   // already narrowed the phase to 'writing' as far as the compiler can tell.
@@ -557,6 +559,8 @@ function drawMap(): void {
       button.type = 'button';
       button.textContent = String(i + 1);
       button.title = level.concept[lang];
+      const beaten = progress.cleared.includes(level.id) ? `, ${t.beaten}` : '';
+      button.setAttribute('aria-label', `${t.rung} ${i + 1}: ${level.concept[lang]}${beaten}`);
       button.disabled = i > open;
       if (progress.cleared.includes(level.id)) button.classList.add('done');
       if (i === startAt) button.classList.add('here');
@@ -654,6 +658,17 @@ resetEl.textContent = t.reset;
 keysEl.textContent = t.keys;
 labelMute();
 hintEl.textContent = t.hint;
+bodyEl.setAttribute('aria-label', t.codeLabel);
+symbolsEl.setAttribute('aria-label', t.symbolsLabel);
+
+/**
+ * The fight, said in words for anyone who cannot see it. Only where things
+ * stand, and only when that changes: the blow by blow is already said aloud
+ * by the line under the desk, which is a live region.
+ */
+function describeScene(): void {
+  canvas.setAttribute('aria-label', t.scene(game.level + 1, levelCount(), game.lives));
+}
 /**
  * Skip the rest of the fight.
  *
@@ -789,7 +804,7 @@ for (const [label, insert] of SYMBOLS) {
   button.type = 'button';
   button.tabIndex = -1;
   button.textContent = label;
-  if (insert === '\t') button.setAttribute('aria-label', 'indent');
+  if (insert === '\t') button.setAttribute('aria-label', t.indentLabel);
   button.addEventListener('pointerdown', (event) => event.preventDefault());
   button.addEventListener('mousedown', (event) => event.preventDefault());
   button.addEventListener('click', () => {

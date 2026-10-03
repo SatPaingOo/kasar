@@ -2,6 +2,17 @@
 
 Keep a Changelog, newest first.
 
+## [0.7.2] — 2026-10-03
+
+### Added
+
+- Something for a screen reader. The line that says what happened is a live
+  region, so each result is read out as it arrives; the code box is labelled;
+  the cards are dialogs; the row of symbols is a toolbar; each rung on the map
+  says what it asks and whether it is beaten; and the fight, which is only
+  pictures, is described in words: which rung, of how many, and how many lives
+  are left.
+
 ## [0.7.1] — 2026-10-03
 
 ### Fixed

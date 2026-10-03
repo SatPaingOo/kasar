@@ -41,6 +41,11 @@ interface Text {
   readonly finish: string;
   readonly won: string;
   readonly wonWhy: (rungs: number) => string;
+  readonly codeLabel: string;
+  readonly symbolsLabel: string;
+  readonly indentLabel: string;
+  readonly beaten: string;
+  readonly scene: (rung: number, of: number, lives: number) => string;
   readonly down: string;
   readonly downWhy: string;
   readonly sameRung: string;
@@ -91,6 +96,11 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     finish: 'Finish',
     won: 'Nothing left standing',
     wonWhy: (rungs) => `Every rung, all ${rungs} of them.`,
+    codeLabel: 'Your code: the body of strike',
+    symbolsLabel: 'Symbols',
+    indentLabel: 'Indent',
+    beaten: 'beaten',
+    scene: (rung, of, lives) => `Rung ${rung} of ${of}. ${lives} ${lives === 1 ? 'life' : 'lives'} left.`,
     down: 'He is down',
     downWhy: 'Beaten by rung',
     sameRung: 'Back on your feet',
@@ -140,6 +150,11 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     finish: 'အဆုံးသတ်',
     won: 'ဘာမှ မကျန်တော့ဘူး',
     wonWhy: (rungs) => `အဆင့် ${rungs} ခုလုံး ပြီးပြီ။`,
+    codeLabel: 'မင်းရဲ့ code — strike ရဲ့ အထဲပိုင်း',
+    symbolsLabel: 'သင်္ကေတများ',
+    indentLabel: 'အထဲတိုး',
+    beaten: 'အောင်ပြီး',
+    scene: (rung, of, lives) => `အဆင့် ${of} ခုထဲက ${rung}။ အသက် ${lives} ခု ကျန်တယ်။`,
     down: 'သူ လဲသွားပြီ',
     downWhy: 'ရှုံးသွားတဲ့ အဆင့်',
     sameRung: 'ပြန်ထပြီး ဒီအဆင့်ကို ပြန်စ',

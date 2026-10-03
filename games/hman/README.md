@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.7.1
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.7.2
 
 မှန် — correct.
 
@@ -176,6 +176,12 @@ A phone also "improves" punctuation: `'` becomes `’` and `--` becomes `—`,
 which is right in a message and a syntax error in code that says nothing
 about quotes. Each one is put straight as it arrives, as an edit that can be
 undone like any other.
+
+For a screen reader, the line under the desk that says what happened is a
+live region, so every result is read out as it arrives, with its line; the box
+is labelled as the body of `strike`; the cards are dialogs; and the fight,
+which is only pictures, is described in words — which rung, of how many, and
+how many lives are left.
 
 There is no completion and no type checking, and both are deliberate. Typing
 out `parts.filter` is part of learning it, and type checking is a compiler.

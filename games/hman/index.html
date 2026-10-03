@@ -552,7 +552,7 @@
   </head>
   <body>
     <a class="back" href="../../" aria-label="Back to the shelf">&larr;</a>
-    <canvas id="stage"></canvas>
+    <canvas id="stage" role="img"></canvas>
 
     <div class="desk">
       <div class="concept" id="concept"></div>
@@ -577,21 +577,21 @@
         </div>
         <pre class="frame tail" id="tail">}</pre>
       </div>
-      <div class="symbols" id="symbols"></div>
+      <div class="symbols" id="symbols" role="toolbar"></div>
       <div class="row">
         <button id="submit" class="go" type="button"></button>
         <button id="hint" type="button"></button>
         <button id="reset" type="button"></button>
         <button id="mute" type="button"></button>
-        <span class="says" id="says"></span>
+        <span class="says" id="says" role="status" aria-live="polite"></span>
       </div>
       <div class="keys" id="keys"></div>
-      <div class="hints" id="hints"></div>
+      <div class="hints" id="hints" aria-live="polite"></div>
     </div>
 
     <div class="build" id="build"></div>
 
-    <div class="curtain" id="curtain">
+    <div class="curtain" id="curtain" role="dialog" aria-modal="true" aria-labelledby="curtainTitle">
       <div class="card">
         <h1 id="curtainTitle"></h1>
         <p class="lead" id="curtainLead"></p>
