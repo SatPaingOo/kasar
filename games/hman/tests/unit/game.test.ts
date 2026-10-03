@@ -382,44 +382,54 @@ describe('every rung', () => {
   });
 });
 
+/**
+ * Plausible wrong answers, each of which its rung must not let through. A
+ * hidden case is there to spring a trap, and a trap that never springs is a
+ * lesson the rung only claims to teach.
+ */
+const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
+  ['fallback', 'return parts[0] || -1;', '|| where ?? was needed, because 0 is not nothing'],
+  [
+    'biggest',
+    'let best = 0;\nfor (const n of parts) if (n > best) best = n;\nreturn best;',
+    'a biggest that starts at 0',
+  ],
+  ['between', 'return n > low && n < high;', 'an edge left out'],
+  ['count', 'return parts.filter((n) => n >= 5).length;', 'a count that lets 5 in'],
+  ['middle', 'return parts[parts.length / 2];', 'a middle that is not a whole number'],
+  ['ends', 'return parts[0];', 'one number where a list was promised'],
+  // Array methods
+  ['above', 'return parts.filter((n) => n >= limit);', 'a limit that lets itself in'],
+  ['firstbig', 'return parts.find((n) => n >= 10) ?? -1;', '10 counted as above 10'],
+  ['sorted', 'return parts.sort();', 'sort with no comparison, which sorts as text'],
+  ['unique', 'return new Set(parts);', 'a Set handed back where a list was promised'],
+  [
+    'chain',
+    'return parts.filter((n) => n % 2 === 0).map((n) => n * 2).reduce((s, n) => s + n);',
+    'reduce with nothing to start from',
+  ],
+];
+
+/** Whether a body gets every hidden case of a rung right. */
+function beats(id: string, body: string): boolean {
+  const level = LEVELS.find((one) => one.id === id);
+  if (level === undefined) throw new Error(`no rung ${id}`);
+  const params = readSignature(level.signature).params.map((p) => p.name);
+  return level.cases.every((one) => {
+    try {
+      return same(runBody(params, body, one.args), one.want);
+    } catch {
+      return false;
+    }
+  });
+}
+
 describe('the traps the hidden cases are there to spring', () => {
-  /** A plausible wrong answer, which the rung must not let through. */
-  function beats(id: string, body: string): boolean {
-    const level = LEVELS.find((one) => one.id === id);
-    if (level === undefined) throw new Error(`no rung ${id}`);
-    const params = readSignature(level.signature).params.map((p) => p.name);
-    return level.cases.every((one) => {
-      try {
-        return same(runBody(params, body, one.args), one.want);
-      } catch {
-        return false;
-      }
+  for (const [id, body, why] of TRAPS) {
+    it(`catches ${why} (${id})`, () => {
+      expect(beats(id, body)).toBe(false);
     });
   }
-
-  it('catches || where ?? was needed, because 0 is not nothing', () => {
-    expect(beats('fallback', 'return parts[0] || -1;')).toBe(false);
-  });
-
-  it('catches a biggest that starts at 0', () => {
-    expect(beats('biggest', 'let best = 0;\nfor (const n of parts) if (n > best) best = n;\nreturn best;')).toBe(false);
-  });
-
-  it('catches an edge left out', () => {
-    expect(beats('between', 'return n > low && n < high;')).toBe(false);
-  });
-
-  it('catches a count that lets 5 in', () => {
-    expect(beats('count', 'return parts.filter((n) => n >= 5).length;')).toBe(false);
-  });
-
-  it('catches a middle that is not a whole number', () => {
-    expect(beats('middle', 'return parts[parts.length / 2];')).toBe(false);
-  });
-
-  it('catches one number where a list was promised', () => {
-    expect(beats('ends', 'return parts[0];')).toBe(false);
-  });
 });
 
 describe('being put down', () => {

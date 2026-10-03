@@ -66,6 +66,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Values and lists', my: 'တန်ဖိုးနဲ့ စာရင်း' },
   { en: 'Choosing', my: 'ရွေးချယ်ခြင်း' },
   { en: 'Again and again', my: 'ထပ်ခါ ထပ်ခါ' },
+  { en: 'Array methods', my: 'Array method တွေ' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -568,5 +569,225 @@ export const LEVELS: readonly Level[] = [
       my: 'map က အရင်အဆင့်က loop-နဲ့-push ကို တစ်ကြောင်းတည်းနဲ့ ပြောတာ။ parts ကို ဘယ်တော့မှ မပြောင်းဘူး — အရှည်တူ စာရင်းသစ် တစ်ခုကို အမြဲ ဖန်တီးတယ်။',
     },
     another: 'const out = [];\nfor (const n of parts) out.push(n * 2);\nreturn out;',
+  },
+
+  // ── Array methods ───────────────────────────────────────────────────
+  {
+    id: 'evens',
+    chapter: 3,
+    concept: { en: 'only the even ones', my: 'စုံကိန်းတွေပဲ' },
+    brief: {
+      en: 'He only lands on even parts. Give back a list of just the even ones, in the order they came.',
+      my: 'သူက စုံကိန်း အပိုင်းတွေကိုပဲ ထိတယ်။ စုံကိန်းတွေချည်းပဲ ပါတဲ့ စာရင်း တစ်ခုကို မူလ အစီအစဉ်အတိုင်း ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(parts: number[]): number[]',
+    starter: 'return ',
+    shown: [one([4, 9, 2], [4, 2]), one([7, 1], [])],
+    cases: [one([3, 8, 5], [8]), one([6, 6, 1, 9], [6, 6]), one([2], [2]), one([], []), one([0, -4, 3], [0, -4])],
+    hints: [
+      {
+        en: 'You wrote this shape in the last chapter: a loop, an if, and a list to push into. There is a shorter way.',
+        my: 'ဒီပုံစံကို အရင်အခန်းမှာ ရေးခဲ့ပြီးပြီ: loop တစ်ခု၊ if တစ်ခု၊ push လုပ်မယ့် စာရင်း တစ်ခု။ ပိုတိုတဲ့ နည်း ရှိတယ်။',
+      },
+      {
+        en: 'parts.filter((n) => ___) keeps every part for which the test is true.',
+        my: 'parts.filter((n) => ___) က စစ်ချက် true ဖြစ်တဲ့ အပိုင်းတိုင်းကို ချန်ထားတယ်။',
+      },
+      code('return parts.filter((n) => n % 2 === 0);'),
+    ],
+    lesson: {
+      en: 'filter takes a test and keeps what passes it, in order. The test has to give back true or false — which n % 2 === 0 already is.',
+      my: 'filter က စစ်ချက် တစ်ခု ယူပြီး အောင်တဲ့ဟာတွေကို အစီအစဉ်အတိုင်း ချန်ထားတယ်။ စစ်ချက်က true ဒါမှမဟုတ် false ပြန်ပေးရမယ် — n % 2 === 0 က အဲဒါ ဖြစ်ပြီးသား။',
+    },
+    another: 'const out = [];\nfor (const n of parts) {\n  if (n % 2 === 0) out.push(n);\n}\nreturn out;',
+  },
+  {
+    id: 'above',
+    chapter: 3,
+    concept: { en: 'over the line', my: 'မျဉ်းကို ကျော်တာ' },
+    brief: {
+      en: 'Now the line moves. Give back the parts that are above limit — whatever limit is this time.',
+      my: 'အခု မျဉ်းက ရွေ့တယ်။ limit ထက် ကြီးတဲ့ အပိုင်းတွေကို ပြန်ပေးပါ — ဒီတစ်ခါ limit က ဘာပဲ ဖြစ်ဖြစ်။',
+    },
+    signature: 'function strike(parts: number[], limit: number): number[]',
+    starter: 'return ',
+    shown: [many([[4, 9, 2], 3], [4, 9]), many([[7, 1], 10], [])],
+    cases: [
+      many([[3, 8, 5], 5], [8]),
+      many([[6, 6, 1, 9], 0], [6, 6, 1, 9]),
+      many([[2], 2], []),
+      many([[-1, -5, 0], -2], [-1, 0]),
+      many([[], 1], []),
+    ],
+    hints: [
+      {
+        en: 'The same filter, but the test now uses limit, which comes from outside it.',
+        my: 'filter ပဲ၊ ဒါပေမဲ့ စစ်ချက်က အပြင်ကနေ လာတဲ့ limit ကို သုံးတယ်။',
+      },
+      {
+        en: 'The arrow inside filter can see limit: (n) => n > limit.',
+        my: 'filter ထဲက arrow က limit ကို မြင်နိုင်တယ်: (n) => n > limit။',
+      },
+      code('return parts.filter((n) => n > limit);'),
+    ],
+    lesson: {
+      en: 'The little function inside filter can use names from around it, like limit. That is a closure, and it is why one filter can serve any limit.',
+      my: 'filter ထဲက function အသေးလေးက သူ့ပတ်ဝန်းကျင်က နာမည်တွေကို (limit လို) သုံးနိုင်တယ်။ အဲဒါကို closure လို့ ခေါ်တယ်၊ filter တစ်ခုတည်းက limit မျိုးစုံအတွက် အလုပ်လုပ်နိုင်တာ ဒါကြောင့်ပဲ။',
+    },
+  },
+  {
+    id: 'firstbig',
+    chapter: 3,
+    concept: { en: 'the first big one', my: 'ပထမဆုံး အကြီး' },
+    brief: {
+      en: 'He takes the first part above 10 and no other. Give it back — or -1 if there is none.',
+      my: 'သူက 10 ထက်ကြီးတဲ့ ပထမဆုံး အပိုင်းကိုပဲ ယူတယ်၊ တခြား မယူဘူး။ အဲဒါကို ပြန်ပေးပါ — မရှိရင် -1။',
+    },
+    signature: 'function strike(parts: number[]): number',
+    starter: 'return ',
+    shown: [one([4, 19, 12], 19), one([7, 1], -1)],
+    cases: [one([30, 8, 50], 30), one([6, 11], 11), one([10], -1), one([], -1), one([1, 2, 99], 99)],
+    hints: [
+      {
+        en: 'filter would give back all of them. You want only the first, and to stop looking once you have it.',
+        my: 'filter က အကုန် ပြန်ပေးလိမ့်မယ်။ မင်း လိုတာ ပထမ တစ်ခုပဲ၊ တွေ့တာနဲ့ ရှာတာ ရပ်ရမယ်။',
+      },
+      {
+        en: 'parts.find((n) => ___) gives back the first that passes, or undefined if none does.',
+        my: 'parts.find((n) => ___) က အောင်တဲ့ ပထမ တစ်ခုကို ပြန်ပေးတယ်၊ တစ်ခုမှ မအောင်ရင် undefined။',
+      },
+      code('return parts.find((n) => n > 10) ?? -1;'),
+    ],
+    lesson: {
+      en: 'find stops at the first match; filter never stops. And find gives undefined when nothing matches, which is what ?? is for.',
+      my: 'find က ပထမဆုံး ကိုက်တာမှာ ရပ်တယ်၊ filter က ဘယ်တော့မှ မရပ်ဘူး။ ပြီးတော့ ဘာမှ မကိုက်ရင် find က undefined ပေးတယ် — ?? က အဲဒီအတွက်ပဲ။',
+    },
+  },
+  {
+    id: 'has',
+    chapter: 3,
+    concept: { en: 'is it there', my: 'ပါလား' },
+    brief: {
+      en: 'He only swings if 7 is somewhere in it. Give back true if 7 is one of the parts, false if not.',
+      my: 'အပိုင်းတွေထဲမှာ 7 ပါမှ သူ လွှဲထိုးတယ်။ 7 ပါရင် true၊ မပါရင် false ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(parts: number[]): boolean',
+    starter: 'return ',
+    shown: [one([4, 7, 2], true), one([1, 1], false)],
+    cases: [one([7], true), one([], false), one([17, 70], false), one([3, 8, 5, 7], true), one([-7], false)],
+    hints: [
+      {
+        en: 'You need neither where it is nor what it is — only whether it is there at all.',
+        my: 'ဘယ်နေရာမှာလဲ၊ ဘာလဲ မလိုဘူး — ပါသလား မပါဘူးလား ဆိုတာပဲ လိုတယ်။',
+      },
+      {
+        en: 'parts.includes(x) answers exactly that.',
+        my: 'parts.includes(x) က အဲဒီမေးခွန်းကို တိုက်ရိုက် ဖြေတယ်။',
+      },
+      code('return parts.includes(7);'),
+    ],
+    lesson: {
+      en: 'includes is yes or no; indexOf is where, or -1; find is the thing itself. Three questions about the same list, and picking the one that asks yours is half the work.',
+      my: 'includes က ဟုတ်/မဟုတ်၊ indexOf က ဘယ်နေရာ (မရှိရင် -1)၊ find က အဲဒီအရာကိုယ်တိုင်။ စာရင်း တစ်ခုတည်းအပေါ် မေးခွန်း သုံးမျိုး — ကိုယ့်မေးခွန်းနဲ့ ကိုက်တာကို ရွေးတတ်တာက အလုပ်ရဲ့ တစ်ဝက်ပဲ။',
+    },
+    another: 'return parts.some((n) => n === 7);',
+  },
+  {
+    id: 'sorted',
+    chapter: 3,
+    concept: { en: 'smallest first', my: 'အငယ်ဆုံးက ရှေ့' },
+    brief: {
+      en: 'He takes them in order, lightest first. Give back the parts sorted from smallest to biggest.',
+      my: 'သူက အပေါ့ဆုံးကနေ စီပြီး ယူတယ်။ အပိုင်းတွေကို အငယ်ဆုံးကနေ အကြီးဆုံးအထိ စီပြီး ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(parts: number[]): number[]',
+    starter: 'return ',
+    shown: [one([4, 9, 2], [2, 4, 9]), one([7, 1], [1, 7])],
+    cases: [
+      one([10, 9, 1], [1, 9, 10]),
+      one([3, 8, 5], [3, 5, 8]),
+      one([100, 25, 3], [3, 25, 100]),
+      one([2], [2]),
+      one([-1, -10, 5], [-10, -1, 5]),
+    ],
+    hints: [
+      {
+        en: 'parts.sort() looks right on the examples. Work out what it does to [10, 9, 1] first.',
+        my: 'parts.sort() က နမူနာတွေမှာ မှန်သလို ထင်ရတယ်။ [10, 9, 1] ကို ဘာလုပ်မလဲ အရင် စဉ်းစားကြည့်ပါ။',
+      },
+      {
+        en: 'Left alone, sort compares them as text, so 10 comes before 9. Give it a comparison: (a, b) => a - b.',
+        my: 'ဘာမှ မပေးရင် sort က စာသားလို နှိုင်းယှဉ်တယ်၊ ဒါကြောင့် 10 က 9 ရဲ့ ရှေ့ ရောက်တယ်။ နှိုင်းယှဉ်ပုံ တစ်ခု ပေးပါ: (a, b) => a - b။',
+      },
+      code('return [...parts].sort((a, b) => a - b);'),
+    ],
+    lesson: {
+      en: "sort with no comparison sorts as text: '10' comes before '9' the way 'ba' comes before 'c'. Given (a, b) => a - b it sorts as numbers. And sort changes the very list it is given, which is why the answer copies it first with [...parts] — or uses toSorted, below, which never changes it.",
+      my: "နှိုင်းယှဉ်ပုံ မပေးရင် sort က စာသားလို စီတယ်: 'ba' က 'c' ရဲ့ ရှေ့ ရောက်သလိုပဲ '10' က '9' ရဲ့ ရှေ့ ရောက်တယ်။ (a, b) => a - b ပေးမှ ဂဏန်းလို စီတယ်။ ပြီးတော့ sort က ပေးလိုက်တဲ့ စာရင်းကိုယ်တိုင်ကို ပြောင်းပစ်တယ် — ဒါကြောင့် အဖြေက [...parts] နဲ့ အရင် ကူးယူတာ၊ ဒါမှမဟုတ် အောက်က toSorted ကို သုံးတာ၊ သူက ဘယ်တော့မှ မပြောင်းဘူး။",
+    },
+    another: 'return parts.toSorted((a, b) => a - b);',
+  },
+  {
+    id: 'unique',
+    chapter: 3,
+    concept: { en: 'once each', my: 'တစ်ခါစီ' },
+    brief: {
+      en: 'He never hits the same number twice. Give back the parts with the repeats taken out, each kept where it first appeared.',
+      my: 'သူက ဂဏန်း တစ်ခုတည်းကို နှစ်ခါ ဘယ်တော့မှ မထိုးဘူး။ ထပ်နေတာတွေကို ဖယ်ပြီး ပြန်ပေးပါ — တစ်ခုစီကို ပထမဆုံး ပေါ်ခဲ့တဲ့ နေရာမှာ ထားပါ။',
+    },
+    signature: 'function strike(parts: number[]): number[]',
+    starter: 'return ',
+    shown: [one([4, 9, 4, 2], [4, 9, 2]), one([7, 7], [7])],
+    cases: [
+      one([3, 8, 3, 8, 5], [3, 8, 5]),
+      one([1, 2, 3], [1, 2, 3]),
+      one([], []),
+      one([5, 5, 5, 5], [5]),
+      one([2, 1, 2, 1], [2, 1]),
+    ],
+    hints: [
+      {
+        en: 'A Set is a collection that cannot hold the same thing twice.',
+        my: 'Set ဆိုတာ အရာ တစ်ခုတည်းကို နှစ်ခါ မထည့်နိုင်တဲ့ စုစည်းမှု တစ်ခု။',
+      },
+      {
+        en: 'new Set(parts) drops the repeats — but a Set is not a list, and the signature promised number[]. Spread it back into one: [...set].',
+        my: 'new Set(parts) က ထပ်နေတာတွေကို ဖယ်ပေးတယ် — ဒါပေမဲ့ Set က စာရင်း မဟုတ်ဘူး၊ signature က number[] ကတိပေးထားတယ်။ စာရင်းအဖြစ် ပြန်ဖြန့်ပါ: [...set]။',
+      },
+      code('return [...new Set(parts)];'),
+    ],
+    lesson: {
+      en: 'A Set keeps each thing once, in the order it first arrived. It is not an array, though — handing it back breaks the promise of number[] — so [...] spreads it back into one.',
+      my: 'Set က အရာတစ်ခုစီကို တစ်ခါပဲ သိမ်းတယ်၊ ပထမ ရောက်လာတဲ့ အစီအစဉ်အတိုင်း။ ဒါပေမဲ့ array မဟုတ်ဘူး — အဲဒါကို တိုက်ရိုက် ပြန်ပေးရင် number[] ကတိ ပျက်တယ် — ဒါကြောင့် [...] နဲ့ array အဖြစ် ပြန်ဖြန့်တာ။',
+    },
+    another: 'return parts.filter((n, i) => parts.indexOf(n) === i);',
+  },
+  {
+    id: 'chain',
+    chapter: 3,
+    concept: { en: 'one after another', my: 'တစ်ခုပြီး တစ်ခု' },
+    brief: {
+      en: 'The finisher, in three moves: keep only the even parts, double each of them, then add them all up. Give back that total.',
+      my: 'အပြီးသတ် ထိုးချက်၊ သုံးဆင့်နဲ့: စုံကိန်း အပိုင်းတွေကိုပဲ ချန်၊ တစ်ခုစီကို နှစ်ဆလုပ်၊ ပြီးရင် အားလုံး ပေါင်း။ အဲဒီ စုစုပေါင်းကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(parts: number[]): number',
+    starter: 'return ',
+    shown: [one([4, 9, 2], 12), one([6, 1], 12)],
+    cases: [one([3, 8, 5], 16), one([7, 1], 0), one([], 0), one([2, 2, 3], 8), one([-2, 3], -4)],
+    hints: [
+      {
+        en: 'Three steps you already know — filter, map, and a total — each handing its list to the next.',
+        my: 'သိပြီးသား အဆင့် သုံးဆင့် — filter၊ map၊ ပြီးတော့ စုစုပေါင်း — တစ်ဆင့်က သူ့စာရင်းကို နောက်တစ်ဆင့်ကို လက်ဆင့်ကမ်းတယ်။',
+      },
+      {
+        en: 'They chain, each one called on what the last gave back: parts.filter(…).map(…).reduce((sum, n) => sum + n, 0)',
+        my: 'တစ်ခုက ပြန်ပေးတာပေါ်မှာ နောက်တစ်ခုကို ခေါ်ပြီး ဆက်တိုက် ချိတ်လို့ရတယ်: parts.filter(…).map(…).reduce((sum, n) => sum + n, 0)',
+      },
+      code('return parts\n  .filter((n) => n % 2 === 0)\n  .map((n) => n * 2)\n  .reduce((sum, n) => sum + n, 0);'),
+    ],
+    lesson: {
+      en: "Each method hands back a new list, so the next can be called straight on it, and read top to bottom a chain says what happens in the order it happens. reduce's 0 matters: without it, an empty list has nothing to start from, and it throws.",
+      my: 'method တစ်ခုစီက စာရင်းအသစ် ပြန်ပေးလို့ နောက်တစ်ခုကို အဲဒီပေါ်မှာ တန်းခေါ်လို့ရတယ်၊ အပေါ်ကနေ အောက်ကို ဖတ်ရင် chain က ဖြစ်တဲ့ အစီအစဉ်အတိုင်း ပြောပြတယ်။ reduce ရဲ့ 0 က အရေးကြီးတယ်: မပါရင် စာရင်း ဗလာမှာ စစရာ မရှိလို့ error တက်တယ်။',
+    },
   },
 ];
