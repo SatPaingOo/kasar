@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hman</title>
+    <style>
+      /*
+        The only game on the shelf that is not all canvas. It needs a real text
+        box, because a canvas cannot take typing, so the fight is drawn above
+        and the desk is ordinary DOM below it.
+      */
+      :root {
+        color-scheme: dark;
+        --ink: #e8e3f2;
+        --ink-dim: #8a82a0;
+        --line: #2a2436;
+        --surface: #121016;
+        --raised: #191523;
+        --accent: #b9a0e0;
+        --wrong: #d98a8a;
+        --right: #9ad8a8;
+        --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+        --font: 'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--surface);
+        color: var(--ink);
+        font-family: var(--font);
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #stage {
+        display: block;
+        width: 100%;
+        flex: 0 0 38%;
+        min-height: 150px;
+      }
+
+      .desk {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        border-top: 1px solid var(--line);
+        padding: 0.9rem clamp(0.75rem, 3vw, 1.5rem) 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+      }
+
+      .concept {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      html[lang='my'] .concept {
+        font-family: var(--font);
+        letter-spacing: 0.01em;
+        text-transform: none;
+        font-size: 0.8rem;
+      }
+
+      .brief {
+        margin: 0;
+        font-size: 0.98rem;
+        line-height: 1.5;
+      }
+
+      .shown {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.1rem;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--ink-dim);
+      }
+
+      .signature {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--ink-dim);
+        white-space: pre;
+        overflow-x: auto;
+      }
+
+      textarea {
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: var(--ink);
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.65rem 0.75rem;
+        min-height: 6.5rem;
+        resize: vertical;
+        width: 100%;
+        tab-size: 2;
+      }
+
+      textarea:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .row {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      button {
+        font-family: var(--font);
+        font-size: 0.86rem;
+        color: var(--ink);
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 0.45rem 0.95rem;
+        min-height: 2.2rem;
+        cursor: pointer;
+        transition:
+          border-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      button:hover:not(:disabled),
+      button:focus-visible:not(:disabled) {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      button:disabled {
+        color: var(--ink-dim);
+        cursor: default;
+      }
+
+      button.go {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .hints {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        font-size: 0.86rem;
+        color: var(--ink-dim);
+        border-left: 2px solid var(--line);
+        padding-left: 0.7rem;
+      }
+
+      .hints:empty {
+        display: none;
+      }
+
+      .hints code {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        color: var(--accent);
+        white-space: pre-wrap;
+      }
+
+      .says {
+        font-size: 0.85rem;
+        min-height: 1.2rem;
+        color: var(--ink-dim);
+      }
+
+      .says.bad {
+        color: var(--wrong);
+      }
+
+      .says.good {
+        color: var(--right);
+      }
+
+      /*
+        The way back to the shelf is a plain link in this page, not something
+        the shelf reaches in and adds: a game here owes the shelf nothing.
+      */
+      .back {
+        position: fixed;
+        top: 0.5rem;
+        left: 0.7rem;
+        z-index: 3;
+        color: var(--ink);
+        opacity: 0.35;
+        font:
+          400 1.1rem/1 system-ui,
+          sans-serif;
+        text-decoration: none;
+        padding: 0.3rem 0.45rem;
+      }
+
+      .back:hover,
+      .back:focus-visible {
+        opacity: 0.9;
+      }
+
+      .curtain {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        padding: 1.5rem;
+        text-align: center;
+        background: rgba(18, 16, 22, 0.94);
+      }
+
+      .curtain[hidden] {
+        display: none;
+      }
+
+      .curtain h1 {
+        margin: 0;
+        font-size: clamp(2rem, 9vw, 2.8rem);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+
+      .curtain p {
+        margin: 0;
+        max-width: 34rem;
+        font-size: 0.95rem;
+        line-height: 1.55;
+        color: var(--ink-dim);
+      }
+
+      .curtain p.lead {
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../" aria-label="Back to the shelf">&larr;</a>
+    <canvas id="stage"></canvas>
+
+    <div class="desk">
+      <div class="concept" id="concept"></div>
+      <p class="brief" id="brief"></p>
+      <div class="shown" id="shown"></div>
+      <div class="signature" id="signature"></div>
+      <textarea id="body" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      <div class="row">
+        <button id="submit" class="go" type="button"></button>
+        <button id="hint" type="button"></button>
+        <span class="says" id="says"></span>
+      </div>
+      <div class="hints" id="hints"></div>
+    </div>
+
+    <div class="curtain" id="curtain">
+      <h1 id="curtainTitle"></h1>
+      <p class="lead" id="curtainLead"></p>
+      <p id="curtainBody"></p>
+      <button id="curtainGo" class="go" type="button"></button>
+    </div>
+
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>

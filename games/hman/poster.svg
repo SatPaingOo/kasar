@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="Two stick figures facing each other across a dark floor, one pale and one dim, with a line of code between them">
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1726"/>
+      <stop offset="1" stop-color="#241e33"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="400" fill="url(#room)"/>
+  <line x1="0" y1="318" x2="640" y2="318" stroke="#2f2742" stroke-width="3"/>
+
+  <!-- what was written, hanging between them: the move, before it is made -->
+  <text x="320" y="92" text-anchor="middle" fill="#b9a0e0" opacity="0.5"
+        font-family="ui-monospace, Menlo, Consolas, monospace" font-size="19">return parts[0];</text>
+
+  <!-- him: mid-strike, weight forward -->
+  <g stroke="#e8e3f2" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M214 318 L234 268 L226 232"/>
+    <path d="M268 318 L248 272 L226 232"/>
+    <path d="M226 232 L232 170"/>
+    <path d="M230 186 L272 180 L306 192"/>
+    <path d="M230 186 L204 206 L212 232"/>
+  </g>
+  <circle cx="236" cy="152" r="16" fill="none" stroke="#e8e3f2" stroke-width="7"/>
+  <circle cx="245" cy="147" r="3.4" fill="#e8e3f2"/>
+
+  <!-- and the one he is fighting: the same figure, flipped, in a colder ink,
+       knocked back a step -->
+  <g stroke="#6f6490" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M430 318 L408 270 L418 236"/>
+    <path d="M376 318 L396 274 L418 236"/>
+    <path d="M418 236 L410 176"/>
+    <path d="M412 190 L372 196 L348 214"/>
+    <path d="M412 190 L440 206 L434 232"/>
+  </g>
+  <circle cx="406" cy="158" r="16" fill="none" stroke="#6f6490" stroke-width="7"/>
+  <circle cx="397" cy="153" r="3.4" fill="#6f6490"/>
+
+  <!-- the strike itself -->
+  <g stroke="#b9a0e0" stroke-width="4" stroke-linecap="round" opacity="0.85">
+    <line x1="312" y1="192" x2="340" y2="200"/>
+    <line x1="316" y1="176" x2="338" y2="178"/>
+    <line x1="314" y1="210" x2="336" y2="220"/>
+  </g>
+</svg>

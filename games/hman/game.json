@@ -1,0 +1,14 @@
+{
+  "id": "hman",
+  "version": "0.1.0",
+  "title": {
+    "en": "Hman",
+    "my": "မှန်"
+  },
+  "blurb": {
+    "en": "Write the move and he makes it. The thing he is fighting is the version of him that got it wrong.",
+    "my": "ထိုးချက်ကို ရေးပေးရင် သူ လုပ်ပြတယ်။ သူတိုက်နေတာက မှားသွားတဲ့ သူ့ကိုယ်သူပဲ။"
+  },
+  "accent": "#b9a0e0",
+  "year": 2026
+}

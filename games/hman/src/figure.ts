@@ -1,0 +1,133 @@
+/**
+ * The man, and the one he is fighting.
+ *
+ * The same drawing twice: the mirror is this figure flipped and in a colder
+ * ink, because that is what it is — the version of him that got the answer
+ * wrong. One function, two calls, and nothing to keep in step.
+ *
+ * His own figure, written here. The shelf has four of these now and none may
+ * reach into another; this one stands and strikes, which is a vocabulary none
+ * of the other three have.
+ */
+
+/** Feet at the origin, y growing downwards. */
+const BODY = {
+  headRadius: 4.4,
+  hip: 16,
+  shoulder: 27,
+  neck: 29,
+  thigh: 9,
+  shin: 9,
+  upperArm: 7.4,
+  forearm: 7.4,
+  lineWidth: 2.6,
+  height: 34,
+} as const;
+
+interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface Pose {
+  readonly facing: 1 | -1;
+  /** 0 standing, 1 at full reach of a strike. */
+  readonly lunge: number;
+  /** 0 upright, 1 knocked back. */
+  readonly recoil: number;
+  /** Seconds, for the small motion of standing there. */
+  readonly time: number;
+}
+
+const reach = (from: Point, angle: number, length: number): Point => ({
+  x: from.x + Math.cos(angle) * length,
+  y: from.y + Math.sin(angle) * length,
+});
+
+function line(ctx: CanvasRenderingContext2D, from: Point, ...rest: readonly Point[]): void {
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  for (const p of rest) ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+}
+
+/** Draw him with his feet at (x, y), `unit` pixels tall overall. */
+export function drawFigure(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  unit: number,
+  pose: Pose,
+  ink: string,
+): void {
+  const scale = unit / BODY.height;
+  const face = pose.facing;
+  const lunge = pose.lunge;
+  const recoil = pose.recoil;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.strokeStyle = ink;
+  ctx.fillStyle = ink;
+  ctx.lineWidth = BODY.lineWidth;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Weight goes forward into a strike and back out of a hit.
+  const shift = face * (lunge * 5 - recoil * 4);
+  const breath = Math.sin(pose.time * 2) * 0.35 * (1 - lunge);
+  const tilt = face * (lunge * 0.26 - recoil * 0.3);
+
+  const hip: Point = { x: shift * 0.5, y: -BODY.hip + breath };
+  const shoulder: Point = {
+    x: hip.x + Math.sin(tilt) * (BODY.shoulder - BODY.hip),
+    y: hip.y - Math.cos(tilt) * (BODY.shoulder - BODY.hip),
+  };
+  const neck: Point = { x: shoulder.x + Math.sin(tilt) * 2, y: shoulder.y - 2 };
+  const head: Point = { x: neck.x + Math.sin(tilt) * 4.4, y: neck.y - BODY.headRadius };
+
+  // Feet stay where they are; only the body moves over them.
+  for (const side of [1, -1]) {
+    const foot: Point = { x: side * 4.5 * face + (side === face ? shift * 0.25 : 0), y: 0 };
+    const knee: Point = {
+      x: (hip.x + foot.x) / 2 + face * 1.6,
+      y: (hip.y + foot.y) / 2,
+    };
+    line(ctx, hip, knee, foot);
+  }
+
+  line(ctx, hip, shoulder, neck);
+
+  // The striking arm reaches out; the other stays in.
+  const strikeAngle = face === 1 ? -0.18 - lunge * 0.1 : Math.PI + 0.18 + lunge * 0.1;
+  const bent = face === 1 ? -1.9 : Math.PI + 1.9;
+  const armAngle = bent + (strikeAngle - bent) * lunge;
+  const elbow = reach(shoulder, armAngle, BODY.upperArm);
+  const fist = reach(elbow, armAngle + face * (0.5 - lunge * 0.5), BODY.forearm);
+  line(ctx, shoulder, elbow, fist);
+
+  const guardAngle = face === 1 ? -2.4 + recoil * 0.6 : Math.PI + 2.4 - recoil * 0.6;
+  const guardElbow = reach(shoulder, guardAngle, BODY.upperArm);
+  line(ctx, shoulder, guardElbow, reach(guardElbow, guardAngle - face * 0.7, BODY.forearm));
+
+  ctx.beginPath();
+  ctx.arc(head.x, head.y, BODY.headRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(head.x + face * 1.9, head.y - 0.6, 0.95, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  // The fist is where a strike lands, so the caller can put a flash on it.
+  lastFist = { x: x + fist.x * scale, y: y + fist.y * scale };
+}
+
+let lastFist: Point = { x: 0, y: 0 };
+
+/** Where the striking fist ended up, in canvas pixels, after the last draw. */
+export function fistAt(): Point {
+  return lastFist;
+}

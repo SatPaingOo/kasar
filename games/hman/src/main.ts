@@ -1,0 +1,273 @@
+/**
+ * The loop, the canvas, the desk and the keyboard.
+ *
+ * Everything that decides anything is in game.ts; running what was typed is in
+ * runner.ts. This wires the two to the page, and it is the only file that
+ * knows there is a DOM.
+ */
+
+import { advance, casesOf, createGame, levelAt, levelCount, resolve, score, takeHint } from './game.js';
+import type { Game } from './game.js';
+import { run } from './runner.js';
+import { adviseOn } from './advice.js';
+import { draw } from './render.js';
+import type { Blow, View } from './render.js';
+import { TEXT, pickLang } from './strings.js';
+import type { Lang } from './strings.js';
+
+function need<T extends Element>(selector: string): T {
+  const found = document.querySelector<T>(selector);
+  if (found === null) throw new Error(`missing ${selector}`);
+  return found;
+}
+
+const canvas = need<HTMLCanvasElement>('#stage');
+const ctx = canvas.getContext('2d');
+if (ctx === null) throw new Error('no canvas');
+const paint: CanvasRenderingContext2D = ctx;
+
+const conceptEl = need<HTMLElement>('#concept');
+const briefEl = need<HTMLElement>('#brief');
+const shownEl = need<HTMLElement>('#shown');
+const signatureEl = need<HTMLElement>('#signature');
+const bodyEl = need<HTMLTextAreaElement>('#body');
+const submitEl = need<HTMLButtonElement>('#submit');
+const hintEl = need<HTMLButtonElement>('#hint');
+const saysEl = need<HTMLElement>('#says');
+const hintsEl = need<HTMLElement>('#hints');
+const curtainEl = need<HTMLElement>('#curtain');
+const curtainTitleEl = need<HTMLElement>('#curtainTitle');
+const curtainLeadEl = need<HTMLElement>('#curtainLead');
+const curtainBodyEl = need<HTMLElement>('#curtainBody');
+const curtainGoEl = need<HTMLButtonElement>('#curtainGo');
+
+const lang: Lang = pickLang([navigator.language, ...navigator.languages]);
+document.documentElement.lang = lang;
+document.title = TEXT[lang].title;
+const t = TEXT[lang];
+
+let game: Game = createGame();
+let view: View = { width: 1, height: 1 };
+let clock = 0;
+let busy = false;
+
+/** The blows from the last submit, played one at a time. */
+let queue: Blow[] = [];
+let blow: Blow | null = null;
+let swing = 0;
+
+function resize(): void {
+  const ratio = window.devicePixelRatio || 1;
+  const box = canvas.getBoundingClientRect();
+  const width = Math.round(box.width) || window.innerWidth;
+  const height = Math.round(box.height) || 200;
+  if (width === view.width && height === view.height && canvas.width === Math.round(width * ratio)) return;
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  paint.setTransform(ratio, 0, 0, ratio, 0, 0);
+  view = { width, height };
+}
+
+function say(message: string, tone: 'plain' | 'good' | 'bad' = 'plain'): void {
+  saysEl.textContent = message;
+  saysEl.className = `says${tone === 'plain' ? '' : ` ${tone}`}`;
+}
+
+/** Which rung the desk is currently showing, so it is not rebuilt under them. */
+let onDesk = -1;
+
+/**
+ * Put a rung on the desk.
+ *
+ * Only when it is a different rung. Rebuilding it after every submit would
+ * drop what they had written back to the starter line, which is exactly the
+ * moment they most want it kept: a submit that got three cases out of four is
+ * a thing to edit, not to start again.
+ */
+function showRung(): void {
+  const level = levelAt(game.level);
+  if (level === undefined) return;
+  if (onDesk === game.level) {
+    drawHints();
+    return;
+  }
+  onDesk = game.level;
+
+  conceptEl.textContent = level.concept[lang];
+  briefEl.textContent = level.brief[lang];
+  signatureEl.textContent = level.signature;
+
+  shownEl.replaceChildren();
+  const label = document.createElement('span');
+  label.textContent = `${t.examples}:`;
+  shownEl.append(label);
+  for (const one of level.shown) {
+    const bit = document.createElement('span');
+    bit.textContent = `[${one.parts.join(', ')}] → ${JSON.stringify(one.want)}`;
+    shownEl.append(bit);
+  }
+
+  bodyEl.value = level.starter;
+  drawHints();
+  say('');
+}
+
+function drawHints(): void {
+  const level = levelAt(game.level);
+  hintsEl.replaceChildren();
+  if (level === undefined) return;
+
+  for (let i = 0; i < game.hintsShown; i += 1) {
+    const hint = level.hints[i];
+    if (hint === undefined) continue;
+    const row = document.createElement('div');
+    const text = hint[lang];
+    // The deepest hint is code, so it is set as code.
+    if (i === level.hints.length - 1) {
+      const pre = document.createElement('code');
+      pre.textContent = text;
+      row.append(pre);
+    } else {
+      row.textContent = text;
+    }
+    hintsEl.append(row);
+  }
+
+  const spent = game.hintsShown >= level.hints.length;
+  hintEl.disabled = spent || busy || game.phase !== 'writing';
+  hintEl.textContent = spent ? t.noMoreHints : t.hint;
+}
+
+async function strike(): Promise<void> {
+  if (busy || game.phase !== 'writing') return;
+  busy = true;
+  submitEl.disabled = true;
+  hintEl.disabled = true;
+
+  const source = bodyEl.value;
+  const outcome = await run(source, casesOf(game));
+
+  if (outcome.fatal !== null) {
+    // Nothing ran, so nothing is resolved — this is a miss, not a maul.
+    const advice = adviseOn(source, outcome.fatal);
+    if (advice === 'loop') say(t.looping, 'bad');
+    else if (advice === 'annotation') say(t.annotation, 'bad');
+    else say(`${t.threw}: ${outcome.fatal}`, 'bad');
+    busy = false;
+    submitEl.disabled = false;
+    drawHints();
+    return;
+  }
+
+  resolve(game, outcome.results);
+  queue = game.attempts.filter((a) => !a.repeat).map((a) => ({ landed: a.hit }));
+  if (queue.length === 0) queue = [{ landed: false }];
+
+  const missed = game.attempts.find((a) => !a.hit);
+  if (missed === undefined) {
+    say(t.cleared, 'good');
+  } else if (missed.error !== null) {
+    say(`${t.threw}: ${missed.error}`, 'bad');
+  } else {
+    say(
+      `[${missed.parts.join(', ')}] — ${t.got} ${JSON.stringify(missed.got)}, ${t.wanted} ${JSON.stringify(missed.want)}`,
+      'bad',
+    );
+  }
+}
+
+/** Walk the blows, then move the run on. */
+function playOut(dt: number): void {
+  if (blow === null) {
+    const next = queue.shift();
+    if (next === undefined) {
+      if (busy) {
+        busy = false;
+        advance(game);
+        if (game.phase === 'won' || game.phase === 'lost') showEnd();
+        else {
+          showRung();
+          submitEl.disabled = false;
+        }
+        drawHints();
+      }
+      return;
+    }
+    blow = next;
+    swing = 0;
+    return;
+  }
+
+  swing += dt * 2.6;
+  if (swing >= 1) {
+    blow = null;
+    swing = 0;
+  }
+}
+
+function showEnd(): void {
+  const won = game.phase === 'won';
+  curtainTitleEl.textContent = won ? t.won : t.lost;
+  curtainLeadEl.textContent = won
+    ? `${t.wonWhy} ${game.lives} ${t.lives}`
+    : `${t.lostWhy} ${game.cleared}/${levelCount()}`;
+  curtainBodyEl.textContent = `${score(game)} · ${game.hintsTaken} ${t.hintsTaken}`;
+  curtainGoEl.textContent = t.again;
+  curtainEl.hidden = false;
+}
+
+function showTitle(): void {
+  curtainTitleEl.textContent = t.title;
+  curtainLeadEl.textContent = t.premise;
+  curtainBodyEl.textContent = `${t.howWrite} ${t.howWrong} ${t.howJs}`;
+  curtainGoEl.textContent = t.begin;
+  curtainEl.hidden = false;
+}
+
+function begin(): void {
+  game = createGame();
+  onDesk = -1;
+  queue = [];
+  blow = null;
+  busy = false;
+  curtainEl.hidden = true;
+  submitEl.disabled = false;
+  showRung();
+  bodyEl.focus();
+}
+
+submitEl.textContent = t.submit;
+hintEl.textContent = t.hint;
+submitEl.addEventListener('click', () => void strike());
+hintEl.addEventListener('click', () => {
+  takeHint(game);
+  drawHints();
+});
+curtainGoEl.addEventListener('click', begin);
+
+// Ctrl/Cmd+Enter submits, because reaching for the mouse mid-thought is the
+// one thing a box like this must not make you do.
+bodyEl.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    void strike();
+  }
+});
+
+let last = performance.now();
+function tick(now: number): void {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  clock += dt;
+  playOut(dt);
+  draw(paint, view, game, { lang, time: clock, blow, swing });
+  requestAnimationFrame(tick);
+}
+
+const watcher = new ResizeObserver(() => resize());
+watcher.observe(canvas);
+window.addEventListener('resize', resize);
+resize();
+showRung();
+showTitle();
+requestAnimationFrame(tick);
