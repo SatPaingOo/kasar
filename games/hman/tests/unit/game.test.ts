@@ -472,6 +472,21 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
   ['fib', 'if (n < 2) return 1;\nreturn strike(n - 1) + strike(n - 2);', 'the 0th counted as 1'],
   ['deepsum', 'return parts.flat().reduce((s, p) => s + p, 0);', 'one level flattened where any depth was promised'],
   ['flatten', 'return parts.flat();', 'flat with no depth, which is one level'],
+  // Rows and columns
+  ['rowsums', 'return grid.map((row) => row.reduce((sum, n) => sum + n));', 'an empty row with nothing to start from'],
+  ['column', 'return grid[c];', 'a row taken where a column was asked for'],
+  ['diagonal', 'return grid.map((row) => row[0]);', 'the first column taken for the diagonal'],
+  ['transpose', 'return grid[0].map((_, c) => grid.map((row) => row[c]));', 'an empty grid with no first row'],
+  [
+    'neighbours',
+    'let count = 0;\nfor (let dr = -1; dr <= 1; dr += 1) {\n  for (let dc = -1; dc <= 1; dc += 1) {\n    if (dr === 0 && dc === 0) continue;\n    if (grid[r + dr][c + dc] === 1) count += 1;\n  }\n}\nreturn count;',
+    'reaching past an edge without ?.',
+  ],
+  [
+    'neighbours',
+    'let count = 0;\nfor (let dr = -1; dr <= 1; dr += 1) {\n  for (let dc = -1; dc <= 1; dc += 1) {\n    if (grid[r + dr]?.[c + dc] === 1) count += 1;\n  }\n}\nreturn count;',
+    'the cell itself counted',
+  ],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */

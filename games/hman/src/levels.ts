@@ -72,6 +72,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Shapes of things', my: 'အရာတွေရဲ့ ပုံသဏ္ဌာန်' },
   { en: 'Moves of your own', my: 'ကိုယ်ပိုင် ထိုးချက်တွေ' },
   { en: 'Himself again', my: 'ကိုယ့်ကိုယ်ကို ပြန်ခေါ်' },
+  { en: 'Rows and columns', my: 'အတန်းနဲ့ အတိုင်' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -1818,5 +1819,350 @@ export const LEVELS: readonly Level[] = [
       my: 'ခေါ်တဲ့နေရာမှာ spread — push(...list) — က item တိုင်းကို ကိုယ်ပိုင် argument အဖြစ် ပေးတယ်။ ပြီးတော့ ဒီအလုပ်က language ထဲမှာ ပါပြီးသား: အောက်က flat(Infinity) က ဘယ်လောက်နက်နက် ဖြန့်ပေးတယ်။',
     },
     another: 'return parts.flat(Infinity);',
+  },
+
+  // ── Rows and columns ────────────────────────────────────────────────
+  {
+    id: 'rowsums',
+    chapter: 9,
+    concept: { en: 'row by row', my: 'အတန်းလိုက်' },
+    brief: {
+      en: 'The guard is a grid now — a list of rows, each a list of numbers. Give back the total of each row.',
+      my: 'အခု ကာကွယ်မှုက grid တစ်ခု — အတန်းတွေရဲ့ စာရင်း၊ အတန်း တစ်ခုစီက ဂဏန်းစာရင်း။ အတန်း တစ်ခုစီရဲ့ စုစုပေါင်းကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(grid: number[][]): number[]',
+    starter: 'return ',
+    shown: [
+      one(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [3, 7],
+      ),
+      one([[5]], [5]),
+    ],
+    cases: [
+      one(
+        [
+          [1, 1, 1],
+          [2, 2, 2],
+          [0, 0, 0],
+        ],
+        [3, 6, 0],
+      ),
+      one([], []),
+      one([[], [4]], [0, 4]),
+      one(
+        [
+          [-1, 1],
+          [10, -5],
+        ],
+        [0, 5],
+      ),
+    ],
+    hints: [
+      {
+        en: 'number[][] is a list of lists. Each row is a number[], which you already know how to total.',
+        my: 'number[][] က စာရင်းတွေရဲ့ စာရင်း။ အတန်း တစ်ခုစီက number[]၊ အဲဒါကို ပေါင်းတတ်ပြီးသား။',
+      },
+      {
+        en: 'map over the rows; inside, reduce the row.',
+        my: 'အတန်းတွေကို map လုပ်ပါ၊ အထဲမှာ row ကို reduce လုပ်ပါ။',
+      },
+      code('return grid.map((row) => row.reduce((sum, n) => sum + n, 0));'),
+    ],
+    lesson: {
+      en: 'A grid is only a list whose items are lists, so everything learned so far applies twice: once to the rows, and once inside each row.',
+      my: 'grid ဆိုတာ item တွေက စာရင်းတွေ ဖြစ်နေတဲ့ စာရင်း တစ်ခုပဲ၊ ဒါကြောင့် အခုထိ သင်ခဲ့သမျှ အကုန် နှစ်ခါ သုံးလို့ရတယ်: တစ်ခါက အတန်းတွေအပေါ်၊ တစ်ခါက အတန်း တစ်ခုစီရဲ့ အထဲမှာ။',
+    },
+  },
+  {
+    id: 'column',
+    chapter: 9,
+    concept: { en: 'down a column', my: 'အတိုင်လိုက်' },
+    brief: {
+      en: 'He strikes straight down one column. Give back column c — the item at index c in every row.',
+      my: 'သူက အတိုင် တစ်ခုအတိုင်း တည့်တည့် အောက်ကို ထိုးတယ်။ c အတိုင်ကို ပြန်ပေးပါ — အတန်းတိုင်းရဲ့ c index မှာ ရှိတာ။',
+    },
+    signature: 'function strike(grid: number[][], c: number): number[]',
+    starter: 'return ',
+    shown: [
+      many(
+        [
+          [
+            [1, 2],
+            [3, 4],
+          ],
+          1,
+        ],
+        [2, 4],
+      ),
+      many(
+        [
+          [
+            [1, 2],
+            [3, 4],
+          ],
+          0,
+        ],
+        [1, 3],
+      ),
+    ],
+    cases: [
+      many([[[5, 6, 7]], 2], [7]),
+      many(
+        [
+          [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+          ],
+          1,
+        ],
+        [2, 5, 8],
+      ),
+      many([[], 0], []),
+      many([[[9], [8], [7]], 0], [9, 8, 7]),
+    ],
+    hints: [
+      {
+        en: 'grid[r][c] is row r, column c: the row first, then the place in it.',
+        my: 'grid[r][c] က r အတန်း၊ c အတိုင်: အတန်း အရင်၊ ပြီးမှ အတန်းထဲက နေရာ။',
+      },
+      {
+        en: 'One item from every row is a map: grid.map((row) => ___).',
+        my: 'အတန်းတိုင်းကနေ item တစ်ခုစီ ယူတာက map ပဲ: grid.map((row) => ___)။',
+      },
+      code('return grid.map((row) => row[c]);'),
+    ],
+    lesson: {
+      en: 'A row is easy to get — grid[r] — and a column is not, because a column is spread across every row. Most grid code is about which index comes first, and getting it the wrong way round gives a perfectly reasonable wrong answer.',
+      my: 'အတန်းကို ယူရလွယ်တယ် — grid[r] — အတိုင်ကတော့ မလွယ်ဘူး၊ အတိုင်က အတန်းတိုင်းမှာ ဖြန့်ကျနေလို့။ grid code အများစုက ဘယ် index အရင်လာလဲ ဆိုတာပဲ၊ ပြောင်းပြန် ဖြစ်သွားရင် အဓိပ္ပာယ်ရှိပုံရတဲ့ အဖြေ မှားတစ်ခု ရမယ်။',
+    },
+  },
+  {
+    id: 'diagonal',
+    chapter: 9,
+    concept: { en: 'corner to corner', my: 'ထောင့်ကနေ ထောင့်' },
+    brief: {
+      en: 'He cuts from the top-left corner to the bottom-right. The grid is square. Give back the numbers on that diagonal.',
+      my: 'သူက ဘယ်ဘက်အပေါ်ထောင့်ကနေ ညာဘက်အောက်ထောင့်ကို ဖြတ်ခုတ်တယ်။ grid က စတုရန်း။ အဲဒီ ထောင့်ဖြတ်မျဉ်းပေါ်က ဂဏန်းတွေကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(grid: number[][]): number[]',
+    starter: 'return ',
+    shown: [
+      one(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [1, 4],
+      ),
+      one([[7]], [7]),
+    ],
+    cases: [
+      one(
+        [
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+        ],
+        [1, 5, 9],
+      ),
+      one([], []),
+      one(
+        [
+          [0, 1],
+          [1, 0],
+        ],
+        [0, 0],
+      ),
+      one(
+        [
+          [2, 0, 0, 0],
+          [0, 3, 0, 0],
+          [0, 0, 4, 0],
+          [0, 0, 0, 5],
+        ],
+        [2, 3, 4, 5],
+      ),
+    ],
+    hints: [
+      {
+        en: 'On the diagonal, the row and the column are the same number.',
+        my: 'ထောင့်ဖြတ်မျဉ်းပေါ်မှာ အတန်းနံပါတ်နဲ့ အတိုင်နံပါတ် တူတယ်။',
+      },
+      {
+        en: 'map hands over an index as its second argument: grid.map((row, i) => ___).',
+        my: 'map က ဒုတိယ argument အဖြစ် index ပေးတယ်: grid.map((row, i) => ___)။',
+      },
+      code('return grid.map((row, i) => row[i]);'),
+    ],
+    lesson: {
+      en: "map's second argument is the index, and it is often the whole trick. The other diagonal is row[row.length - 1 - i]: the index counted from the other end.",
+      my: 'map ရဲ့ ဒုတိယ argument က index၊ အများအားဖြင့် အဲဒါက လှည့်ကွက် တစ်ခုလုံးပဲ။ နောက်ထောင့်ဖြတ်မျဉ်းက row[row.length - 1 - i]: တစ်ဖက်အစွန်းကနေ ရေတဲ့ index။',
+    },
+    another: 'const out = [];\nfor (let i = 0; i < grid.length; i += 1) out.push(grid[i][i]);\nreturn out;',
+  },
+  {
+    id: 'transpose',
+    chapter: 9,
+    concept: { en: 'turned on its side', my: 'ဘေးစောင်း လှည့်' },
+    brief: {
+      en: 'He turns the grid on its side, so rows become columns. Give back the grid with what was at row r, column c moved to row c, column r.',
+      my: 'သူက grid ကို ဘေးစောင်း လှည့်လိုက်တယ်၊ ဒါကြောင့် အတန်းတွေက အတိုင်တွေ ဖြစ်သွားတယ်။ r အတန်း c အတိုင်မှာ ရှိတာကို c အတန်း r အတိုင်ကို ရွှေ့ပြီး grid ကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(grid: number[][]): number[][]',
+    starter: '',
+    shown: [
+      one(
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [
+          [1, 3],
+          [2, 4],
+        ],
+      ),
+      one([[1, 2, 3]], [[1], [2], [3]]),
+    ],
+    cases: [
+      one([[1], [2], [3]], [[1, 2, 3]]),
+      one(
+        [
+          [1, 2, 3],
+          [4, 5, 6],
+        ],
+        [
+          [1, 4],
+          [2, 5],
+          [3, 6],
+        ],
+      ),
+      one([[9]], [[9]]),
+      one([], []),
+    ],
+    hints: [
+      {
+        en: 'The new grid has one row for every column of the old one.',
+        my: 'grid အသစ်မှာ အဟောင်းရဲ့ အတိုင် တစ်ခုစီအတွက် အတန်း တစ်ခု ရှိတယ်။',
+      },
+      {
+        en: "You wrote 'column c' two rungs ago. Do it for every c — and an empty grid has no columns at all.",
+        my: "'c အတိုင်' ကို အဆင့် နှစ်ဆင့်အရင်က ရေးခဲ့ပြီးပြီ။ c တိုင်းအတွက် လုပ်ပါ — grid ဗလာမှာတော့ အတိုင် လုံးဝ မရှိဘူး။",
+      },
+      code('if (grid.length === 0) return [];\nreturn grid[0].map((_, c) => grid.map((row) => row[c]));'),
+    ],
+    lesson: {
+      en: 'Transpose is two maps, one inside the other: the outer walks the columns of the old grid and the inner walks its rows. Building on what you wrote before — column c, here — is most of how bigger programs get written.',
+      my: 'transpose က map နှစ်ခု၊ တစ်ခုထဲမှာ တစ်ခု: အပြင်ဘက်ကဟာက grid အဟောင်းရဲ့ အတိုင်တွေကို လျှောက်တယ်၊ အထဲကဟာက အတန်းတွေကို လျှောက်တယ်။ အရင်ရေးခဲ့တာ (ဒီမှာ c အတိုင်) ပေါ်မှာ ဆက်ဆောက်တာက program ကြီးတွေ ရေးတဲ့ နည်းရဲ့ အများစုပဲ။',
+    },
+    another:
+      'const out = [];\nconst width = grid[0]?.length ?? 0;\nfor (let c = 0; c < width; c += 1) {\n  out.push(grid.map((row) => row[c]));\n}\nreturn out;',
+  },
+  {
+    id: 'neighbours',
+    chapter: 9,
+    concept: { en: 'all around', my: 'ပတ်ပတ်လည်' },
+    brief: {
+      en: 'A cell is surrounded by up to eight others. Give back how many of the cells around row r, column c hold a 1. The cell itself does not count, and a cell on an edge has fewer neighbours.',
+      my: 'အကွက် တစ်ကွက်ကို အများဆုံး အကွက် ရှစ်ကွက် ဝိုင်းထားတယ်။ r အတန်း c အတိုင် ပတ်ပတ်လည်က အကွက်တွေထဲမှာ 1 ပါတဲ့ အကွက် ဘယ်နှစ်ကွက် ရှိလဲ ပြန်ပေးပါ။ အဲဒီ အကွက်ကိုယ်တိုင် မပါဘူး၊ အစွန်းပေါ်က အကွက်မှာ ဘေးကပ်အကွက် နည်းတယ်။',
+    },
+    signature: 'function strike(grid: number[][], r: number, c: number): number',
+    starter: '',
+    shown: [
+      many(
+        [
+          [
+            [1, 1, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+          ],
+          1,
+          1,
+        ],
+        8,
+      ),
+      many(
+        [
+          [
+            [0, 0],
+            [0, 0],
+          ],
+          0,
+          0,
+        ],
+        0,
+      ),
+    ],
+    cases: [
+      many(
+        [
+          [
+            [1, 1],
+            [1, 1],
+          ],
+          0,
+          0,
+        ],
+        3,
+      ),
+      many(
+        [
+          [
+            [0, 1, 0],
+            [1, 1, 1],
+            [0, 1, 0],
+          ],
+          1,
+          1,
+        ],
+        4,
+      ),
+      many(
+        [
+          [
+            [1, 0, 1],
+            [0, 0, 0],
+            [1, 0, 1],
+          ],
+          0,
+          1,
+        ],
+        2,
+      ),
+      many([[[1]], 0, 0], 0),
+      many(
+        [
+          [
+            [1, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1],
+          ],
+          2,
+          2,
+        ],
+        3,
+      ),
+    ],
+    hints: [
+      {
+        en: 'Walk dr and dc from -1 to 1 each. That covers the cell and its eight neighbours — skip the one where both are 0.',
+        my: 'dr နဲ့ dc ကို -1 ကနေ 1 အထိ တစ်ခုစီ လျှောက်ပါ။ အဲဒါက အကွက်ကိုယ်တိုင်နဲ့ ဘေးကပ် ရှစ်ကွက်ကို ခြုံမိတယ် — နှစ်ခုလုံး 0 ဖြစ်တဲ့ဟာကို ကျော်ပါ။',
+      },
+      {
+        en: 'Past an edge grid[r + dr] is undefined, and undefined[c] throws. grid[r + dr]?.[c + dc] gives undefined instead, which is not 1.',
+        my: 'အစွန်းကို ကျော်ရင် grid[r + dr] က undefined၊ undefined[c] က error တက်တယ်။ grid[r + dr]?.[c + dc] ကတော့ အဲဒီအစား undefined ပေးတယ်၊ အဲဒါ 1 မဟုတ်ဘူး။',
+      },
+      code(
+        'let count = 0;\nfor (let dr = -1; dr <= 1; dr += 1) {\n  for (let dc = -1; dc <= 1; dc += 1) {\n    if (dr === 0 && dc === 0) continue;\n    if (grid[r + dr]?.[c + dc] === 1) count += 1;\n  }\n}\nreturn count;',
+      ),
+    ],
+    lesson: {
+      en: 'Two loops, one inside the other, walk a small square around a point, and continue skips one turn of a loop without leaving it. ?. is what makes the edges safe: it asks before it reaches. This exact rung is the heart of the Game of Life, and of minesweeper.',
+      my: 'loop နှစ်ခု တစ်ခုထဲမှာ တစ်ခု ထည့်ရင် အမှတ် တစ်ခုပတ်ပတ်လည်က စတုရန်းလေး တစ်ခုကို လျှောက်နိုင်တယ်၊ continue က loop ကို မထွက်ဘဲ တစ်ကြိမ်ကို ကျော်တယ်။ ?. က အစွန်းတွေကို လုံခြုံစေတယ်: မလှမ်းခင် အရင်မေးတယ်။ ဒီအဆင့်က Game of Life နဲ့ minesweeper ရဲ့ နှလုံးသားပဲ။',
+    },
   },
 ];
