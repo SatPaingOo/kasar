@@ -40,12 +40,27 @@ interface Text {
   readonly goOn: string;
   readonly finish: string;
   readonly won: string;
-  readonly wonWhy: string;
+  readonly wonWhy: (rungs: number) => string;
   readonly down: string;
   readonly downWhy: string;
   readonly sameRung: string;
   readonly hintsTaken: string;
   readonly again: string;
+  readonly chapter: string;
+  readonly reset: string;
+  readonly keys: string;
+  readonly another: string;
+  readonly nextChapter: string;
+  readonly fromStart: string;
+  readonly pick: string;
+  readonly noReturn: string;
+  readonly notThere: string;
+  readonly nan: string;
+  readonly carryOn: (rung: number) => string;
+  readonly chapterDone: (name: string) => string;
+  readonly onLine: (line: number) => string;
+  readonly promised: (want: string, got: string) => string;
+  readonly gaveBack: (call: string, got: string, want: string) => string;
 }
 
 export const TEXT: Readonly<Record<Lang, Text>> = {
@@ -74,12 +89,27 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     goOn: 'Next rung',
     finish: 'Finish',
     won: 'Nothing left standing',
-    wonWhy: 'All of it, with',
+    wonWhy: (rungs) => `Every rung, all ${rungs} of them.`,
     down: 'He is down',
     downWhy: 'Beaten by rung',
     sameRung: 'Back on your feet',
     hintsTaken: 'hints',
     again: 'Again',
+    chapter: 'chapter',
+    reset: 'Start over',
+    keys: 'Ctrl+Enter strikes · Tab indents · Ctrl+/ turns a line off · Ctrl+Z undoes',
+    another: 'Another way',
+    nextChapter: 'Next chapter:',
+    fromStart: 'From the first rung',
+    pick: 'Or go to a rung',
+    noReturn: 'Nothing came back — that is undefined. There is no return, so the function just ends.',
+    notThere: 'undefined came back — what was returned is not there. An index past the end, or a property spelt wrong?',
+    nan: "NaN came back — 'not a number'. It is nearly always a number added to undefined: a part that is not there, like parts[parts.length].",
+    carryOn: (rung) => `Carry on — rung ${rung}`,
+    chapterDone: (name) => `That is the end of “${name}”.`,
+    onLine: (line) => `line ${line}`,
+    promised: (want, got) => `The signature promises ${want}, and this gave back ${got}.`,
+    gaveBack: (call, got, want) => `${call} gave back ${got} — needed ${want}`,
   },
   my: {
     title: 'မှန်',
@@ -106,11 +136,27 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     goOn: 'နောက်အဆင့်',
     finish: 'အဆုံးသတ်',
     won: 'ဘာမှ မကျန်တော့ဘူး',
-    wonWhy: 'အကုန်ပြီး၊',
+    wonWhy: (rungs) => `အဆင့် ${rungs} ခုလုံး ပြီးပြီ။`,
     down: 'သူ လဲသွားပြီ',
     downWhy: 'ရှုံးသွားတဲ့ အဆင့်',
     sameRung: 'ပြန်ထပြီး ဒီအဆင့်ကို ပြန်စ',
     hintsTaken: 'ကြိမ် အကူအညီယူ',
     again: 'ထပ်ကစားမယ်',
+    chapter: 'အခန်း',
+    reset: 'ပြန်စ',
+    keys: 'Ctrl+Enter ထိုး · Tab အထဲတိုး · Ctrl+/ စာကြောင်းပိတ် · Ctrl+Z နောက်ပြန်',
+    another: 'နောက်တစ်နည်း',
+    nextChapter: 'နောက်အခန်း:',
+    fromStart: 'ပထမ အဆင့်ကနေ',
+    pick: 'ဒါမှမဟုတ် အဆင့် တစ်ခု ရွေးပါ',
+    noReturn: 'ဘာမှ ပြန်မလာဘူး — အဲဒါ undefined။ return မပါလို့ function က ဘာမှမပေးဘဲ ပြီးသွားတယ်။',
+    notThere:
+      'undefined ပြန်လာတယ် — return လုပ်လိုက်တဲ့ အရာက မရှိဘူး။ အဆုံးကို ကျော်သွားတဲ့ index လား၊ စာလုံးပေါင်း မှားနေတဲ့ property လား?',
+    nan: 'NaN ပြန်လာတယ် — "ဂဏန်း မဟုတ်" လို့ ဆိုလိုတယ်။ များသောအားဖြင့် ဂဏန်း တစ်ခုကို undefined နဲ့ ပေါင်းမိလို့ ဖြစ်တာ: parts[parts.length] လို မရှိတဲ့ အပိုင်း တစ်ခု။',
+    carryOn: (rung) => `ဆက်ကစားမယ် — အဆင့် ${rung}`,
+    chapterDone: (name) => `“${name}” အခန်း ပြီးပြီ။`,
+    onLine: (line) => `စာကြောင်း ${line}`,
+    promised: (want, got) => `signature က ${want} ပြန်ပေးမယ်လို့ ကတိပေးထားတယ်၊ ဒါပေမဲ့ ${got} ပြန်လာတယ်။`,
+    gaveBack: (call, got, want) => `${call} က ${got} ပြန်ပေးတယ် — လိုတာက ${want}`,
   },
 };

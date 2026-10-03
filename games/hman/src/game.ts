@@ -14,7 +14,11 @@
  */
 
 import { LEVELS } from './levels.js';
-import type { Case, Level, Value } from './levels.js';
+import type { Case, Level } from './levels.js';
+import { same, show } from './values.js';
+import type { Value } from './values.js';
+
+export { same };
 
 export const RULES = {
   /**
@@ -49,11 +53,17 @@ export type Phase = 'writing' | 'resolving' | 'cleared' | 'won' | 'down';
 
 /** One case, after the code has been run against it. */
 export interface Attempt {
-  readonly parts: readonly number[];
+  readonly args: readonly Value[];
   readonly want: Value;
-  /** What came back, or null if it threw or never finished. */
+  /** What came back, or null if it threw, never finished, or was not a value. */
   readonly got: Value | null;
+  /** How what came back reads on screen, whatever it was. */
+  readonly seen: string;
+  /** Its type, in TypeScript's words. */
+  readonly type: string;
   readonly error: string | null;
+  /** The line of the box it threw on, when the engine said. */
+  readonly line: number | null;
   readonly hit: boolean;
   /** Already solved on an earlier submit, so it lands nothing new. */
   readonly repeat: boolean;
@@ -93,10 +103,12 @@ export function levelCount(): number {
   return LEVELS.length;
 }
 
-export function createGame(): Game {
-  const first = LEVELS[0];
+/** A run, starting on any rung — the first, or one already reached. */
+export function createGame(start: number = 0): Game {
+  const level = Math.max(0, Math.min(LEVELS.length - 1, Math.floor(start)));
+  const first = LEVELS[level];
   return {
-    level: 0,
+    level,
     lives: RULES.lives,
     solved: new Array<boolean>(first?.cases.length ?? 0).fill(false),
     hintsShown: 0,
@@ -107,25 +119,6 @@ export function createGame(): Game {
     attempts: [],
     events: [],
   };
-}
-
-/**
- * Two answers are the same answer.
- *
- * Deliberately strict about shape: a rung that asks for a list and is handed a
- * single number has not been answered, even when the number is right, and
- * saying so is most of what the early rungs teach.
- */
-export function same(a: Value | null, b: Value | null): boolean {
-  if (a === null || b === null) return false;
-  const aList = Array.isArray(a);
-  const bList = Array.isArray(b);
-  if (aList !== bList) return false;
-  if (!aList || !bList) return a === b;
-  const x = a as readonly number[];
-  const y = b as readonly number[];
-  if (x.length !== y.length) return false;
-  return x.every((n, i) => n === y[i]);
 }
 
 /** How much of the mirror is still standing, 0 to 1. */
@@ -156,6 +149,13 @@ export function takeHint(game: Game): boolean {
   return true;
 }
 
+/** A rough type for a result that arrived without one — only ever in tests. */
+function kindOf(value: Value | null): string {
+  if (value === null) return 'undefined';
+  if (Array.isArray(value)) return 'list';
+  return typeof value;
+}
+
 /** What the browser has to run, in the order the cases are in. */
 export function casesOf(game: Game): readonly Case[] {
   return LEVELS[game.level]?.cases ?? [];
@@ -164,6 +164,12 @@ export function casesOf(game: Game): readonly Case[] {
 export interface RunResult {
   readonly value: Value | null;
   readonly error: string | null;
+  /** How it reads on screen. Worked out from `value` when it is missing. */
+  readonly seen?: string;
+  /** Its type, in TypeScript's words. Worked out from `value` when missing. */
+  readonly type?: string;
+  /** The line of the box it threw on. */
+  readonly line?: number;
 }
 
 /**
@@ -188,10 +194,13 @@ export function resolve(game: Game, results: readonly RunResult[]): Game {
     const hit = result.error === null && same(result.value, one.want);
 
     attempts.push({
-      parts: one.parts,
+      args: one.args,
       want: one.want,
       got: result.value,
+      seen: result.seen ?? (result.value === null ? 'undefined' : show(result.value)),
+      type: result.type ?? kindOf(result.value),
       error: result.error,
+      line: result.line ?? null,
       hit,
       repeat: hit && already,
     });
@@ -249,11 +258,8 @@ export function retry(game: Game): Game {
 }
 
 /**
- * Move on once the fight has finished playing out. Separate from `resolve`
- * because the rung has to stay on screen while its strikes are animating.
- */
-/**
- * Back to the desk after a submit that did not finish the rung.
+ * Back to the desk after a submit that did not finish the rung. Separate from
+ * `resolve` because the rung has to stay on screen while its blows play.
  */
 export function carryOn(game: Game): Game {
   if (game.phase !== 'resolving') return game;
@@ -281,6 +287,10 @@ export function advance(game: Game): Game {
   }
 
   game.level = next;
+  // Lives belong to the rung, so a new rung gets them all back. It used to
+  // carry over whatever the last rung had left, which made one bad rung cost
+  // the next one too.
+  game.lives = RULES.lives;
   game.solved = new Array<boolean>(LEVELS[next]?.cases.length ?? 0).fill(false);
   game.hintsShown = 0;
   game.attempts = [];

@@ -2,6 +2,50 @@
 
 Keep a Changelog, newest first.
 
+## [0.5.0] — 2026-10-03
+
+### Added
+
+- Seventeen rungs in three chapters — values and lists, choosing, and loops —
+  where there were four. Logic before vocabulary: a loop that totals, counts,
+  finds and builds comes before `map` is named, and `map` arrives as the short
+  way of saying the loop just written.
+- A lesson when a rung is beaten: what it was called, and another way to write
+  it. A rung's label before then says what is asked, never the tool for it.
+- The box is an editor now. The signature is its first line and the closing
+  brace its last; the code is coloured; Enter opens a block properly between
+  braces; brackets and quotes close themselves only where that is wanted;
+  Shift+Tab, Ctrl+/ and Backspace through indent all work; a line that broke
+  is marked in the gutter; and **Start over** puts the starter back as an edit
+  that can be undone.
+- Progress is kept in the browser: the rungs beaten and what was in the box
+  for each. The title carries on where you were, and a map of every rung by
+  chapter lets you go back to any that is open.
+- Why an answer was wrong, as specifically as can be known: no `return` at
+  all, or a `return` of something that was not there; `NaN` and where it
+  nearly always comes from; and a broken promise about the shape, said in
+  TypeScript's words — "the signature promises `number[]`, and this gave back
+  `number`".
+
+### Changed
+
+- An answer can be anything JSON could carry — strings, booleans, records —
+  and a rung can take more than one argument. The blow on screen is written as
+  a call: `strike(5, 1, 9) → false`.
+- The player's code is written into the worker's script as a function instead
+  of being handed to `new Function`, which is what gets a line number out of a
+  syntax error. It also runs in strict mode now, as TypeScript does, so a
+  misspelt variable is an error rather than a quiet global.
+
+### Fixed
+
+- Lives were meant to belong to the rung and did not: a new rung started with
+  whatever the last one had left. It gets all of them back now.
+- Undo did not work. The editor set the box's value for every bracket it
+  closed and every indent it added, and setting a textarea's value throws its
+  history away — so the first thing it helped with was the last thing Ctrl+Z
+  could reach.
+
 ## [0.4.1] — 2026-10-03
 
 ### Fixed

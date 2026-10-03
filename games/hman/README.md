@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.4.1
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.5.0
 
 မှန် — correct.
 
@@ -27,6 +27,13 @@ only one on the shelf that does not.
 ## Playing it
 
 Write the body, then **Strike** (or `Ctrl`/`Cmd` + `Enter`).
+
+Where you got to is kept — the rungs beaten and what was in the box for each —
+in the browser's own storage, and nothing leaves the machine. Coming back,
+the title offers to carry on, and every rung up to one past the furthest
+beaten can be gone back to from the map on it. Seventeen rungs is not one
+sitting, and a ladder that started from the bottom every time the tab closed
+would only ever be climbed as far as one evening reaches.
 
 Every case that comes back right takes one more of the mirror down. A submit
 with anything wrong in it costs one life, however much was wrong — so a first
@@ -56,18 +63,51 @@ at exactly the place a syllabus thinks is easiest.
 
 So it starts at the first thing that produces something visible, and a variable
 arrives at the rung where it first makes the answer easier rather than at the
-rung where it would be named:
+rung where it would be named.
 
-| rung | the move | what it is really teaching |
+Seventeen rungs in three chapters. The aim is logic before vocabulary: by the
+end of the third chapter someone can write a loop that totals, counts, finds
+and builds, and only then is `map` named — as the short way of saying the loop
+they just wrote.
+
+| chapter | rungs | what it is really teaching |
 |---|---|---|
-| a value | give back the first part | return, indexing from 0 |
-| both ends | first plus last | `length`, and why a variable helps |
-| a choice | the heavier of the first two | a condition |
-| all of them | every part, doubled | doing one thing to each |
+| Values and lists | 1–5 | indexing from 0, `length` and the last index, a name for a value, `Math.floor`, and that `number` and `number[]` are different promises |
+| Choosing | 6–10 | `?:` and `if`, a comparison *is* a boolean, `else if`, `&&` and inclusive edges, the empty list and `??` against `\|\|` |
+| Again and again | 11–17 | the accumulator, counting with an `if` inside, where a loop starts, returning early with an index, the empty list being `true` for "all", building a list with `push`, and `map` |
+
+**A rung is named only after it is beaten.** Its label says what is being
+asked — "how many", "the heaviest" — never which tool does it. The card that
+comes up when the mirror falls is where "that was a filter" gets said, with
+another way to write it underneath. Doing it first and being told what it was
+called afterwards is how it gets remembered; being told first turns every rung
+into a quiz about a word.
+
+**The hidden cases are where the traps are.** The worked examples are always
+the easy shape. The fight underneath has the empty list, the zero, the list
+of negatives, the value on the edge — because that is where code actually
+breaks, and finding out by being hit by it is the lesson. The tests hold each
+rung to this: `parts[0] || -1` must lose to `[0, 5]`, a biggest that starts
+at 0 must lose to a list of negatives.
+
+**Every rung's answer is run by the tests**, exactly as its last hint writes
+it, against every case — and so is the other way its lesson shows. A rung
+whose own answer did not pass would be unwinnable, and playing would only find
+that by someone getting stuck on a correct solution.
 
 ## Running what was typed
 
-In a worker, built from a blob so it travels with the page.
+In a worker, built from a blob so it travels with the page. The player's code
+is written into that blob as the body of a function, rather than handed to
+`new Function`, and that is entirely for line numbers: a syntax error from
+`new Function` says what is wrong and never where, while one in a worker's
+own script comes back with its line, and so does the stack of anything that
+throws. The line is marked in the gutter.
+
+It runs in strict mode, because TypeScript does. Assigning to a name that was
+never declared quietly makes a global in sloppy JavaScript and is an error
+everywhere TypeScript is used, so a misspelt variable would pass here and fail
+for real.
 
 Two things make that enough. The only code it ever runs is code typed by the
 person at the keyboard — never from a URL, a file or anyone else — so it can do
@@ -76,9 +116,38 @@ beginners write constantly: on the main thread it kills the tab with no way
 back, and in a worker it costs one submit, because a terminated worker is
 simply gone. Measured at **1010 ms to recover, page alive**.
 
-Anything that comes back which is not a number or a list of numbers becomes
-`null` and counts as a miss, which is both safe and the honest answer to "that
-is not what was asked for".
+An answer can be anything JSON could carry — a number, a string, a boolean, a
+list, a record. Anything else — `undefined`, `NaN`, a `Set`, a function —
+counts as a miss, and what the player is told about it is the point:
+
+- **nothing came back**: with no `return` in the box, that is the mistake;
+  with one there, what was returned was not there — an index one past the
+  end, a property spelt wrong. Telling someone looking straight at their
+  `return` that it is missing is how advice stops being read.
+- **`NaN`**: nearly always a number added to `undefined`.
+- **the wrong shape**: the signature is read for its return type, so a list
+  where a number was promised is called what it is, in TypeScript's words —
+  "the signature promises `number[]`, and this gave back `number`" — before
+  anything is said about which number it was.
+
+## The box is an editor
+
+A textarea, transparent, laid over a `<pre>` that carries the colour. The
+textarea does the typing, the selection and the undo; the `<pre>` underneath
+is only drawn, letter for letter, which is why the highlighter's one rule is
+that its pieces put back together are exactly its input. The signature is the
+editor's first line and the closing brace its last, because that is what the
+box is — the inside of a function.
+
+Enter carries the indent and opens a block properly between braces; brackets
+and quotes close themselves where that is wanted and step over where they are
+already closed; Tab and Shift+Tab indent; Ctrl+/ turns lines off; and Ctrl+Z
+works. That last one is not free: setting a textarea's value throws its undo
+history away, so every edit goes in through `insertText`, the one way to put
+text into a textarea that the browser's own undo knows about.
+
+There is no completion and no type checking, and both are deliberate. Typing
+out `parts.filter` is part of learning it, and type checking is a compiler.
 
 ## It is TypeScript above the box and JavaScript inside it
 
@@ -98,10 +167,14 @@ literals and conditionals alone, colons and all.
 
 | file | what it is |
 |---|---|
-| `src/levels.ts` | the ladder: briefs, examples, hidden cases and hints, in both languages |
+| `src/levels.ts` | the ladder: chapters, briefs, examples, hidden cases, hints and lessons, in both languages |
 | `src/game.ts` | the rules. Pure, and it never runs anything — it takes the results of a run and decides what they do |
+| `src/values.ts` | what an answer can be: cleaning, comparing, showing, and its type in TypeScript's words |
+| `src/types.ts` | reading the signature: parameter names, the head line, and the return type as a promise to check |
 | `src/runner.ts` | the worker, the blob and the timeout. The only part that executes anything |
-| `src/advice.ts` | what to say when the code did not run. String work only, so it is testable |
+| `src/advice.ts` | why an answer was wrong, and the line an error is on. String work only, so it is testable |
+| `src/highlight.ts` | the colour under the code: a scanner, not a parser |
+| `src/progress.ts` | what survives closing the tab, with the storage passed in so it can be tested |
 | `src/beat.ts` | the timing of one blow and of a topple. No canvas, so it is testable |
 | `src/editing.ts` | what makes the box an editor: indent, brackets, line counting. String work, so it is testable |
 | `src/sound.ts` | every sound, made from oscillators and one noise buffer |
@@ -155,7 +228,11 @@ land when it comes.
 
 ## Still to come
 
-- More rungs. Six to eight was the plan; there are four.
+- The rest of the ladder, towards fifty: array methods properly (`filter`,
+  `reduce`, `find`, `some`, `sort` and its numeric trap, `Set`), text,
+  records and `Record<string, T>`, functions of your own, and small whole
+  programs. Written a chapter at a time and played before the next, because a
+  difficulty curve that is wrong is wrong for every rung written after it.
 - An ending worth watching, for both ways a run can finish.
 - Whether this belongs on the shelf at all. It is here to find that out: if it
   gets replayed to practise rather than to play, it wants to be its own thing,

@@ -11,13 +11,14 @@
  * blocks that visibly loses one, and a life that goes is seen going.
  */
 
-import { RULES, standing } from './game.js';
+import { RULES, levelCount, standing } from './game.js';
 import type { Game } from './game.js';
 import { fallAt, swingAt } from './beat.js';
 import { drawFigure } from './figure.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
-import type { Value } from './levels.js';
+import { callOf, show } from './values.js';
+import type { Value } from './values.js';
 
 const INK = {
   far: '#1b1726',
@@ -39,8 +40,9 @@ export interface View {
 /** One case, played out. */
 export interface Blow {
   readonly landed: boolean;
-  readonly parts: readonly number[];
-  readonly got: Value | null;
+  readonly args: readonly Value[];
+  /** What came back, as it reads — `undefined` and `NaN` included. */
+  readonly seen: string;
   readonly want: Value;
   readonly error: string | null;
 }
@@ -60,7 +62,30 @@ export interface Ui {
   readonly span: number;
 }
 
-const show = (value: Value | null): string => (value === null ? '—' : JSON.stringify(value));
+const MONO = 'ui-monospace, Menlo, Consolas, monospace';
+
+/**
+ * Write one line of the caption, smaller if it has to be, so it is never cut
+ * off at the edges. A record or a long list makes a much longer line than the
+ * numbers the first rungs dealt in.
+ */
+function fitText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  weight: number,
+  room: number,
+): void {
+  let px = size;
+  ctx.font = `${weight} ${px}px ${MONO}`;
+  while (px > 9 && ctx.measureText(text).width > room) {
+    px -= 1;
+    ctx.font = `${weight} ${px}px ${MONO}`;
+  }
+  ctx.fillText(text, x, y);
+}
 
 /** The blocks the mirror is made of: one per case, and one goes per hit. */
 function drawShell(ctx: CanvasRenderingContext2D, game: Game, cx: number, y: number, flashing: boolean): void {
@@ -149,24 +174,22 @@ function drawCaption(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
 
-  const tried = `[${blow.parts.join(', ')}]`;
-  ctx.font = `600 ${big}px ui-monospace, Menlo, Consolas, monospace`;
+  const room = view.width - 24;
+  const call = callOf(blow.args, 64);
 
   if (blow.error !== null) {
     ctx.fillStyle = INK.wrong;
-    ctx.fillText(`${tried}  ✗  ${t.threw}`, mid, base);
-    ctx.font = `400 ${big * 0.76}px ui-monospace, Menlo, Consolas, monospace`;
+    fitText(ctx, `${call}  ✗  ${t.threw}`, mid, base, big, 600, room);
     ctx.fillStyle = INK.dim;
-    ctx.fillText(blow.error, mid, base + big * 1.25);
+    fitText(ctx, blow.error, mid, base + big * 1.25, big * 0.76, 400, room);
   } else if (blow.landed) {
     ctx.fillStyle = INK.right;
-    ctx.fillText(`${tried}  →  ${show(blow.got)}  ✓`, mid, base);
+    fitText(ctx, `${call}  →  ${blow.seen}  ✓`, mid, base, big, 600, room);
   } else {
     ctx.fillStyle = INK.wrong;
-    ctx.fillText(`${tried}  →  ${show(blow.got)}  ✗`, mid, base);
-    ctx.font = `400 ${big * 0.76}px ui-monospace, Menlo, Consolas, monospace`;
+    fitText(ctx, `${call}  →  ${blow.seen}  ✗`, mid, base, big, 600, room);
     ctx.fillStyle = INK.dim;
-    ctx.fillText(`${t.wanted} ${show(blow.want)}`, mid, base + big * 1.25);
+    fitText(ctx, `${t.wanted} ${show(blow.want, 64)}`, mid, base + big * 1.25, big * 0.76, 400, room);
   }
 
   ctx.globalAlpha = 1;
@@ -265,7 +288,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   ctx.font = '500 11px ui-monospace, Menlo, Consolas, monospace';
   ctx.fillStyle = INK.dim;
   ctx.textAlign = 'left';
-  ctx.fillText(`${t.rung} ${game.level + 1}`, 10, view.height - 8);
+  ctx.fillText(`${t.rung} ${game.level + 1}/${levelCount()}`, 10, view.height - 8);
   ctx.textAlign = 'right';
   ctx.fillText(`${t.standing} ${Math.round(standing(game) * game.solved.length)}`, view.width - 10, view.height - 8);
   ctx.textAlign = 'left';

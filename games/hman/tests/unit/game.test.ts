@@ -12,7 +12,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { LEVELS } from '../../src/levels.js';
+import { CHAPTERS, LEVELS } from '../../src/levels.js';
+import { fits, readSignature } from '../../src/types.js';
+import { clean } from '../../src/values.js';
+import type { Value } from '../../src/values.js';
 import {
   RULES,
   advance,
@@ -150,6 +153,24 @@ describe('the run', () => {
     expect(game.level).toBe(0);
   });
 
+  it('starts each rung with all its lives, whatever the last one cost', () => {
+    const game = createGame();
+    resolve(game, allWrong(game));
+    game.phase = 'writing';
+    resolve(game, allRight(game));
+    expect(game.lives).toBe(RULES.lives - 1);
+    advance(game);
+    expect(game.lives).toBe(RULES.lives);
+  });
+
+  it('can start on a later rung, for a player coming back to it', () => {
+    const game = createGame(3);
+    expect(game.level).toBe(3);
+    expect(game.solved).toHaveLength(levelAt(3)?.cases.length ?? -1);
+    expect(createGame(999).level).toBe(levelCount() - 1);
+    expect(createGame(-5).level).toBe(0);
+  });
+
   it('starts each rung with its own cases standing and no hints showing', () => {
     const game = createGame();
     takeHint(game);
@@ -233,48 +254,165 @@ describe('hints', () => {
   });
 });
 
+/**
+ * Run a body the way the game does: strict, as the inside of a function whose
+ * parameters are the ones the signature names. The arguments are copied first,
+ * as the worker's are, so an answer that sorts its input in place cannot
+ * change the ladder's own data under the next case.
+ */
+function runBody(params: readonly string[], body: string, args: readonly Value[]): Value | null {
+  const fn = new Function(...params, `"use strict";\n${body}`) as (...given: unknown[]) => unknown;
+  return clean(fn(...structuredClone(args)));
+}
+
 describe('every rung', () => {
-  it('has two worked examples, hidden cases and three hints', () => {
+  it('has two worked examples, hidden cases, three hints and a lesson', () => {
     for (const level of LEVELS) {
-      expect(level.shown).toHaveLength(2);
-      expect(level.cases.length).toBeGreaterThanOrEqual(3);
-      expect(level.hints).toHaveLength(3);
-      expect(level.signature).toContain('function strike');
+      expect(level.shown, level.id).toHaveLength(2);
+      expect(level.cases.length, level.id).toBeGreaterThanOrEqual(4);
+      expect(level.hints, level.id).toHaveLength(3);
+      expect(level.signature, level.id).toContain('function strike');
+      expect(level.lesson.en.length, level.id).toBeGreaterThan(0);
+      expect(level.lesson.my.length, level.id).toBeGreaterThan(0);
+      expect(CHAPTERS[level.chapter], level.id).toBeDefined();
     }
   });
 
-  it('asks for the shape its signature promises', () => {
+  it('has its own id', () => {
+    expect(new Set(LEVELS.map((level) => level.id)).size).toBe(LEVELS.length);
+  });
+
+  it('comes in chapter order, with no chapter left empty', () => {
+    const chapters = LEVELS.map((level) => level.chapter);
+    expect([...chapters].sort((a, b) => a - b)).toEqual(chapters);
+    CHAPTERS.forEach((_, c) => expect(chapters).toContain(c));
+  });
+
+  it('gives its answer as code, the same in both languages', () => {
     for (const level of LEVELS) {
-      const wantsList = level.signature.includes('): number[]');
-      for (const one of [...level.shown, ...level.cases]) {
-        expect(Array.isArray(one.want)).toBe(wantsList);
-      }
+      const answer = level.hints[level.hints.length - 1];
+      expect(answer?.en, level.id).toBe(answer?.my);
+    }
+  });
+
+  it('has a signature the game can read', () => {
+    for (const level of LEVELS) {
+      const sig = readSignature(level.signature);
+      expect(sig.params.length, level.id).toBeGreaterThan(0);
+      expect(sig.returns, `${level.id} returns ${sig.returnsText}`).not.toBeNull();
+      for (const param of sig.params) expect(param.type, `${level.id} ${param.name}`).not.toBeNull();
     }
   });
 
   /**
-   * The one that matters: each rung's own stated answer, run against its own
-   * hidden cases. A rung whose answer does not pass is unwinnable, and playing
-   * would only find it by someone getting stuck on a correct solution.
+   * The data keeps the signature's promises. A case whose wanted answer is the
+   * wrong type would blame every correct answer for breaking a promise the
+   * rung itself broke first.
+   */
+  it('asks for what its signature promises, and is called with what it says it takes', () => {
+    for (const level of LEVELS) {
+      const sig = readSignature(level.signature);
+      for (const one of [...level.shown, ...level.cases]) {
+        expect(fits(one.want, sig.returns), `${level.id} wants ${JSON.stringify(one.want)}`).toBe(true);
+        expect(one.args, level.id).toHaveLength(sig.params.length);
+        one.args.forEach((arg, i) => {
+          expect(fits(arg, sig.params[i]?.type ?? null), `${level.id} arg ${i}`).toBe(true);
+        });
+      }
+    }
+  });
+
+  it('hides cases that are not just the worked examples again', () => {
+    for (const level of LEVELS) {
+      const shown = level.shown.map((one) => JSON.stringify(one.args));
+      const fresh = level.cases.filter((one) => !shown.includes(JSON.stringify(one.args)));
+      expect(fresh.length, level.id).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  /**
+   * The one that matters: each rung's own answer — the code its last hint
+   * gives, exactly as a player would type it — run against every case. A rung
+   * whose answer does not pass is unwinnable, and playing would only find it
+   * by someone getting stuck on a correct solution.
    */
   it('can be solved by the answer its own last hint gives', () => {
-    const answers: Readonly<Record<string, (parts: readonly number[]) => unknown>> = {
-      value: (parts) => parts[0],
-      reach: (parts) => (parts[0] ?? 0) + (parts[parts.length - 1] ?? 0),
-      choose: (parts) => ((parts[0] ?? 0) > (parts[1] ?? 0) ? parts[0] : parts[1]),
-      every: (parts) => parts.map((n) => n * 2),
-    };
-
     for (const level of LEVELS) {
-      const answer = answers[level.id];
-      expect(answer, `no answer written for rung ${level.id}`).toBeDefined();
-      if (answer === undefined) continue;
+      const sig = readSignature(level.signature);
+      const params = sig.params.map((p) => p.name);
+      const answer = level.hints[level.hints.length - 1]?.en ?? '';
       for (const one of [...level.shown, ...level.cases]) {
-        expect(same(answer(one.parts) as never, one.want), `${level.id} failed on [${one.parts.join(', ')}]`).toBe(
+        const got = runBody(params, answer, one.args);
+        expect(same(got, one.want), `${level.id} on ${JSON.stringify(one.args)} gave ${JSON.stringify(got)}`).toBe(
           true,
         );
       }
     }
+  });
+
+  it('can be solved the other way its lesson shows, too', () => {
+    for (const level of LEVELS) {
+      if (level.another === undefined) continue;
+      const params = readSignature(level.signature).params.map((p) => p.name);
+      for (const one of [...level.shown, ...level.cases]) {
+        const got = runBody(params, level.another, one.args);
+        expect(same(got, one.want), `${level.id} another way on ${JSON.stringify(one.args)}`).toBe(true);
+      }
+    }
+  });
+
+  it('is not already solved by what the box starts with', () => {
+    for (const level of LEVELS) {
+      const params = readSignature(level.signature).params.map((p) => p.name);
+      const solved = level.cases.every((one) => {
+        try {
+          return same(runBody(params, level.starter, one.args), one.want);
+        } catch {
+          return false;
+        }
+      });
+      expect(solved, level.id).toBe(false);
+    }
+  });
+});
+
+describe('the traps the hidden cases are there to spring', () => {
+  /** A plausible wrong answer, which the rung must not let through. */
+  function beats(id: string, body: string): boolean {
+    const level = LEVELS.find((one) => one.id === id);
+    if (level === undefined) throw new Error(`no rung ${id}`);
+    const params = readSignature(level.signature).params.map((p) => p.name);
+    return level.cases.every((one) => {
+      try {
+        return same(runBody(params, body, one.args), one.want);
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  it('catches || where ?? was needed, because 0 is not nothing', () => {
+    expect(beats('fallback', 'return parts[0] || -1;')).toBe(false);
+  });
+
+  it('catches a biggest that starts at 0', () => {
+    expect(beats('biggest', 'let best = 0;\nfor (const n of parts) if (n > best) best = n;\nreturn best;')).toBe(false);
+  });
+
+  it('catches an edge left out', () => {
+    expect(beats('between', 'return n > low && n < high;')).toBe(false);
+  });
+
+  it('catches a count that lets 5 in', () => {
+    expect(beats('count', 'return parts.filter((n) => n >= 5).length;')).toBe(false);
+  });
+
+  it('catches a middle that is not a whole number', () => {
+    expect(beats('middle', 'return parts[parts.length / 2];')).toBe(false);
+  });
+
+  it('catches one number where a list was promised', () => {
+    expect(beats('ends', 'return parts[0];')).toBe(false);
   });
 });
 

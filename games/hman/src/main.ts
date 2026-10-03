@@ -2,8 +2,8 @@
  * The loop, the canvas, the desk and the keyboard.
  *
  * Everything that decides anything is in game.ts; running what was typed is in
- * runner.ts. This wires the two to the page, and it is the only file that
- * knows there is a DOM.
+ * runner.ts; what the keys do to the text is in editing.ts. This wires them to
+ * the page, and it is the only file that knows there is a DOM.
  */
 
 import {
@@ -21,11 +21,19 @@ import {
 } from './game.js';
 import type { Game } from './game.js';
 import { run } from './runner.js';
-import { adviseOn } from './advice.js';
+import { adviseOn, whyMissed } from './advice.js';
 import { draw } from './render.js';
 import { DOWN, blowSeconds, swingAt } from './beat.js';
 import { MUTE_LABEL, createSound } from './sound.js';
-import { lineCount, onBackspace, onBracket, onEnter, onTab } from './editing.js';
+import { lineCount, onBackspace, onEnter, onTab, onType, toggleComment } from './editing.js';
+import type { Edit } from './editing.js';
+import { tokenize } from './highlight.js';
+import { CHAPTERS, LEVELS } from './levels.js';
+import { nextUnbeaten, openUpTo, readProgress, withCleared, withDraft, writeProgress } from './progress.js';
+import type { Progress, Store } from './progress.js';
+import { readSignature } from './types.js';
+import type { Signature } from './types.js';
+import { callOf, show } from './values.js';
 import type { Blow, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
 import type { Lang } from './strings.js';
@@ -44,19 +52,30 @@ const paint: CanvasRenderingContext2D = ctx;
 const conceptEl = need<HTMLElement>('#concept');
 const briefEl = need<HTMLElement>('#brief');
 const shownEl = need<HTMLElement>('#shown');
-const signatureEl = need<HTMLElement>('#signature');
+const headEl = need<HTMLElement>('#head');
 const bodyEl = need<HTMLTextAreaElement>('#body');
+const colourEl = need<HTMLElement>('#paint');
+const gutterEl = need<HTMLElement>('#gutter');
 const submitEl = need<HTMLButtonElement>('#submit');
 const hintEl = need<HTMLButtonElement>('#hint');
+const resetEl = need<HTMLButtonElement>('#reset');
+const muteEl = need<HTMLButtonElement>('#mute');
 const saysEl = need<HTMLElement>('#says');
+const keysEl = need<HTMLElement>('#keys');
 const hintsEl = need<HTMLElement>('#hints');
 const curtainEl = need<HTMLElement>('#curtain');
 const curtainTitleEl = need<HTMLElement>('#curtainTitle');
 const curtainLeadEl = need<HTMLElement>('#curtainLead');
 const curtainBodyEl = need<HTMLElement>('#curtainBody');
+const lessonEl = need<HTMLElement>('#lesson');
+const lessonTextEl = need<HTMLElement>('#lessonText');
+const lessonAltEl = need<HTMLElement>('#lessonAlt');
+const lessonAltLabelEl = need<HTMLElement>('#lessonAltLabel');
+const lessonCodeEl = need<HTMLElement>('#lessonCode');
+const curtainNextEl = need<HTMLElement>('#curtainNext');
 const curtainGoEl = need<HTMLButtonElement>('#curtainGo');
-const muteEl = need<HTMLButtonElement>('#mute');
-const gutterEl = need<HTMLElement>('#gutter');
+const curtainAltEl = need<HTMLButtonElement>('#curtainAlt');
+const mapEl = need<HTMLElement>('#map');
 const buildEl = need<HTMLElement>('#build');
 
 /**
@@ -83,23 +102,43 @@ document.documentElement.lang = lang;
 document.title = TEXT[lang].title;
 const t = TEXT[lang];
 
+/** The browser's storage, or nothing if it is refused — a private window, say. */
+function storage(): Store | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+const store = storage();
+const ids = LEVELS.map((level) => level.id);
+let progress: Progress = readProgress(store);
+let saving = 0;
+/** Written a moment after typing stops, not on every key. */
+function saveSoon(): void {
+  window.clearTimeout(saving);
+  saving = window.setTimeout(() => writeProgress(store, progress), 400);
+}
+function saveNow(): void {
+  window.clearTimeout(saving);
+  writeProgress(store, progress);
+}
+
 let game: Game = createGame();
+let sig: Signature = readSignature(levelAt(0)?.signature ?? '');
 let view: View = { width: 1, height: 1 };
 let clock = 0;
 let busy = false;
 /**
  * True while the worker is still running the player's code.
  *
- * This is the whole bug. `busy` was set before awaiting the worker, and the
- * loop reads an empty queue plus `busy` as "the fight has finished" — so
- * between pressing Strike and the code coming back, the loop decided the fight
- * was over, let the desk go and moved past the moment where clearing a rung is
- * noticed. By the time the real result arrived the loop had already finished
- * with it, so the mirror never fell and no card ever came.
- *
- * It depended on who got there first. In a page running at sixty frames a
- * second the loop always wins, which is why it never worked for a player; in a
- * throttled one the worker usually wins, which is why it kept passing here.
+ * `busy` was once set before awaiting the worker, and the loop reads an empty
+ * queue plus `busy` as "the fight has finished" — so between pressing Strike
+ * and the code coming back, the loop decided the fight was over, let the desk
+ * go and moved past the moment where clearing a rung is noticed. In a page
+ * running at sixty frames a second the loop always won, which is why it never
+ * worked for a player; in a throttled one the worker usually won, which is why
+ * it kept passing here.
  */
 let awaiting = false;
 
@@ -113,6 +152,8 @@ let rang = false;
 let thrown = 0;
 /** How long the blow on screen lasts. */
 let span = 0;
+/** The line of the box the last mistake was on, marked in the gutter. */
+let badLine: number | null = null;
 const sound = createSound();
 
 function resize(): void {
@@ -131,6 +172,100 @@ function say(message: string, tone: 'plain' | 'good' | 'bad' = 'plain'): void {
   saysEl.textContent = message;
   saysEl.className = `says${tone === 'plain' ? '' : ` ${tone}`}`;
 }
+
+// ── The editor ─────────────────────────────────────────────────────────
+
+/** Colour a piece of code into an element, a span per token. */
+function colour(into: HTMLElement, text: string, trailing: boolean): void {
+  const pieces = document.createDocumentFragment();
+  for (const token of tokenize(
+    text,
+    sig.params.map((p) => p.name),
+  )) {
+    if (token.tone === 'plain') {
+      pieces.append(token.text);
+      continue;
+    }
+    const span = document.createElement('span');
+    span.className = `t-${token.tone}`;
+    span.textContent = token.text;
+    pieces.append(span);
+  }
+  // A <pre> does not give an empty last line any height, and a textarea does,
+  // so without this the colour is one line short whenever the text ends in a
+  // newline — and everything typed on that line has nothing under it.
+  if (trailing) pieces.append('\n ');
+  into.replaceChildren(pieces);
+}
+
+/** Numbers down the side, with the line of the last mistake marked. */
+function drawGutter(): void {
+  const lines = lineCount(bodyEl.value);
+  const rows = document.createDocumentFragment();
+  for (let i = 1; i <= lines; i += 1) {
+    const row = document.createElement('div');
+    row.textContent = String(i);
+    if (i === badLine) row.className = 'bad';
+    rows.append(row);
+  }
+  gutterEl.replaceChildren(rows);
+}
+
+/** The box is as tall as what is in it, so nothing ever scrolls out of sight. */
+function grow(): void {
+  bodyEl.style.height = 'auto';
+  const extra = bodyEl.offsetHeight - bodyEl.clientHeight;
+  bodyEl.style.height = `${bodyEl.scrollHeight + extra}px`;
+}
+
+function refresh(): void {
+  colour(colourEl, bodyEl.value, true);
+  drawGutter();
+  grow();
+  colourEl.scrollLeft = bodyEl.scrollLeft;
+}
+
+/** The text changed: the old mistake no longer applies, and it is worth keeping. */
+function edited(): void {
+  badLine = null;
+  refresh();
+  const level = levelAt(game.level);
+  if (level !== undefined) {
+    progress = withDraft(progress, level.id, bodyEl.value);
+    saveSoon();
+  }
+}
+
+/**
+ * Put an edit into the box the way typing would be.
+ *
+ * `insertText` is old and marked as such, and it is still the only way to put
+ * text into a textarea that the browser's own undo knows about. Setting the
+ * value throws the whole history away, which is what the first version did:
+ * the first bracket it closed for you was the last thing Ctrl+Z could reach.
+ */
+function apply(edit: Edit): void {
+  bodyEl.focus();
+  bodyEl.setSelectionRange(edit.from, edit.to);
+  let done: boolean;
+  try {
+    if (edit.insert.length > 0) done = document.execCommand('insertText', false, edit.insert);
+    else done = edit.from === edit.to || document.execCommand('delete');
+  } catch {
+    done = false;
+  }
+  if (!done) bodyEl.setRangeText(edit.insert, edit.from, edit.to, 'end');
+  bodyEl.setSelectionRange(edit.start, edit.end);
+  // insertText fires its own input event; the fallback does not.
+  if (!done) edited();
+}
+
+function markLine(line: number | null): void {
+  badLine = line !== null && line >= 1 && line <= lineCount(bodyEl.value) ? line : null;
+  drawGutter();
+}
+
+// ── The desk ───────────────────────────────────────────────────────────
 
 /** Which rung the desk is currently showing, so it is not rebuilt under them. */
 let onDesk = -1;
@@ -151,10 +286,11 @@ function showRung(): void {
     return;
   }
   onDesk = game.level;
+  sig = readSignature(level.signature);
 
-  conceptEl.textContent = level.concept[lang];
+  const chapter = CHAPTERS[level.chapter];
+  conceptEl.textContent = `${t.chapter} ${level.chapter + 1}${chapter === undefined ? '' : ` · ${chapter[lang]}`} — ${level.concept[lang]}`;
   briefEl.textContent = level.brief[lang];
-  signatureEl.textContent = level.signature;
 
   shownEl.replaceChildren();
   const label = document.createElement('span');
@@ -162,12 +298,14 @@ function showRung(): void {
   shownEl.append(label);
   for (const one of level.shown) {
     const bit = document.createElement('span');
-    bit.textContent = `[${one.parts.join(', ')}] → ${JSON.stringify(one.want)}`;
+    bit.textContent = `${callOf(one.args)} → ${show(one.want)}`;
     shownEl.append(bit);
   }
 
-  bodyEl.value = level.starter;
-  drawGutter();
+  colour(headEl, [...sig.above, `${sig.head} {`].join('\n'), false);
+  bodyEl.value = progress.drafts[level.id] ?? level.starter;
+  badLine = null;
+  refresh();
   drawHints();
   say('');
 }
@@ -196,6 +334,44 @@ function drawHints(): void {
   const spent = game.hintsShown >= level.hints.length;
   hintEl.disabled = spent || busy || game.phase !== 'writing';
   hintEl.textContent = spent ? t.noMoreHints : t.hint;
+  resetEl.disabled = busy || game.phase !== 'writing';
+}
+
+/**
+ * Say why the first wrong case was wrong, as specifically as can be known.
+ * The fight shows what came back; this says what to do about it.
+ */
+function explainMiss(source: string): void {
+  const missed = game.attempts.find((a) => !a.hit);
+  if (missed === undefined) {
+    say(t.cleared, 'good');
+    return;
+  }
+  const call = callOf(missed.args);
+  const why = whyMissed({ got: missed.got, type: missed.type, error: missed.error }, sig.returns, source);
+  switch (why.kind) {
+    case 'threw': {
+      markLine(missed.line);
+      const at = badLine === null ? '' : ` (${t.onLine(badLine)})`;
+      say(`${call} — ${t.threw}${at}: ${missed.error ?? ''}`, 'bad');
+      return;
+    }
+    case 'noReturn':
+      say(`${call} — ${t.noReturn}`, 'bad');
+      return;
+    case 'notThere':
+      say(`${call} — ${t.notThere}`, 'bad');
+      return;
+    case 'nan':
+      say(`${call} — ${t.nan}`, 'bad');
+      return;
+    case 'promise':
+      say(`${call} → ${missed.seen}. ${t.promised(sig.returnsText, missed.type)}`, 'bad');
+      return;
+    case 'value':
+      say(t.gaveBack(call, missed.seen, show(missed.want)), 'bad');
+      return;
+  }
 }
 
 async function strike(): Promise<void> {
@@ -204,17 +380,24 @@ async function strike(): Promise<void> {
   awaiting = true;
   submitEl.disabled = true;
   hintEl.disabled = true;
+  resetEl.disabled = true;
 
   const source = bodyEl.value;
-  const outcome = await run(source, casesOf(game));
+  const outcome = await run(
+    source,
+    sig.params.map((p) => p.name),
+    casesOf(game),
+  );
   awaiting = false;
 
   if (outcome.fatal !== null) {
     // Nothing ran, so nothing is resolved — this is a miss, not a maul.
     const advice = adviseOn(source, outcome.fatal);
+    markLine(outcome.line);
+    const at = badLine === null ? '' : ` (${t.onLine(badLine)})`;
     if (advice === 'loop') say(t.looping, 'bad');
-    else if (advice === 'annotation') say(t.annotation, 'bad');
-    else say(`${t.threw}: ${outcome.fatal}`, 'bad');
+    else if (advice === 'annotation') say(`${t.annotation}${at}`, 'bad');
+    else say(`${t.threw}${at}: ${outcome.fatal}`, 'bad');
     busy = false;
     submitEl.disabled = false;
     drawHints();
@@ -222,39 +405,35 @@ async function strike(): Promise<void> {
   }
 
   resolve(game, outcome.results);
+  const level = levelAt(game.level);
+  // Read from the events rather than the phase: the guard at the top has
+  // already narrowed the phase to 'writing' as far as the compiler can tell.
+  if (game.events.some((e) => e.kind === 'cleared') && level !== undefined) {
+    progress = withCleared(withDraft(progress, level.id, source), level.id);
+    saveNow();
+  }
+
   /*
    * Every blow carries the case it came from, because the case is the part
-   * worth watching: a lunge says something happened, the numbers say what.
+   * worth watching: a lunge says something happened, the call says what.
    *
    * But only the hits and the *first* miss are played. Four identical failures
    * in a row told the player nothing the first had not, and while they played
-   * nothing could be pressed — six seconds of being unable to touch the thing
-   * you are trying to fix, which is most of why this felt stuck rather than
-   * slow.
+   * nothing could be pressed.
    */
   const fresh = game.attempts.filter((a) => !a.repeat);
   const landed = fresh.filter((a) => a.hit);
   const firstMiss = fresh.find((a) => !a.hit);
-  const shown = firstMiss === undefined ? landed : [...landed, firstMiss];
-  queue = shown.map((a) => ({ landed: a.hit, parts: a.parts, got: a.got, want: a.want, error: a.error }));
+  const played = firstMiss === undefined ? landed : [...landed, firstMiss];
+  queue = played.map((a) => ({ landed: a.hit, args: a.args, seen: a.seen, want: a.want, error: a.error }));
   if (queue.length === 0) {
     const first = game.attempts[0];
     if (first !== undefined) {
-      queue = [{ landed: true, parts: first.parts, got: first.got, want: first.want, error: null }];
+      queue = [{ landed: true, args: first.args, seen: first.seen, want: first.want, error: null }];
     }
   }
 
-  const missed = game.attempts.find((a) => !a.hit);
-  if (missed === undefined) {
-    say(t.cleared, 'good');
-  } else if (missed.error !== null) {
-    say(`${t.threw}: ${missed.error}`, 'bad');
-  } else {
-    say(
-      `[${missed.parts.join(', ')}] — ${t.got} ${JSON.stringify(missed.got)}, ${t.wanted} ${JSON.stringify(missed.want)}`,
-      'bad',
-    );
-  }
+  explainMiss(source);
 }
 
 /** Walk the blows, then move the run on. */
@@ -311,41 +490,126 @@ function playOut(dt: number): void {
   }
 }
 
+// ── The curtain ────────────────────────────────────────────────────────
+
+/** What the big button on the curtain does right now. */
+type Mode = 'title' | 'cleared' | 'down' | 'won';
+let mode: Mode = 'title';
+/** Where the title's main button starts the run. */
+let startAt = 0;
+
+function openCurtain(next: Mode): void {
+  mode = next;
+  lessonEl.hidden = true;
+  mapEl.hidden = true;
+  curtainAltEl.hidden = true;
+  curtainNextEl.textContent = '';
+  curtainBodyEl.textContent = '';
+  curtainEl.hidden = false;
+  curtainEl.scrollTop = 0;
+}
+
 /**
- * The rung is beaten. Said out loud, with what comes next named, and left for
- * the player to step through — this is the only reward the game has and it
- * used to happen silently between two frames.
+ * Every rung, by chapter, as buttons. The ones that can be started are live;
+ * the rest are drawn anyway, because a ladder you can see the top of is one
+ * worth climbing.
+ */
+function drawMap(): void {
+  const open = openUpTo(progress, ids);
+  const rows = document.createDocumentFragment();
+  const heading = document.createElement('div');
+  heading.className = 'pick';
+  heading.textContent = t.pick;
+  rows.append(heading);
+  CHAPTERS.forEach((chapter, c) => {
+    const row = document.createElement('div');
+    row.className = 'chapter';
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = `${t.chapter} ${c + 1} · ${chapter[lang]}`;
+    row.append(name);
+    LEVELS.forEach((level, i) => {
+      if (level.chapter !== c) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = String(i + 1);
+      button.title = level.concept[lang];
+      button.disabled = i > open;
+      if (progress.cleared.includes(level.id)) button.classList.add('done');
+      if (i === startAt) button.classList.add('here');
+      button.addEventListener('click', () => {
+        sound.unlock();
+        begin(i);
+      });
+      row.append(button);
+    });
+    rows.append(row);
+  });
+  mapEl.replaceChildren(rows);
+  mapEl.hidden = false;
+}
+
+/**
+ * The rung is beaten. Said out loud, with what it was and what comes next,
+ * and left for the player to step through — this is the only reward the game
+ * has, and naming what was just done is the part that teaches.
  */
 function showCleared(): void {
+  const level = levelAt(game.level);
   const next = levelAt(game.level + 1);
+  openCurtain('cleared');
   curtainTitleEl.textContent = t.cleared;
   curtainLeadEl.textContent = `${t.rungDone} ${game.level + 1}/${levelCount()}`;
-  curtainBodyEl.textContent = hasNext(game) && next !== undefined ? `${t.nextUp} ${next.concept[lang]}` : '';
+
+  if (level !== undefined) {
+    lessonTextEl.textContent = level.lesson[lang];
+    lessonEl.hidden = false;
+    if (level.another === undefined) {
+      lessonAltEl.hidden = true;
+    } else {
+      lessonAltLabelEl.textContent = `${t.another}:`;
+      colour(lessonCodeEl, level.another, false);
+      lessonAltEl.hidden = false;
+    }
+  }
+
+  if (next !== undefined && level !== undefined) {
+    const nextChapter = CHAPTERS[next.chapter];
+    const thisChapter = CHAPTERS[level.chapter];
+    curtainNextEl.textContent =
+      next.chapter !== level.chapter && nextChapter !== undefined && thisChapter !== undefined
+        ? `${t.chapterDone(thisChapter[lang])} ${t.nextChapter} ${nextChapter[lang]}`
+        : `${t.nextUp} ${next.concept[lang]}`;
+  }
   curtainGoEl.textContent = hasNext(game) ? t.goOn : t.finish;
-  curtainEl.hidden = false;
+  curtainGoEl.focus();
 }
 
 function showEnd(): void {
   const won = game.phase === 'won';
+  openCurtain(won ? 'won' : 'down');
   curtainTitleEl.textContent = won ? t.won : t.down;
-  curtainLeadEl.textContent = won
-    ? `${t.wonWhy} ${game.lives} ${t.lives}`
-    : `${t.downWhy} ${game.level + 1}/${levelCount()}`;
+  curtainLeadEl.textContent = won ? t.wonWhy(levelCount()) : `${t.downWhy} ${game.level + 1}/${levelCount()}`;
   curtainBodyEl.textContent = `${score(game)} · ${game.hintsTaken} ${t.hintsTaken}`;
   curtainGoEl.textContent = won ? t.again : t.sameRung;
-  curtainEl.hidden = false;
+  curtainGoEl.focus();
 }
 
 function showTitle(): void {
+  openCurtain('title');
   curtainTitleEl.textContent = t.title;
   curtainLeadEl.textContent = t.premise;
   curtainBodyEl.textContent = `${t.howWrite} ${t.howWrong} ${t.howJs}`;
-  curtainGoEl.textContent = t.begin;
-  curtainEl.hidden = false;
+  startAt = nextUnbeaten(progress, ids);
+  const returning = progress.cleared.length > 0;
+  curtainGoEl.textContent = returning ? t.carryOn(startAt + 1) : t.begin;
+  curtainAltEl.textContent = t.fromStart;
+  curtainAltEl.hidden = !returning || startAt === 0;
+  drawMap();
 }
 
-function begin(): void {
-  game = createGame();
+function begin(start: number): void {
+  game = createGame(start);
   onDesk = -1;
   downFor = null;
   clearedFor = null;
@@ -359,6 +623,8 @@ function begin(): void {
 }
 
 submitEl.textContent = t.submit;
+resetEl.textContent = t.reset;
+keysEl.textContent = t.keys;
 labelMute();
 hintEl.textContent = t.hint;
 /**
@@ -386,6 +652,13 @@ hintEl.addEventListener('click', () => {
   if (takeHint(game)) sound.play('hint');
   drawHints();
 });
+/** Back to what the rung started with — as an edit, so it can be undone. */
+resetEl.addEventListener('click', () => {
+  const level = levelAt(game.level);
+  if (level === undefined || busy) return;
+  const starter = level.starter;
+  apply({ from: 0, to: bodyEl.value.length, insert: starter, start: starter.length, end: starter.length });
+});
 
 function labelMute(): void {
   const [on, off] = MUTE_LABEL[lang];
@@ -396,11 +669,10 @@ muteEl.addEventListener('click', () => {
   sound.toggle();
   labelMute();
 });
+
 curtainGoEl.addEventListener('click', () => {
   sound.unlock();
-  // Beaten by a rung, you get that rung again — not the whole run from the
-  // bottom. What is cleared below stays cleared.
-  if (game.phase === 'cleared') {
+  if (mode === 'cleared') {
     // Asked before advancing, because afterwards the phase is narrowed to
     // what it was and reading it back to see if the run is over does not
     // compile.
@@ -420,90 +692,78 @@ curtainGoEl.addEventListener('click', () => {
     bodyEl.focus();
     return;
   }
-  if (game.phase === 'down') {
+  if (mode === 'down') {
+    // Beaten by a rung, you get that rung again — not the whole run from the
+    // bottom, and not an empty box either: what you wrote is what you fix.
     retry(game);
     downFor = null;
     queue = [];
     blow = null;
     busy = false;
     curtainEl.hidden = true;
-    onDesk = -1;
     showRung();
+    say('');
     submitEl.disabled = false;
     bodyEl.focus();
     return;
   }
-  begin();
+  if (mode === 'won') {
+    showTitle();
+    return;
+  }
+  begin(startAt);
+});
+curtainAltEl.addEventListener('click', () => {
+  sound.unlock();
+  begin(0);
 });
 
-// Ctrl/Cmd+Enter submits, because reaching for the mouse mid-thought is the
-// one thing a box like this must not make you do.
-/** Numbers down the side, scrolled with the text. */
-function drawGutter(): void {
-  const lines = lineCount(bodyEl.value);
-  let out = '';
-  for (let i = 1; i <= lines; i += 1)
-    out += `${i}
-`;
-  gutterEl.textContent = out;
-  gutterEl.scrollTop = bodyEl.scrollTop;
-}
-
-/** Put an edit back into the box and leave the caret where it belongs. */
-function apply(edit: { readonly text: string; readonly caret: number }): void {
-  bodyEl.value = edit.text;
-  bodyEl.selectionStart = edit.caret;
-  bodyEl.selectionEnd = edit.caret;
-  drawGutter();
-}
+// ── Keys ───────────────────────────────────────────────────────────────
 
 bodyEl.addEventListener('scroll', () => {
-  gutterEl.scrollTop = bodyEl.scrollTop;
+  colourEl.scrollLeft = bodyEl.scrollLeft;
 });
-bodyEl.addEventListener('input', drawGutter);
+bodyEl.addEventListener('input', edited);
 
 bodyEl.addEventListener('keydown', (event) => {
+  if (event.isComposing) return;
+  const mod = event.ctrlKey || event.metaKey;
+
   if (event.key === 'Escape') {
     skip();
     return;
   }
-  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+  // Ctrl/Cmd+Enter submits, because reaching for the mouse mid-thought is the
+  // one thing a box like this must not make you do.
+  if (event.key === 'Enter' && mod) {
     event.preventDefault();
     void strike();
     return;
   }
+  if (mod && (event.key === '/' || event.code === 'Slash')) {
+    event.preventDefault();
+    apply(toggleComment(bodyEl.value, bodyEl.selectionStart, bodyEl.selectionEnd));
+    return;
+  }
+  if (mod || event.altKey) return;
 
   const start = bodyEl.selectionStart;
   const end = bodyEl.selectionEnd;
+  let edit: Edit | null = null;
 
-  if (event.key === 'Tab') {
+  if (event.key === 'Tab') edit = onTab(bodyEl.value, start, end, event.shiftKey);
+  else if (event.key === 'Enter' && !event.shiftKey) edit = onEnter(bodyEl.value, start, end);
+  else if (event.key === 'Backspace') edit = onBackspace(bodyEl.value, start, end);
+  else if (event.key.length === 1) edit = onType(bodyEl.value, start, end, event.key);
+
+  if (event.key === 'Tab') event.preventDefault();
+  if (edit !== null) {
     event.preventDefault();
-    apply(onTab(bodyEl.value, start, end, event.shiftKey));
-    return;
-  }
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    apply(onEnter(bodyEl.value, start));
-    return;
-  }
-  if (start === end) {
-    if (event.key === 'Backspace') {
-      const edit = onBackspace(bodyEl.value, start);
-      if (edit !== null) {
-        event.preventDefault();
-        apply(edit);
-      }
-      return;
-    }
-    if (event.key.length === 1) {
-      const edit = onBracket(bodyEl.value, start, event.key);
-      if (edit !== null) {
-        event.preventDefault();
-        apply(edit);
-      }
-    }
+    apply(edit);
   }
 });
+
+// ── The loop ───────────────────────────────────────────────────────────
 
 let last = performance.now();
 let drawFailed = false;
@@ -562,6 +822,8 @@ window.setInterval(() => {
   const now = performance.now();
   if (now - last > 220) step(now, 0.3);
 }, 140);
+
+window.addEventListener('pagehide', saveNow);
 
 const watcher = new ResizeObserver(() => resize());
 watcher.observe(canvas);

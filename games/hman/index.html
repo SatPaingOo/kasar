@@ -91,63 +91,155 @@
         color: var(--ink-dim);
       }
 
-      .signature {
-        font-family: var(--mono);
-        font-size: 0.82rem;
-        color: var(--ink-dim);
-        white-space: pre;
-        overflow-x: auto;
-      }
-
       /*
-        A textarea with a gutter beside it. The two share a line height and
-        the gutter is scrolled to match, which is the whole trick.
+        The editor. A real textarea, transparent, laid exactly over a <pre>
+        that carries the colour: the textarea does the typing, the selection
+        and the undo, and the <pre> underneath is only ever drawn. The two
+        must agree to the pixel — same font, same size, same padding, same
+        line height, no ligatures — or every letter after the first mismatch
+        sits in the wrong place.
+
+        The signature is the first line of it and the closing brace the last,
+        because that is what the box is: the inside of a function.
       */
       .editor {
-        display: flex;
         background: var(--raised);
         border: 1px solid var(--line);
         border-radius: 3px;
-        overflow: hidden;
-        min-height: 7.5rem;
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        line-height: 1.55;
       }
 
       .editor:focus-within {
         border-color: var(--accent);
       }
 
+      .frame {
+        margin: 0;
+        padding: 0.5rem 0.75rem 0.2rem;
+        font: inherit;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: var(--ink-dim);
+      }
+
+      .frame.tail {
+        padding: 0.2rem 0.75rem 0.5rem;
+      }
+
+      .lines {
+        display: flex;
+      }
+
       .gutter {
         flex: none;
-        width: 2.4rem;
-        padding: 0.65rem 0.4rem 0.65rem 0;
+        width: 2.6rem;
+        padding: 0.35rem 0.55rem 0.35rem 0;
         text-align: right;
-        font-family: var(--mono);
-        font-size: 0.88rem;
-        line-height: 1.55;
         /* --line is a border colour. As text on a dark gutter it was very
            nearly the background, so the numbers were not there at all. */
         color: #6f6694;
         background: rgba(0, 0, 0, 0.22);
-        overflow: hidden;
         user-select: none;
+      }
+
+      .gutter .bad {
+        color: var(--wrong);
+        background: rgba(217, 138, 138, 0.14);
+        margin-right: -0.55rem;
+        padding-right: 0.55rem;
+      }
+
+      .field {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .paint,
+      textarea {
+        display: block;
+        box-sizing: border-box;
+        margin: 0;
+        border: 0;
+        padding: 0.35rem 0.75rem;
+        font: inherit;
+        line-height: inherit;
+        letter-spacing: 0;
+        word-spacing: 0;
+        tab-size: 2;
         white-space: pre;
+        font-variant-ligatures: none;
+        font-feature-settings:
+          'liga' 0,
+          'calt' 0;
+      }
+
+      .paint {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        color: var(--ink);
       }
 
       textarea {
-        flex: 1;
-        min-width: 0;
-        font-family: var(--mono);
-        font-size: 0.88rem;
-        line-height: 1.55;
-        color: var(--ink);
-        background: transparent;
-        border: 0;
-        padding: 0.65rem 0.75rem;
+        position: relative;
+        width: 100%;
+        min-height: calc(3 * 1.55em + 0.7rem);
         resize: none;
-        tab-size: 2;
+        background: transparent;
+        color: transparent;
+        caret-color: var(--ink);
         outline: none;
-        overflow-y: auto;
-        height: 7.5rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+
+      textarea::selection {
+        background: rgba(185, 160, 224, 0.3);
+        color: transparent;
+      }
+
+      .t-keyword {
+        color: #c4a8ee;
+      }
+      .t-literal,
+      .t-number {
+        color: #e6b48a;
+      }
+      .t-string {
+        color: #a9d39b;
+      }
+      .t-comment {
+        color: #6f6694;
+        font-style: italic;
+      }
+      .t-type {
+        color: #8fc8d8;
+      }
+      .t-param {
+        color: #f0d29a;
+      }
+      .t-call {
+        color: #9fb8f0;
+      }
+      .t-property {
+        color: #d8cfe8;
+      }
+      .t-operator {
+        color: #c49ab8;
+      }
+      .t-punct {
+        color: #8a82a0;
+      }
+
+      .keys {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--ink-dim);
+        opacity: 0.75;
       }
 
       .row {
@@ -251,17 +343,24 @@
         inset: 0;
         z-index: 2;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.8rem;
+        overflow-y: auto;
         padding: 1.5rem;
-        text-align: center;
-        background: rgba(18, 16, 22, 0.94);
+        background: rgba(18, 16, 22, 0.95);
       }
 
       .curtain[hidden] {
         display: none;
+      }
+
+      .card {
+        margin: auto;
+        width: 100%;
+        max-width: 36rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.8rem;
+        text-align: center;
       }
 
       .curtain h1 {
@@ -281,6 +380,109 @@
 
       .curtain p.lead {
         color: var(--ink);
+      }
+
+      .curtain p:empty {
+        display: none;
+      }
+
+      /* What the rung was, said once it is beaten. */
+      .lesson {
+        width: 100%;
+        text-align: left;
+        border-left: 2px solid var(--accent);
+        padding: 0.2rem 0 0.2rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+
+      .lesson[hidden],
+      .alt[hidden],
+      .map[hidden],
+      button[hidden] {
+        display: none;
+      }
+
+      .curtain .lesson p {
+        color: var(--ink);
+        font-size: 0.92rem;
+      }
+
+      .alt span {
+        font-size: 0.75rem;
+        color: var(--ink-dim);
+      }
+
+      .alt pre {
+        margin: 0.25rem 0 0;
+        padding: 0.5rem 0.7rem;
+        background: var(--raised);
+        border-radius: 3px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        color: var(--ink);
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      /* Every rung, by chapter: the ones that can be started, and the ones
+         still to come, which are worth seeing even before they open. */
+      .map {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        margin-top: 0.4rem;
+        text-align: left;
+      }
+
+      .map .chapter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .map .pick {
+        font-size: 0.85rem;
+        color: var(--ink-dim);
+        text-align: center;
+        margin-bottom: 0.2rem;
+      }
+
+      .map button:disabled {
+        opacity: 0.4;
+      }
+
+      .map .name {
+        flex: 0 0 100%;
+        font-size: 0.78rem;
+        color: var(--ink-dim);
+      }
+
+      .map button {
+        min-height: 2rem;
+        min-width: 2.2rem;
+        padding: 0.25rem 0.5rem;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+      }
+
+      .map button.done {
+        border-color: #4a3f66;
+        color: var(--accent);
+      }
+
+      .map button.here {
+        border-color: var(--accent);
       }
 
       /* Which build this is. Small, dim, and the fastest way to settle an
@@ -306,27 +508,57 @@
       <div class="concept" id="concept"></div>
       <p class="brief" id="brief"></p>
       <div class="shown" id="shown"></div>
-      <div class="signature" id="signature"></div>
       <div class="editor">
-        <div class="gutter" id="gutter" aria-hidden="true"></div>
-        <textarea id="body" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"></textarea>
+        <pre class="frame" id="head"></pre>
+        <div class="lines">
+          <div class="gutter" id="gutter" aria-hidden="true"></div>
+          <div class="field">
+            <pre class="paint" id="paint" aria-hidden="true"></pre>
+            <textarea
+              id="body"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              autocorrect="off"
+              wrap="off"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+        <pre class="frame tail" id="tail">}</pre>
       </div>
       <div class="row">
         <button id="submit" class="go" type="button"></button>
         <button id="hint" type="button"></button>
+        <button id="reset" type="button"></button>
         <button id="mute" type="button"></button>
         <span class="says" id="says"></span>
       </div>
+      <div class="keys" id="keys"></div>
       <div class="hints" id="hints"></div>
     </div>
 
     <div class="build" id="build"></div>
 
     <div class="curtain" id="curtain">
-      <h1 id="curtainTitle"></h1>
-      <p class="lead" id="curtainLead"></p>
-      <p id="curtainBody"></p>
-      <button id="curtainGo" class="go" type="button"></button>
+      <div class="card">
+        <h1 id="curtainTitle"></h1>
+        <p class="lead" id="curtainLead"></p>
+        <p id="curtainBody"></p>
+        <div class="lesson" id="lesson" hidden>
+          <p id="lessonText"></p>
+          <div class="alt" id="lessonAlt" hidden>
+            <span id="lessonAltLabel"></span>
+            <pre id="lessonCode"></pre>
+          </div>
+        </div>
+        <p id="curtainNext"></p>
+        <div class="actions">
+          <button id="curtainGo" class="go" type="button"></button>
+          <button id="curtainAlt" type="button" hidden></button>
+        </div>
+        <div class="map" id="map" hidden></div>
+      </div>
     </div>
 
     <script type="module" src="./dist/main.js"></script>
