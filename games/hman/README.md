@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.3.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.4.0
 
 မှန် — correct.
 
@@ -102,7 +102,8 @@ literals and conditionals alone, colons and all.
 | `src/game.ts` | the rules. Pure, and it never runs anything — it takes the results of a run and decides what they do |
 | `src/runner.ts` | the worker, the blob and the timeout. The only part that executes anything |
 | `src/advice.ts` | what to say when the code did not run. String work only, so it is testable |
-| `src/beat.ts` | the timing of one blow. No canvas, so it is testable |
+| `src/beat.ts` | the timing of one blow and of a topple. No canvas, so it is testable |
+| `src/editing.ts` | what makes the box an editor: indent, brackets, line counting. String work, so it is testable |
 | `src/sound.ts` | every sound, made from oscillators and one noise buffer |
 | `src/figure.ts` | the man, drawn in code. Drawn twice: the second is him, flipped and colder |
 | `src/render.ts` | the fight. The only thing on the canvas |
@@ -111,6 +112,21 @@ literals and conditionals alone, colons and all.
 The split that matters is `game.ts` never executing anything. Running code
 needs a worker and a clock and is therefore the browser's problem; the damage
 model is not, so the whole of it plays out headlessly in the tests.
+
+## Beating a rung is the only reward, so it is an event
+
+It used to happen between two frames: the level advanced, the desk rebuilt
+itself, and nothing said so. The mirror did not fall either — it lost blocks
+off a bar and went on standing, so the thing you were fighting never actually
+lost. And it was slow: four correct cases were four full blows with the desk
+locked throughout, so a correct answer took over six seconds to report itself,
+which reads as nothing having happened at all.
+
+Clearing is its own state now. The mirror topples, the room brightens, and a
+card names the rung you beat and the one coming next; you leave it by choosing
+to. The first blow of a submit keeps its full beat and the hits after it are
+quick, because they are all the same good news — but a miss always keeps its
+beat, since the miss is the one carrying something to read.
 
 ## Showing what happened
 

@@ -99,24 +99,53 @@
         overflow-x: auto;
       }
 
+      /*
+        A textarea with a gutter beside it. The two share a line height and
+        the gutter is scrolled to match, which is the whole trick.
+      */
+      .editor {
+        display: flex;
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        overflow: hidden;
+        min-height: 7.5rem;
+      }
+
+      .editor:focus-within {
+        border-color: var(--accent);
+      }
+
+      .gutter {
+        flex: none;
+        width: 2.4rem;
+        padding: 0.65rem 0.4rem 0.65rem 0;
+        text-align: right;
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: var(--line);
+        background: rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+        user-select: none;
+        white-space: pre;
+      }
+
       textarea {
+        flex: 1;
+        min-width: 0;
         font-family: var(--mono);
         font-size: 0.88rem;
         line-height: 1.55;
         color: var(--ink);
-        background: var(--raised);
-        border: 1px solid var(--line);
-        border-radius: 3px;
+        background: transparent;
+        border: 0;
         padding: 0.65rem 0.75rem;
-        min-height: 6.5rem;
-        resize: vertical;
-        width: 100%;
+        resize: none;
         tab-size: 2;
-      }
-
-      textarea:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 1px;
+        outline: none;
+        overflow-y: auto;
+        height: 7.5rem;
       }
 
       .row {
@@ -262,7 +291,10 @@
       <p class="brief" id="brief"></p>
       <div class="shown" id="shown"></div>
       <div class="signature" id="signature"></div>
-      <textarea id="body" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <textarea id="body" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"></textarea>
+      </div>
       <div class="row">
         <button id="submit" class="go" type="button"></button>
         <button id="hint" type="button"></button>

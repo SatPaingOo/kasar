@@ -2,6 +2,36 @@
 
 Keep a Changelog, newest first.
 
+## [0.4.0] — 2026-10-03
+
+### Fixed
+
+- Beating a rung did not feel like beating a rung, and often did not look like
+  anything at all. Three things were wrong at once.
+
+  Clearing moved straight on to the next rung, quietly, between two frames —
+  so the desk changed and nothing announced it. Clearing is its own state now:
+  the mirror topples, the room brightens, and a card says which rung was
+  beaten and which one is next. You leave it by choosing to.
+
+  The mirror never fell. It lost blocks off a bar and went on standing there,
+  so the thing you were fighting never actually lost. It goes over now.
+
+  And it was slow. Four correct cases were four full blows at 0.8s each with
+  the desk locked throughout, then a 1.5s topple — a correct answer took over
+  six seconds to say so, measured, which reads as nothing having happened. The
+  first blow of a submit keeps its beat and the hits after it are quick; a
+  miss always keeps its beat, because the miss is the one you have to read.
+
+### Added
+
+- A real editor rather than a bare textarea: line numbers down the side, Tab
+  and Shift-Tab to indent, Enter carrying the indent down and going a level
+  deeper after an opening bracket, brackets and quotes closing themselves, and
+  Backspace taking both halves of an empty pair. All of it in `src/editing.ts`
+  as string work, so every one of those can be tested — each is obviously
+  right until it eats somebody's code.
+
 ## [0.3.0] — 2026-10-03
 
 ### Changed

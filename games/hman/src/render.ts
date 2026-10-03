@@ -54,6 +54,10 @@ export interface Ui {
   readonly since: number;
   /** Seconds since he went down, or null while he is on his feet. */
   readonly downFor: number | null;
+  /** Seconds since the mirror went down, or null while it still stands. */
+  readonly clearedFor: number | null;
+  /** How long the blow on screen lasts. */
+  readonly span: number;
 }
 
 const show = (value: Value | null): string => (value === null ? '—' : JSON.stringify(value));
@@ -173,12 +177,14 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   const t = TEXT[ui.lang];
   const blow = ui.blow;
   const going = ui.downFor === null ? null : fallAt(ui.downFor);
-  const swing = blow === null || going !== null ? null : swingAt(ui.since, blow.landed ? 1 : 1.5);
+  const beaten = ui.clearedFor === null ? null : fallAt(ui.clearedFor);
+  const settling = going !== null || beaten !== null;
+  const swing = blow === null || settling ? null : swingAt(ui.since, blow.landed ? 1 : 1.5, ui.span);
   const hitting = blow !== null && blow.landed;
   const struck = swing?.struck === true;
 
   ctx.save();
-  const shake = swing?.shake ?? going?.shake ?? 0;
+  const shake = swing?.shake ?? going?.shake ?? beaten?.shake ?? 0;
   if (shake !== 0) ctx.translate(shake, shake * 0.4);
 
   const sky = ctx.createLinearGradient(0, 0, 0, view.height);
@@ -233,7 +239,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       facing: -1,
       lunge: blow !== null && !hitting ? reach : 0,
       recoil: hitting && struck ? reach : 0,
-      fall: 0,
+      fall: beaten?.over ?? 0,
       time: ui.time + 1.3,
     },
     INK.mirror,
@@ -264,9 +270,14 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   ctx.fillText(`${t.standing} ${Math.round(standing(game) * game.solved.length)}`, view.width - 10, view.height - 8);
   ctx.textAlign = 'left';
 
-  // The light goes out of it as he goes down.
+  // The light goes out of the room as he goes down — and comes up when the
+  // thing he is fighting is the one that falls.
   if (going !== null && going.dim > 0) {
     ctx.fillStyle = `rgba(12, 9, 18, ${going.dim})`;
+    ctx.fillRect(0, 0, view.width, view.height);
+  }
+  if (beaten !== null && beaten.dim > 0) {
+    ctx.fillStyle = `rgba(185, 160, 224, ${beaten.dim * 0.4})`;
     ctx.fillRect(0, 0, view.width, view.height);
   }
 

@@ -35,6 +35,10 @@ interface Text {
   readonly looping: string;
   readonly annotation: string;
   readonly cleared: string;
+  readonly rungDone: string;
+  readonly nextUp: string;
+  readonly goOn: string;
+  readonly finish: string;
   readonly won: string;
   readonly wonWhy: string;
   readonly down: string;
@@ -64,7 +68,11 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     threw: 'it broke',
     looping: 'It never finished. Something is looping.',
     annotation: 'Type annotations do not run in the box. The types are in the signature.',
-    cleared: 'The mirror is down.',
+    cleared: 'The mirror is down',
+    rungDone: 'Rung',
+    nextUp: 'Next:',
+    goOn: 'Next rung',
+    finish: 'Finish',
     won: 'Nothing left standing',
     wonWhy: 'All of it, with',
     down: 'He is down',
@@ -92,7 +100,11 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     threw: 'ပျက်သွားတယ်',
     looping: 'မပြီးဘူး။ တစ်ခုခုက အဆုံးမရှိ ပတ်နေတယ်။',
     annotation: 'အကွက်ထဲမှာ type ရေးလို့ မရဘူး။ type တွေက signature မှာ ရှိတယ်။',
-    cleared: 'မှန်ထဲကလူ ပြိုသွားပြီ။',
+    cleared: 'မှန်ထဲကလူ လဲသွားပြီ',
+    rungDone: 'အဆင့်',
+    nextUp: 'နောက်တစ်ခု:',
+    goOn: 'နောက်အဆင့်',
+    finish: 'အဆုံးသတ်',
     won: 'ဘာမှ မကျန်တော့ဘူး',
     wonWhy: 'အကုန်ပြီး၊',
     down: 'သူ လဲသွားပြီ',

@@ -36,7 +36,16 @@ export const RULES = {
   perDown: 25,
 } as const;
 
-export type Phase = 'writing' | 'resolving' | 'won' | 'down';
+/**
+ * `cleared` is its own state, not a step inside advancing.
+ *
+ * Beating a rung used to move straight on to the next one, quietly, between
+ * two frames — so the player saw the desk change and nothing else, and could
+ * not tell whether anything had happened at all. Winning a rung is the only
+ * reward this game has. It gets a state of its own, which the mirror falls
+ * over in and the player leaves by choosing to.
+ */
+export type Phase = 'writing' | 'resolving' | 'cleared' | 'won' | 'down';
 
 /** One case, after the code has been run against it. */
 export interface Attempt {
@@ -215,6 +224,7 @@ export function resolve(game: Game, results: readonly RunResult[]): Game {
 
   if (game.solved.every((done) => done)) {
     game.cleared += 1;
+    game.phase = 'cleared';
     game.events.push({ kind: 'cleared', level: game.level });
   }
 
@@ -242,13 +252,26 @@ export function retry(game: Game): Game {
  * Move on once the fight has finished playing out. Separate from `resolve`
  * because the rung has to stay on screen while its strikes are animating.
  */
-export function advance(game: Game): Game {
+/**
+ * Back to the desk after a submit that did not finish the rung.
+ */
+export function carryOn(game: Game): Game {
   if (game.phase !== 'resolving') return game;
+  game.phase = 'writing';
+  return game;
+}
 
-  if (!game.solved.every((done) => done)) {
-    game.phase = 'writing';
-    return game;
-  }
+/** Whether there is another rung after this one. */
+export function hasNext(game: Game): boolean {
+  return game.level + 1 < LEVELS.length;
+}
+
+/**
+ * Step up to the next rung. Only from `cleared`, and only when the player
+ * says so, because this is the one moment worth making them notice.
+ */
+export function advance(game: Game): Game {
+  if (game.phase !== 'cleared') return game;
 
   const next = game.level + 1;
   if (next >= LEVELS.length) {

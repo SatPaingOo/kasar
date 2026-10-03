@@ -20,6 +20,7 @@ import {
   createGame,
   levelAt,
   levelCount,
+  carryOn,
   resolve,
   retry,
   same,
@@ -121,16 +122,32 @@ describe('a submit', () => {
 });
 
 describe('the run', () => {
-  it('moves to the next rung only once the one below is clear', () => {
+  it('goes back to the desk after a submit that did not finish the rung', () => {
+    const game = createGame();
+    resolve(game, allWrong(game));
+    expect(game.phase).toBe('resolving');
+    carryOn(game);
+    expect(game.level).toBe(0);
+    expect(game.phase).toBe('writing');
+  });
+
+  it('stops on the rung it just cleared rather than slipping to the next', () => {
+    const game = createGame();
+    resolve(game, allRight(game));
+    // Clearing is its own moment. Nothing moves until the player says so.
+    expect(game.phase).toBe('cleared');
+    expect(game.level).toBe(0);
+
+    advance(game);
+    expect(game.level).toBe(1);
+    expect(game.phase).toBe('writing');
+  });
+
+  it('will not advance from anywhere but a cleared rung', () => {
     const game = createGame();
     resolve(game, allWrong(game));
     advance(game);
     expect(game.level).toBe(0);
-    expect(game.phase).toBe('writing');
-
-    resolve(game, allRight(game));
-    advance(game);
-    expect(game.level).toBe(1);
   });
 
   it('starts each rung with its own cases standing and no hints showing', () => {
@@ -149,6 +166,7 @@ describe('the run', () => {
     const game = createGame();
     for (let i = 0; i < levelCount(); i += 1) {
       resolve(game, allRight(game));
+      expect(game.phase).toBe('cleared');
       advance(game);
     }
     expect(game.phase).toBe('won');

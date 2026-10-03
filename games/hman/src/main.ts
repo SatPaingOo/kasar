@@ -6,13 +6,26 @@
  * knows there is a DOM.
  */
 
-import { advance, casesOf, createGame, levelAt, levelCount, resolve, retry, score, takeHint } from './game.js';
+import {
+  advance,
+  carryOn,
+  casesOf,
+  createGame,
+  hasNext,
+  levelAt,
+  levelCount,
+  resolve,
+  retry,
+  score,
+  takeHint,
+} from './game.js';
 import type { Game } from './game.js';
 import { run } from './runner.js';
 import { adviseOn } from './advice.js';
 import { draw } from './render.js';
-import { BLOW, DOWN, swingAt } from './beat.js';
+import { DOWN, blowSeconds, swingAt } from './beat.js';
 import { MUTE_LABEL, createSound } from './sound.js';
+import { lineCount, onBackspace, onBracket, onEnter, onTab } from './editing.js';
 import type { Blow, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
 import type { Lang } from './strings.js';
@@ -43,6 +56,7 @@ const curtainLeadEl = need<HTMLElement>('#curtainLead');
 const curtainBodyEl = need<HTMLElement>('#curtainBody');
 const curtainGoEl = need<HTMLButtonElement>('#curtainGo');
 const muteEl = need<HTMLButtonElement>('#mute');
+const gutterEl = need<HTMLElement>('#gutter');
 
 const lang: Lang = pickLang([navigator.language, ...navigator.languages]);
 document.documentElement.lang = lang;
@@ -60,6 +74,10 @@ let blow: Blow | null = null;
 let since = 0;
 /** Whether this blow has already sounded, so it lands once and not every frame. */
 let rang = false;
+/** How many blows of this submit have already been thrown. */
+let thrown = 0;
+/** How long the blow on screen lasts. */
+let span = 0;
 const sound = createSound();
 
 function resize(): void {
@@ -114,6 +132,7 @@ function showRung(): void {
   }
 
   bodyEl.value = level.starter;
+  drawGutter();
   drawHints();
   say('');
 }
@@ -208,16 +227,17 @@ function playOut(dt: number): void {
     if (next === undefined) {
       if (busy) {
         busy = false;
-        advance(game);
+        thrown = 0;
         if (game.phase === 'down') {
           // He topples first; the card waits until he is on the floor.
           downFor = 0;
           sound.play('lost');
-        } else if (game.phase === 'won') {
-          sound.play('won');
-          showEnd();
+        } else if (game.phase === 'cleared') {
+          // So does the mirror, and that is the whole reward for the rung.
+          clearedFor = 0;
+          sound.play('cleared');
         } else {
-          if (game.solved.every((d) => d)) sound.play('cleared');
+          carryOn(game);
           showRung();
           submitEl.disabled = false;
         }
@@ -228,13 +248,15 @@ function playOut(dt: number): void {
     blow = next;
     since = 0;
     rang = false;
+    span = blowSeconds(next.landed, thrown);
+    thrown += 1;
     return;
   }
 
   since += dt;
   // The sound belongs at the moment of contact, not at the start of the
   // wind-up: a thud that arrives before the fist does reads as a glitch.
-  if (!rang && swingAt(since).struck) {
+  if (!rang && swingAt(since, 1, span).struck) {
     rang = true;
     if (blow.error !== null) sound.play('broke');
     else if (blow.landed) {
@@ -243,10 +265,24 @@ function playOut(dt: number): void {
     } else sound.play('miss');
   }
 
-  if (since >= BLOW) {
+  if (since >= span) {
     blow = null;
     since = 0;
   }
+}
+
+/**
+ * The rung is beaten. Said out loud, with what comes next named, and left for
+ * the player to step through — this is the only reward the game has and it
+ * used to happen silently between two frames.
+ */
+function showCleared(): void {
+  const next = levelAt(game.level + 1);
+  curtainTitleEl.textContent = t.cleared;
+  curtainLeadEl.textContent = `${t.rungDone} ${game.level + 1}/${levelCount()}`;
+  curtainBodyEl.textContent = hasNext(game) && next !== undefined ? `${t.nextUp} ${next.concept[lang]}` : '';
+  curtainGoEl.textContent = hasNext(game) ? t.goOn : t.finish;
+  curtainEl.hidden = false;
 }
 
 function showEnd(): void {
@@ -272,6 +308,7 @@ function begin(): void {
   game = createGame();
   onDesk = -1;
   downFor = null;
+  clearedFor = null;
   queue = [];
   blow = null;
   busy = false;
@@ -296,6 +333,7 @@ function skip(): void {
   queue = [];
   blow = null;
   since = 0;
+  thrown = 0;
 }
 canvas.addEventListener('pointerdown', skip);
 
@@ -322,6 +360,26 @@ curtainGoEl.addEventListener('click', () => {
   sound.unlock();
   // Beaten by a rung, you get that rung again — not the whole run from the
   // bottom. What is cleared below stays cleared.
+  if (game.phase === 'cleared') {
+    // Asked before advancing, because afterwards the phase is narrowed to
+    // what it was and reading it back to see if the run is over does not
+    // compile.
+    const wasLast = !hasNext(game);
+    advance(game);
+    clearedFor = null;
+    queue = [];
+    blow = null;
+    busy = false;
+    curtainEl.hidden = true;
+    if (wasLast) {
+      showEnd();
+      return;
+    }
+    showRung();
+    submitEl.disabled = false;
+    bodyEl.focus();
+    return;
+  }
   if (game.phase === 'down') {
     retry(game);
     downFor = null;
@@ -340,6 +398,30 @@ curtainGoEl.addEventListener('click', () => {
 
 // Ctrl/Cmd+Enter submits, because reaching for the mouse mid-thought is the
 // one thing a box like this must not make you do.
+/** Numbers down the side, scrolled with the text. */
+function drawGutter(): void {
+  const lines = lineCount(bodyEl.value);
+  let out = '';
+  for (let i = 1; i <= lines; i += 1)
+    out += `${i}
+`;
+  gutterEl.textContent = out;
+  gutterEl.scrollTop = bodyEl.scrollTop;
+}
+
+/** Put an edit back into the box and leave the caret where it belongs. */
+function apply(edit: { readonly text: string; readonly caret: number }): void {
+  bodyEl.value = edit.text;
+  bodyEl.selectionStart = edit.caret;
+  bodyEl.selectionEnd = edit.caret;
+  drawGutter();
+}
+
+bodyEl.addEventListener('scroll', () => {
+  gutterEl.scrollTop = bodyEl.scrollTop;
+});
+bodyEl.addEventListener('input', drawGutter);
+
 bodyEl.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     skip();
@@ -348,6 +430,38 @@ bodyEl.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     void strike();
+    return;
+  }
+
+  const start = bodyEl.selectionStart;
+  const end = bodyEl.selectionEnd;
+
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    apply(onTab(bodyEl.value, start, end, event.shiftKey));
+    return;
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    apply(onEnter(bodyEl.value, start));
+    return;
+  }
+  if (start === end) {
+    if (event.key === 'Backspace') {
+      const edit = onBackspace(bodyEl.value, start);
+      if (edit !== null) {
+        event.preventDefault();
+        apply(edit);
+      }
+      return;
+    }
+    if (event.key.length === 1) {
+      const edit = onBracket(bodyEl.value, start, event.key);
+      if (edit !== null) {
+        event.preventDefault();
+        apply(edit);
+      }
+    }
   }
 });
 
@@ -355,6 +469,8 @@ let last = performance.now();
 let drawFailed = false;
 /** Seconds since he went down, or null while he is on his feet. */
 let downFor: number | null = null;
+/** Seconds since the mirror went down, or null while it still stands. */
+let clearedFor: number | null = null;
 
 /**
  * One step of the world.
@@ -378,9 +494,13 @@ function step(now: number, cap: number): void {
     downFor += dt;
     if (downFor >= DOWN && curtainEl.hidden) showEnd();
   }
+  if (clearedFor !== null) {
+    clearedFor += dt;
+    if (clearedFor >= DOWN && curtainEl.hidden) showCleared();
+  }
   playOut(dt);
   try {
-    draw(paint, view, game, { lang, time: clock, blow, since, downFor });
+    draw(paint, view, game, { lang, time: clock, blow, since, downFor, clearedFor, span });
   } catch (err) {
     if (!drawFailed) {
       drawFailed = true;

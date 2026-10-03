@@ -9,8 +9,24 @@
  * *holds*, because the hold is where the answer is readable.
  */
 
-/** One blow, start to finish. */
+/**
+ * One blow, start to finish — and a much shorter one for the rest of a flurry.
+ *
+ * Four correct cases are four blows, and at a full beat each that was three
+ * and a quarter seconds of good news delivered one slow punch at a time, with
+ * the desk locked for all of it. Answering a rung correctly then took over six
+ * seconds to say so, which reads as nothing having happened.
+ *
+ * So the first blow of a submit gets the full beat and the hits after it are
+ * quick. A miss always gets the full beat wherever it falls, because the miss
+ * is the one carrying something you have to read.
+ */
 export const BLOW = 0.8;
+export const BLOW_AGAIN = 0.3;
+
+export function blowSeconds(landed: boolean, index: number): number {
+  return landed && index > 0 ? BLOW_AGAIN : BLOW;
+}
 
 export interface Swing {
   /** 0 to 1, pulling back. */
@@ -34,8 +50,8 @@ const clamp01 = (v: number): number => Math.min(1, Math.max(0, v));
 /** When in the blow the hit happens. Everything before is a wind-up. */
 const IMPACT = 0.34;
 
-export function swingAt(since: number, hard: number = 1): Swing {
-  const t = clamp01(since / BLOW);
+export function swingAt(since: number, hard: number = 1, span: number = BLOW): Swing {
+  const t = clamp01(since / span);
   const struck = t >= IMPACT;
   const after = clamp01((t - IMPACT) / (1 - IMPACT));
 
@@ -54,8 +70,8 @@ export function swingAt(since: number, hard: number = 1): Swing {
   };
 }
 
-/** How long the going-down takes before the card is readable. */
-export const DOWN = 1.5;
+/** How long a topple takes before the card is readable. */
+export const DOWN = 0.9;
 
 export interface Falling {
   /** 0 on his feet, 1 flat out. */
