@@ -2,6 +2,26 @@
 
 Keep a Changelog, newest first.
 
+## [0.4.1] — 2026-10-03
+
+### Fixed
+
+- Nothing happened when you were right. The blows played, the mirror's blocks
+  emptied, the status line said so — and then the mirror stayed standing, no
+  card came, and the rung never changed.
+
+  A race between the worker and the loop. `busy` was set before awaiting the
+  player's code, and the loop reads an empty queue plus `busy` as "the fight
+  has finished" — so in the gap between pressing Strike and the code coming
+  back, the loop decided the fight was over, released the desk and went past
+  the moment where clearing a rung is noticed. By the time the real result
+  arrived the loop had already finished with it.
+
+  It came down to who got there first. At sixty frames a second the loop
+  always wins, which is why it never worked for a player. In a throttled page
+  the worker usually wins, which is why every test here kept passing — the
+  tests were run in a page that was not drawing.
+
 ## [0.4.0] — 2026-10-03
 
 ### Fixed

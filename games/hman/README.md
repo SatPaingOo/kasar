@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.4.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.4.1
 
 မှန် — correct.
 

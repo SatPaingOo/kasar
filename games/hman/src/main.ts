@@ -87,6 +87,21 @@ let game: Game = createGame();
 let view: View = { width: 1, height: 1 };
 let clock = 0;
 let busy = false;
+/**
+ * True while the worker is still running the player's code.
+ *
+ * This is the whole bug. `busy` was set before awaiting the worker, and the
+ * loop reads an empty queue plus `busy` as "the fight has finished" — so
+ * between pressing Strike and the code coming back, the loop decided the fight
+ * was over, let the desk go and moved past the moment where clearing a rung is
+ * noticed. By the time the real result arrived the loop had already finished
+ * with it, so the mirror never fell and no card ever came.
+ *
+ * It depended on who got there first. In a page running at sixty frames a
+ * second the loop always wins, which is why it never worked for a player; in a
+ * throttled one the worker usually wins, which is why it kept passing here.
+ */
+let awaiting = false;
 
 /** The blows from the last submit, played one at a time. */
 let queue: Blow[] = [];
@@ -186,11 +201,13 @@ function drawHints(): void {
 async function strike(): Promise<void> {
   if (busy || game.phase !== 'writing') return;
   busy = true;
+  awaiting = true;
   submitEl.disabled = true;
   hintEl.disabled = true;
 
   const source = bodyEl.value;
   const outcome = await run(source, casesOf(game));
+  awaiting = false;
 
   if (outcome.fatal !== null) {
     // Nothing ran, so nothing is resolved — this is a miss, not a maul.
@@ -242,6 +259,9 @@ async function strike(): Promise<void> {
 
 /** Walk the blows, then move the run on. */
 function playOut(dt: number): void {
+  // Nothing has happened yet: the code is still running.
+  if (awaiting) return;
+
   if (blow === null) {
     const next = queue.shift();
     if (next === undefined) {
@@ -349,7 +369,7 @@ hintEl.textContent = t.hint;
  * the rest before they can edit.
  */
 function skip(): void {
-  if (!busy) return;
+  if (!busy || awaiting) return;
   queue = [];
   blow = null;
   since = 0;
