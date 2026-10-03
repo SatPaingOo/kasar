@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.6.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.7.0
 
 မှန် — correct.
 
@@ -21,8 +21,7 @@ From the repository root:
 npm run play
 ```
 
-Then open `games/hman/`. Keyboard only, so it does not work on a phone — the
-only one on the shelf that does not.
+Then open `games/hman/`. A keyboard is best, and a phone works: see below.
 
 ## Playing it
 
@@ -158,6 +157,19 @@ works. That last one is not free: setting a textarea's value throws its undo
 history away, so every edit goes in through `insertText`, the one way to put
 text into a textarea that the browser's own undo knows about.
 
+On a phone the box gets a row of the symbols a phone keyboard keeps two
+screens away — brackets, quotes, `;`, `=>`, `&&`, `??` and an indent key —
+which stays at the bottom of the desk, just above the keyboard, because the
+page asks to be resized for the keyboard rather than covered by it. Pressing
+one is cancelled before it can take the focus, since on a phone a box that
+loses focus closes its keyboard; the click does the typing. While the box is
+focused the fight shrinks, and it comes back for the blows.
+
+A phone also "improves" punctuation: `'` becomes `’` and `--` becomes `—`,
+which is right in a message and a syntax error in code that says nothing
+about quotes. Each one is put straight as it arrives, as an edit that can be
+undone like any other.
+
 There is no completion and no type checking, and both are deliberate. Typing
 out `parts.filter` is part of learning it, and type checking is a compiler.
 
@@ -262,6 +274,10 @@ land when it comes.
   compiler is on the ladder. Asking the player to *write* types — an alias, an
   interface, an annotation — needs `tsc` in the page, and that is the point
   at which this stops being a shelf game.
+- A run in a real Firefox. Every API the page uses is in Firefox 121 and
+  later, but whether the colour under the text lines up with a Firefox
+  textarea to the pixel can only be seen there; so far it has only been played
+  in Chromium.
 - Whether this belongs on the shelf at all. It is here to find that out: if it
   gets replayed to practise rather than to play, it wants to be its own thing,
   with more languages and saved progress — and a Python runtime is ten

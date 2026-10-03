@@ -25,7 +25,7 @@ import { adviseOn, whyMissed } from './advice.js';
 import { draw } from './render.js';
 import { DOWN, WIN, blowSeconds, swingAt } from './beat.js';
 import { MUTE_LABEL, createSound } from './sound.js';
-import { lineCount, onBackspace, onEnter, onTab, onType, toggleComment } from './editing.js';
+import { lineCount, onBackspace, onEnter, onSymbol, onTab, onType, straighten, toggleComment } from './editing.js';
 import type { Edit } from './editing.js';
 import { tokenize } from './highlight.js';
 import { CHAPTERS, LEVELS } from './levels.js';
@@ -76,6 +76,7 @@ const curtainNextEl = need<HTMLElement>('#curtainNext');
 const curtainGoEl = need<HTMLButtonElement>('#curtainGo');
 const curtainAltEl = need<HTMLButtonElement>('#curtainAlt');
 const mapEl = need<HTMLElement>('#map');
+const symbolsEl = need<HTMLElement>('#symbols');
 const buildEl = need<HTMLElement>('#build');
 
 /**
@@ -227,6 +228,13 @@ function refresh(): void {
 
 /** The text changed: the old mistake no longer applies, and it is worth keeping. */
 function edited(): void {
+  // A phone's curly quote is put straight first. That edit fires this again,
+  // so one fix per call is enough to get them all.
+  const fix = straighten(bodyEl.value, bodyEl.selectionStart);
+  if (fix !== null) {
+    apply(fix);
+    return;
+  }
   badLine = null;
   refresh();
   const level = levelAt(game.level);
@@ -740,6 +748,55 @@ curtainAltEl.addEventListener('click', () => {
 });
 
 // ── Keys ───────────────────────────────────────────────────────────────
+
+/**
+ * The row of symbols for a phone. Pressing one must not take the focus off
+ * the box — on a phone that closes the keyboard — so the press is cancelled
+ * and only the click acts.
+ */
+const SYMBOLS: readonly (readonly [label: string, insert: string])[] = [
+  ['⇥', '\t'],
+  ['(', '('],
+  [')', ')'],
+  ['{', '{'],
+  ['}', '}'],
+  ['[', '['],
+  [']', ']'],
+  [';', ';'],
+  ['=', '='],
+  ['=>', '=>'],
+  ['.', '.'],
+  [',', ','],
+  ["'", "'"],
+  ['"', '"'],
+  ['`', '`'],
+  ['+', '+'],
+  ['-', '-'],
+  ['*', '*'],
+  ['/', '/'],
+  ['%', '%'],
+  ['<', '<'],
+  ['>', '>'],
+  ['!', '!'],
+  ['&&', '&&'],
+  ['||', '||'],
+  ['??', '??'],
+  ['?', '?'],
+  [':', ':'],
+];
+for (const [label, insert] of SYMBOLS) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.tabIndex = -1;
+  button.textContent = label;
+  if (insert === '\t') button.setAttribute('aria-label', 'indent');
+  button.addEventListener('pointerdown', (event) => event.preventDefault());
+  button.addEventListener('mousedown', (event) => event.preventDefault());
+  button.addEventListener('click', () => {
+    apply(onSymbol(bodyEl.value, bodyEl.selectionStart, bodyEl.selectionEnd, insert));
+  });
+  symbolsEl.append(button);
+}
 
 bodyEl.addEventListener('scroll', () => {
   colourEl.scrollLeft = bodyEl.scrollLeft;

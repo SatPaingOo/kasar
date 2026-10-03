@@ -17,7 +17,9 @@ import {
   onEnter,
   onTab,
   onType,
+  onSymbol,
   opensBlock,
+  straighten,
   toggleComment,
 } from '../../src/editing.js';
 import type { Edit } from '../../src/editing.js';
@@ -211,5 +213,53 @@ describe('Ctrl+/', () => {
     const once = applied(text, toggleComment(text, 0, text.length));
     const twice = applied(once, toggleComment(once, 0, once.length));
     expect(twice).toBe(text);
+  });
+});
+
+describe('the row of symbols a phone needs', () => {
+  it('pairs a bracket the way typing one would', () => {
+    const out = after('return ', onSymbol('return ', 7, 7, '['));
+    expect(out.text).toBe('return []');
+    expect(out.caret).toBe(8);
+  });
+
+  it('indents with the tab key', () => {
+    expect(after('x', onSymbol('x', 0, 0, '\t')).text).toBe('  x');
+  });
+
+  it('puts in a longer symbol as it is', () => {
+    const out = after('(n) ', onSymbol('(n) ', 4, 4, '=>'));
+    expect(out.text).toBe('(n) =>');
+    expect(out.caret).toBe(6);
+  });
+
+  it('steps over a closer that is already there', () => {
+    const out = after('()', onSymbol('()', 1, 1, ')'));
+    expect(out.text).toBe('()');
+    expect(out.caret).toBe(2);
+  });
+});
+
+describe("a phone's punctuation", () => {
+  it('straightens a curly quote, keeping the caret', () => {
+    const text = 'return \u2018a\u2019;';
+    let current = text;
+    let caret = current.length;
+    for (let edit = straighten(current, caret); edit !== null; edit = straighten(current, caret)) {
+      current = applied(current, edit);
+      caret = edit.end;
+    }
+    expect(current).toBe("return 'a';");
+    expect(caret).toBe(current.length);
+  });
+
+  it('turns a long dash back into the two minuses it was', () => {
+    const edit = straighten('i\u2014', 2);
+    expect(edit === null ? null : applied('i\u2014', edit)).toBe('i--');
+    expect(edit?.end).toBe(3);
+  });
+
+  it('leaves ordinary code alone', () => {
+    expect(straighten("return 'a' - 1;", 3)).toBeNull();
   });
 });

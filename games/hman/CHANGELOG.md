@@ -2,6 +2,21 @@
 
 Keep a Changelog, newest first.
 
+## [0.7.0] — 2026-10-03
+
+### Added
+
+- It can be played on a phone. A row of symbols — brackets, quotes, `;`,
+  `=>`, `&&`, `??`, an indent key — sits at the bottom of the desk, above the
+  keyboard, and pressing one never takes the focus from the box, so the
+  keyboard stays open. While the box is focused the fight shrinks to make
+  room, and comes back for the blows.
+
+### Fixed
+
+- A phone's smart punctuation — `’` for `'`, `—` for `--` — is put straight
+  as it is typed. It was a syntax error that never mentioned quotes.
+
 ## [0.6.0] — 2026-10-03
 
 ### Added

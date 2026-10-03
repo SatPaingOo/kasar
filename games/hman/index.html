@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <title>Hman</title>
     <style>
       /*
@@ -241,6 +244,52 @@
         font-size: 0.68rem;
         color: var(--ink-dim);
         opacity: 0.75;
+      }
+
+      /*
+        The symbols a phone keeps two screens away, in a row that stays at the
+        bottom of the desk — just above the keyboard, once the page has been
+        told to shrink for it. Only where there is no keyboard worth the name.
+      */
+      .symbols {
+        display: none;
+        gap: 0.3rem;
+        overflow-x: auto;
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        padding: 0.35rem 0;
+        background: var(--surface);
+        scrollbar-width: none;
+      }
+
+      .symbols button {
+        flex: none;
+        min-width: 2.6rem;
+        min-height: 2.6rem;
+        padding: 0 0.55rem;
+        font-family: var(--mono);
+        font-size: 0.95rem;
+      }
+
+      @media (pointer: coarse), (max-width: 640px) {
+        .symbols {
+          display: flex;
+        }
+      }
+
+      @media (pointer: coarse) {
+        .keys {
+          display: none;
+        }
+
+        /* While typing, the fight can be small: it is the box being looked at.
+           Strike takes the focus away, and the fight comes back to full size
+           for the blows. */
+        body:has(#body:focus) #stage {
+          flex-basis: 22%;
+          min-height: 110px;
+        }
       }
 
       .row {
@@ -528,6 +577,7 @@
         </div>
         <pre class="frame tail" id="tail">}</pre>
       </div>
+      <div class="symbols" id="symbols"></div>
       <div class="row">
         <button id="submit" class="go" type="button"></button>
         <button id="hint" type="button"></button>

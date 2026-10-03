@@ -228,3 +228,41 @@ export function toggleComment(text: string, start: number, end: number): Edit {
     .join('\n');
   return { from, to, insert, start: start + firstDelta, end: end + delta };
 }
+
+/**
+ * A key from the row of symbols a phone needs, since its keyboard keeps every
+ * bracket two screens away. Brackets and quotes go through the same pairing
+ * typing them would; the indent key is Tab; anything longer goes in as it is.
+ */
+export function onSymbol(text: string, start: number, end: number, symbol: string): Edit {
+  if (symbol === '\t') return onTab(text, start, end, false);
+  if (symbol.length === 1) {
+    const paired = onType(text, start, end, symbol);
+    if (paired !== null) return paired;
+  }
+  return caretAt(start, end, symbol, start + symbol.length);
+}
+
+const SMART: Readonly<Record<string, string>> = {
+  '\u2018': "'",
+  '\u2019': "'",
+  '\u201c': '"',
+  '\u201d': '"',
+  '\u2014': '--',
+};
+
+/**
+ * Undo a phone's idea of good punctuation.
+ *
+ * A phone keyboard turns ' into ’ and -- into —, which is right for a
+ * message and a syntax error in code — and the error says nothing about
+ * quotes. One character at a time, the first it finds, so each fix goes in
+ * as an edit the browser can undo like any other.
+ */
+export function straighten(text: string, caret: number): Edit | null {
+  const at = text.search(/[\u2018\u2019\u201c\u201d\u2014]/);
+  if (at < 0) return null;
+  const plain = SMART[text[at] ?? ''] ?? '';
+  const moved = caret > at ? caret + plain.length - 1 : caret;
+  return { from: at, to: at + 1, insert: plain, start: moved, end: moved };
+}
