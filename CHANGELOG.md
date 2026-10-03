@@ -5,7 +5,15 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+### Added
+
+- `npm run e2e` — plays Hman end to end in the installed Firefox and Chrome,
+  over their own remote protocols, with no dependency.
+
 ### Changed
+
+- The README lists all four games on the shelf. It still listed only the
+  first.
 
 - The shelf no longer borrows Tazaung's night sky, lantern glyph and drifting
   embers. It is greyscale with a faint grid, and every colour on the page now

@@ -1,6 +1,6 @@
 # Kasar
 
-**Status:** S2 Shaped · active · last reviewed 2026-10-02
+**Status:** S2 Shaped · active · last reviewed 2026-10-03
 
 A shelf of small browser games. The shelf lists what is on it and links to
 each game; a game is a page of its own, in its own folder, with its own
@@ -26,6 +26,7 @@ npm run play      # build the shelf and every game, then serve on :5190
 | `npm run stage` | collect only what the site is into `site/` |
 | `npm run typecheck` | check the shelf and every game at once |
 | `npm test` | the rules, headlessly |
+| `npm run e2e` | build, then play Hman in the installed Firefox and Chrome — see **End to end** |
 | `npm run lint` | ESLint |
 | `npm run format` / `format:check` | Prettier |
 
@@ -133,13 +134,18 @@ games/<id>/            one game, standing alone
 tools/manifest.ts      games/*/game.json → games.json
 tools/build-games.ts   tsc per game
 tools/serve.ts         dev static server, serves folder indexes
+tools/stage.ts         collects what the site is into site/
+tools/e2e.ts           plays Hman in real browsers, end to end
 ```
 
 ## On the shelf
 
 | | |
 |---|---|
-| [Tazaung](games/tazaung/README.md) | Relight a sky that is going out, before your own lantern does |
+| [Tazaung](games/tazaung/README.md) | The sky is going out. Relight it before your lantern does. |
+| [Hlaykar](games/hlaykar/README.md) | The water is rising. Stack the stones; he climbs whatever you build. |
+| [Kyo](games/kyo/README.md) | A gorge, and one rope. The only thing to decide is when to let go. |
+| [Hman](games/hman/README.md) | Write the move and he makes it — seventy-five rungs of TypeScript, where a right answer lands on the mirror and a wrong one lands on you. |
 
 ## Tests
 
@@ -148,9 +154,12 @@ keeps its own version; the shelf's and the tools' live in `tests/unit/`.
 
 ```text
 games/tazaung/tests/unit/game.test.ts   the rules
+games/hman/tests/unit/game.test.ts      every rung's own answer run, and every trap made to spring
 tests/unit/tools/request.test.ts        what the dev server may serve
 tests/unit/tools/manifest.test.ts       what counts as a describable game
 tests/unit/tools/site.test.ts           what goes live
+tests/unit/tools/browsers.test.ts       which installed browser the end-to-end run uses
+tests/unit/tools/hman-e2e.test.ts       how the end-to-end run tells a pass
 tests/unit/shell/colour.test.ts         contrast on an accent nobody here chose
 tests/unit/shell/lang.test.ts           which language the shelf opens in
 ```
@@ -169,6 +178,33 @@ What is **not** tested is the drawing. Asserting on a canvas needs a native
 canvas build, and a snapshot of pixels tells you something changed, not
 whether it looks right. The wizard, the sky, the scroll and the motes are
 checked by looking at them.
+
+### End to end
+
+`npm run e2e` builds, serves the working tree on a free port, and plays Hman
+in every installed browser — Firefox and Chrome (or Edge) — and then says
+what passed. `npm run e2e -- firefox` runs one; `npm run e2e -- --url <site>`
+plays a site that is already up, such as the live one.
+
+It plays the way a person does: the editor by real key presses, undo and
+redo included; one of every kind of mistake, with the advice and the line it
+must come back with; all seventy-five rungs in order from an empty save; and
+the row of symbols at phone width. The textarea's own text is drawn in red
+over the colour beneath it and photographed, because whether the two line up
+is a thing to look at — the screenshots' folder is printed at the end.
+
+Hman is the game this exists for. Its two worst failures got past every unit
+test: a race between the worker and the loop that only lost at sixty frames a
+second, and a syntax error that Firefox reported with no message and no line.
+Both were found by playing it, and this is that playing, made repeatable.
+
+It drives the browsers already installed, never downloaded ones, over their
+own remote protocols — WebDriver BiDi for Firefox, the DevTools protocol for
+Chrome — with nothing but Node's built-in WebSocket, so it adds no
+dependency. That is also the reason it can run here at all: Smart App Control
+refuses the unsigned test builds a browser-automation package downloads, and
+lets the signed installed ones run. It is not in CI yet; it runs where the
+browsers are.
 
 ## Stage notes
 

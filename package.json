@@ -15,6 +15,7 @@
     "stage": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/stage.ts",
     "serve": "node --disable-warning=ExperimentalWarning --experimental-strip-types tools/serve.ts",
     "play": "npm run build && npm run serve",
+    "e2e": "npm run build && node --disable-warning=ExperimentalWarning --experimental-strip-types tools/e2e.ts",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",

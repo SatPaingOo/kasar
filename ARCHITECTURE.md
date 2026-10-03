@@ -4,7 +4,7 @@ Structure, decisions, and the reasons behind them. Naming and layout rules come
 from the SPO canon (`spo canon` shows where it is); this document covers what is
 specific to this system.
 
-**Last reviewed:** 2026-10-02
+**Last reviewed:** 2026-10-03
 
 ---
 
@@ -32,7 +32,7 @@ kasar/
 ├── games.json            # generated from games/*/game.json; gitignored
 ├── src/shell/            # reads games.json, renders cards — nothing else
 ├── games/<id>/           # one game, entirely self-contained
-├── tools/                # dev scripts: manifest, per-game build, static server
+├── tools/                # dev scripts: manifest, per-game build, static server, e2e
 └── dist/shell/           # compiled shelf; gitignored
 ```
 
@@ -179,5 +179,6 @@ much less for much more work.
   and a pixel snapshot says something changed, not whether it looks right.
 - `src/shell/main.ts` wires the DOM and is not covered; the judgments it used
   to hold were moved to `colour.ts` and `lang.ts`, which are.
-- No end-to-end test: that the shelf links to a game that loads is checked by
-  opening it.
+- End to end covers Hman only (`npm run e2e`, in the installed Firefox and
+  Chrome, locally — not in CI). That the shelf links to a game that loads, and
+  the other three games, are still checked by opening them.
