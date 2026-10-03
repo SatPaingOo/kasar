@@ -75,6 +75,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Rows and columns', my: 'အတန်းနဲ့ အတိုင်' },
   { en: 'Doing it well', my: 'ကောင်းကောင်း လုပ်' },
   { en: 'One on top of another', my: 'တစ်ခုပေါ် တစ်ခု' },
+  { en: 'Small programs', my: 'ပရိုဂရမ် အသေးလေးတွေ' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -2510,5 +2511,224 @@ export const LEVELS: readonly Level[] = [
     },
     another:
       "const ops = { '+': (a, b) => a + b, '-': (a, b) => a - b, '*': (a, b) => a * b, '/': (a, b) => a / b };\nconst stack = [];\nfor (const t of tokens) {\n  if (t in ops) {\n    const right = stack.pop();\n    stack.push(ops[t](stack.pop(), right));\n  } else stack.push(Number(t));\n}\nreturn stack.pop();",
+  },
+
+  // ── Small programs ──────────────────────────────────────────────────
+  {
+    id: 'fizzbuzz',
+    chapter: 12,
+    concept: { en: 'the counting game', my: 'ရေတွက်တဲ့ ကစားနည်း' },
+    brief: {
+      en: "Count from 1 to n. Say 'Fizz' for a multiple of 3, 'Buzz' for a multiple of 5, 'FizzBuzz' for both, and otherwise the number itself, as text. Give back what is said.",
+      my: "1 ကနေ n အထိ ရေတွက်ပါ။ 3 ရဲ့ ဆတိုးကိန်းဆိုရင် 'Fizz'၊ 5 ရဲ့ ဆတိုးကိန်းဆိုရင် 'Buzz'၊ နှစ်ခုလုံးဆိုရင် 'FizzBuzz'၊ မဟုတ်ရင် ဂဏန်းကိုယ်တိုင်ကို စာသားအဖြစ် ပြောပါ။ ပြောတာတွေကို ပြန်ပေးပါ။",
+    },
+    signature: 'function strike(n: number): string[]',
+    starter: '',
+    shown: [one(5, ['1', '2', 'Fizz', '4', 'Buzz']), one(1, ['1'])],
+    cases: [
+      one(15, ['1', '2', 'Fizz', '4', 'Buzz', 'Fizz', '7', '8', 'Fizz', 'Buzz', '11', 'Fizz', '13', '14', 'FizzBuzz']),
+      one(0, []),
+      one(3, ['1', '2', 'Fizz']),
+      one(10, ['1', '2', 'Fizz', '4', 'Buzz', 'Fizz', '7', '8', 'Fizz', 'Buzz']),
+    ],
+    hints: [
+      {
+        en: 'Check for both first. If 3 is checked first, 15 says Fizz and stops there.',
+        my: 'နှစ်ခုလုံးကို အရင်စစ်ပါ။ 3 ကို အရင်စစ်ရင် 15 က Fizz လို့ ပြောပြီး အဲဒီမှာ ရပ်သွားမယ်။',
+      },
+      {
+        en: 'String(i) turns a number into text, and the list must hold only strings.',
+        my: 'String(i) က ဂဏန်းကို စာသား ပြောင်းပေးတယ်၊ စာရင်းထဲမှာ string တွေပဲ ရှိရမယ်။',
+      },
+      code(
+        "const out = [];\nfor (let i = 1; i <= n; i += 1) {\n  if (i % 15 === 0) out.push('FizzBuzz');\n  else if (i % 3 === 0) out.push('Fizz');\n  else if (i % 5 === 0) out.push('Buzz');\n  else out.push(String(i));\n}\nreturn out;",
+      ),
+    ],
+    lesson: {
+      en: 'FizzBuzz is the oldest interview question there is, because it catches exactly two things: the order of the conditions, and the type of what comes back. Ask the most specific question first; promise strings, give strings.',
+      my: 'FizzBuzz က interview မေးခွန်းတွေထဲမှာ အဟောင်းဆုံးပဲ၊ အရာ နှစ်ခုကို အတိအကျ ဖမ်းလို့: အခြေအနေတွေရဲ့ အစီအစဉ်နဲ့ ပြန်လာတဲ့အရာရဲ့ type။ အတိကျဆုံး မေးခွန်းကို အရင်မေး၊ string ကတိပေးရင် string ပေး။',
+    },
+    another:
+      "return Array.from({ length: n }, (_, k) => {\n  const i = k + 1;\n  return (i % 3 === 0 ? 'Fizz' : '') + (i % 5 === 0 ? 'Buzz' : '') || String(i);\n});",
+  },
+  {
+    id: 'wordcount',
+    chapter: 12,
+    concept: { en: 'how often each word', my: 'စကားလုံး တစ်လုံးစီ ဘယ်နှစ်ခါ' },
+    brief: {
+      en: 'Count the words in the text: split it on spaces, ignore capitals, and give back how many times each word appears. Extra spaces are not words.',
+      my: 'စာသားထဲက စကားလုံးတွေကို ရေတွက်ပါ: space နဲ့ ခွဲ၊ စာလုံးကြီး/သေး ထည့်မတွက်နဲ့၊ စကားလုံး တစ်လုံးစီ ဘယ်နှစ်ခါ ပါလဲ ပြန်ပေးပါ။ space အပိုတွေက စကားလုံး မဟုတ်ဘူး။',
+    },
+    signature: 'function strike(text: string): Record<string, number>',
+    starter: '',
+    shown: [one('the cat the hat', { the: 2, cat: 1, hat: 1 }), one('', {})],
+    cases: [
+      one('Go go GO', { go: 3 }),
+      one('  a  b ', { a: 1, b: 1 }),
+      one('one', { one: 1 }),
+      one('up down up', { up: 2, down: 1 }),
+    ],
+    hints: [
+      {
+        en: 'This is the tally from chapter six, with the words to be made first.',
+        my: 'ဒါက အခန်း ၆ က ရေတွက်တာပဲ၊ စကားလုံးတွေကို အရင် ထုတ်ရမယ်။',
+      },
+      {
+        en: "split(' ') leaves an empty string wherever two spaces meet. Skip those: if (word === '') continue;",
+        my: "split(' ') က space နှစ်ခု ဆုံတဲ့နေရာတိုင်းမှာ string ဗလာ ချန်ထားခဲ့တယ်။ အဲဒါတွေကို ကျော်ပါ: if (word === '') continue;",
+      },
+      code(
+        "const counts = {};\nfor (const word of text.toLowerCase().split(' ')) {\n  if (word === '') continue;\n  counts[word] = (counts[word] ?? 0) + 1;\n}\nreturn counts;",
+      ),
+    ],
+    lesson: {
+      en: 'Real text is untidy — capitals, doubled spaces, an empty string — and most of a program like this is cleaning it up before the count itself, which is three lines. That proportion is normal.',
+      my: 'တကယ့် စာသားက ရှုပ်ပွတယ် — စာလုံးကြီးတွေ၊ space နှစ်ခုဆင့်၊ string ဗလာ — ဒီလို program ရဲ့ အများစုက တကယ့် ရေတွက်မှု (သုံးကြောင်းပဲ) မတိုင်ခင် သန့်ရှင်းအောင် လုပ်တာပဲ။ အဲဒီ အချိုးက ပုံမှန်ပဲ။',
+    },
+    another:
+      "return text\n  .toLowerCase()\n  .split(' ')\n  .filter((w) => w !== '')\n  .reduce((counts, w) => ({ ...counts, [w]: (counts[w] ?? 0) + 1 }), {});",
+  },
+  {
+    id: 'runlength',
+    chapter: 12,
+    concept: { en: 'said shorter', my: 'တိုတိုပြော' },
+    brief: {
+      en: "Squeeze the text: every run of the same letter becomes the letter and how many there were — 'aaab' is 'a3b1'.",
+      my: "စာသားကို ချုံ့ပါ: စာလုံး တစ်လုံးတည်း ဆက်တိုက် ထပ်နေတာ တစ်ခုစီကို စာလုံးနဲ့ အရေအတွက် ဖြစ်အောင် — 'aaab' က 'a3b1'။",
+    },
+    signature: 'function strike(text: string): string',
+    starter: '',
+    shown: [one('aaab', 'a3b1'), one('xy', 'x1y1')],
+    cases: [one('', ''), one('zzzz', 'z4'), one('aabbaa', 'a2b2a2'), one('abc', 'a1b1c1'), one('aaaaaaaaaaaa', 'a12')],
+    hints: [
+      {
+        en: 'Walk the text keeping the letter you are on and how many of it you have seen in a row.',
+        my: 'စာသားကို လျှောက်ရင်း အခု ရောက်နေတဲ့ စာလုံးနဲ့ အဲဒါကို ဆက်တိုက် ဘယ်နှစ်လုံး တွေ့ခဲ့ပြီလဲ မှတ်ထားပါ။',
+      },
+      {
+        en: 'When the letter changes, write down the run just finished — and do not forget the last run, which nothing comes after.',
+        my: 'စာလုံး ပြောင်းသွားရင် ခုနက ပြီးသွားတဲ့ အတန်းကို ရေးမှတ်ပါ — နောက်ဆုံး အတန်းကို မမေ့နဲ့၊ သူ့နောက်မှာ ဘာမှ မလာတော့လို့။',
+      },
+      code(
+        "let out = '';\nlet i = 0;\nwhile (i < text.length) {\n  let j = i;\n  while (j < text.length && text[j] === text[i]) j += 1;\n  out += text[i] + (j - i);\n  i = j;\n}\nreturn out;",
+      ),
+    ],
+    lesson: {
+      en: 'Run-length encoding is one of the oldest ways of making data smaller; fax machines sent pages with it. Two indexes — where a run starts and where it ends — are cleaner than a counter that has to be remembered and written out at the right moment.',
+      my: 'run-length encoding က data သေးအောင် လုပ်တဲ့ အဟောင်းဆုံး နည်းတွေထဲက တစ်ခု၊ fax စက်တွေက စာမျက်နှာတွေကို ဒီနည်းနဲ့ ပို့ခဲ့တယ်။ index နှစ်ခု — အတန်း စတဲ့နေရာနဲ့ ဆုံးတဲ့နေရာ — က မှတ်ထားပြီး အချိန်ကိုက် ထုတ်ရေးရမယ့် counter တစ်ခုထက် ပိုရှင်းတယ်။',
+    },
+    another:
+      "let out = '';\nlet count = 0;\nfor (let i = 0; i < text.length; i += 1) {\n  count += 1;\n  if (text[i] !== text[i + 1]) {\n    out += text[i] + count;\n    count = 0;\n  }\n}\nreturn out;",
+  },
+  {
+    id: 'caesar',
+    chapter: 12,
+    concept: { en: 'a secret shift', my: 'လျှို့ဝှက် ရွှေ့ခြင်း' },
+    brief: {
+      en: 'Encode the word by moving every letter shift places along the alphabet, wrapping round from z to a. shift may be negative, and the words are all small letters.',
+      my: 'စကားလုံးကို စာလုံးတိုင်း alphabet အတိုင်း shift နေရာ ရွှေ့ပြီး လျှို့ဝှက်ပါ၊ z ကနေ a ကို ပြန်ပတ်ပါ။ shift က အနုတ် ဖြစ်နိုင်တယ်၊ စကားလုံးတွေက စာလုံးသေးချည်းပဲ။',
+    },
+    signature: 'function strike(word: string, shift: number): string',
+    starter: '',
+    shown: [many(['abc', 1], 'bcd'), many(['xyz', 3], 'abc')],
+    cases: [
+      many(['hello', 0], 'hello'),
+      many(['abc', -1], 'zab'),
+      many(['zzz', 26], 'zzz'),
+      many(['kyo', 13], 'xlb'),
+      many(['a', -27], 'z'),
+    ],
+    hints: [
+      {
+        en: "'a'.charCodeAt(0) is 97, and String.fromCharCode(97) is 'a'. Work with each letter's place in the alphabet, 0 to 25.",
+        my: "'a'.charCodeAt(0) က 97၊ String.fromCharCode(97) က 'a'။ စာလုံးတစ်ခုစီရဲ့ alphabet ထဲက နေရာ (0 ကနေ 25) နဲ့ အလုပ်လုပ်ပါ။",
+      },
+      {
+        en: 'Wrapping is % 26 — but in JavaScript -1 % 26 is -1, not 25. ((x % 26) + 26) % 26 is always 0 to 25.',
+        my: 'ပတ်တာက % 26 — ဒါပေမဲ့ JavaScript မှာ -1 % 26 က 25 မဟုတ်ဘဲ -1။ ((x % 26) + 26) % 26 ကတော့ အမြဲ 0 ကနေ 25 ထဲမှာပဲ။',
+      },
+      code(
+        "let out = '';\nfor (const ch of word) {\n  const place = ch.charCodeAt(0) - 97;\n  const moved = (((place + shift) % 26) + 26) % 26;\n  out += String.fromCharCode(97 + moved);\n}\nreturn out;",
+      ),
+    ],
+    lesson: {
+      en: "% is the remainder, not a mathematician's modulo: it keeps the sign of the left side, so -1 % 26 is -1. Adding 26 and taking % again is the standard fix, and it turns up wherever things wrap round — clocks, calendars, a grid whose edges meet.",
+      my: '% က အကြွင်း၊ သင်္ချာပညာရှင်တွေရဲ့ modulo မဟုတ်ဘူး: ဘယ်ဘက်ရဲ့ လက္ခဏာ (+/-) ကို ထိန်းထားလို့ -1 % 26 က -1။ 26 ပေါင်းပြီး % ထပ်ယူတာက စံပြင်ဆင်နည်း၊ ပတ်ပြီး ပြန်လာတဲ့ အရာမှန်သမျှမှာ ပေါ်တယ် — နာရီ၊ ပြက္ခဒိန်၊ အစွန်းချင်း ဆက်နေတဲ့ grid။',
+    },
+  },
+  {
+    id: 'roman',
+    chapter: 12,
+    concept: { en: 'the old way', my: 'ရှေးနည်း' },
+    brief: {
+      en: 'Write n in Roman numerals: I 1, V 5, X 10, L 50, C 100, D 500, M 1000 — and a smaller one before a bigger one takes itself away, as IV is 4 and XC is 90. n is from 1 to 3999.',
+      my: 'n ကို Roman ဂဏန်းနဲ့ ရေးပါ: I 1၊ V 5၊ X 10၊ L 50၊ C 100၊ D 500၊ M 1000 — အသေးက အကြီးရဲ့ ရှေ့မှာ ရှိရင် ကိုယ့်ကိုယ်ကို နုတ်တယ်၊ IV က 4၊ XC က 90 လိုမျိုး။ n က 1 ကနေ 3999 အထိ။',
+    },
+    signature: 'function strike(n: number): string',
+    starter: '',
+    shown: [one(3, 'III'), one(9, 'IX')],
+    cases: [
+      one(4, 'IV'),
+      one(14, 'XIV'),
+      one(40, 'XL'),
+      one(58, 'LVIII'),
+      one(1994, 'MCMXCIV'),
+      one(3999, 'MMMCMXCIX'),
+    ],
+    hints: [
+      {
+        en: 'Greedy works: take the biggest value that still fits, write its letters, subtract it, and repeat.',
+        my: 'greedy နည်း အလုပ်လုပ်တယ်: ဆံ့သေးတဲ့ အကြီးဆုံး တန်ဖိုးကို ယူ၊ သူ့စာလုံးကို ရေး၊ နုတ်၊ ပြီးရင် ထပ်လုပ်။',
+      },
+      {
+        en: 'Put the take-away pairs in the table too — 900 CM, 400 CD, 90 XC, 40 XL, 9 IX, 4 IV — and they need no special case at all.',
+        my: 'နုတ်တဲ့ အတွဲတွေကိုလည်း ဇယားထဲ ထည့်ပါ — 900 CM၊ 400 CD၊ 90 XC၊ 40 XL၊ 9 IX၊ 4 IV — ဒါဆို သီးသန့် case လုံးဝ မလိုတော့ဘူး။',
+      },
+      code(
+        "const table = [\n  [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],\n  [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],\n  [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],\n];\nlet out = '';\nfor (const [value, letters] of table) {\n  while (n >= value) {\n    out += letters;\n    n -= value;\n  }\n}\nreturn out;",
+      ),
+    ],
+    lesson: {
+      en: 'The table is the program: the loop is three lines, and everything known about Roman numerals is data. Putting the awkward cases into the data rather than into ifs is one of the best habits there is.',
+      my: 'ဇယားကိုယ်တိုင်က program ပဲ: loop က သုံးကြောင်းပဲ၊ Roman ဂဏန်းအကြောင်း သိထားသမျှ အားလုံးက data ထဲမှာ။ ခက်တဲ့ case တွေကို if တွေထဲ မထည့်ဘဲ data ထဲ ထည့်တာက အကောင်းဆုံး အလေ့အကျင့်တွေထဲက တစ်ခုပဲ။',
+    },
+  },
+  {
+    id: 'change',
+    chapter: 12,
+    concept: { en: 'the right notes', my: 'ပိုက်ဆံ ခွဲ' },
+    brief: {
+      en: 'Pay amount kyats in notes of 10000, 5000, 1000, 500, 200, 100 and 50, using as few notes as you can. Give back how many of each, biggest first, as a list of seven counts. amount is always a multiple of 50.',
+      my: 'amount ကျပ်ကို 10000၊ 5000၊ 1000၊ 500၊ 200၊ 100 နဲ့ 50 တန် ငွေစက္ကူတွေနဲ့ စက္ကူ အနည်းဆုံး သုံးပြီး ပေးပါ။ တစ်မျိုးစီ ဘယ်နှစ်ရွက်လဲကို အကြီးဆုံးကနေ စပြီး အရေအတွက် ခုနစ်ခုပါတဲ့ စာရင်းအဖြစ် ပြန်ပေးပါ။ amount က အမြဲ 50 ရဲ့ ဆတိုးကိန်း။',
+    },
+    signature: 'function strike(amount: number): number[]',
+    starter: '',
+    shown: [one(15750, [1, 1, 0, 1, 1, 0, 1]), one(300, [0, 0, 0, 0, 1, 1, 0])],
+    cases: [
+      one(0, [0, 0, 0, 0, 0, 0, 0]),
+      one(50, [0, 0, 0, 0, 0, 0, 1]),
+      one(1000, [0, 0, 1, 0, 0, 0, 0]),
+      one(400, [0, 0, 0, 0, 2, 0, 0]),
+      one(26850, [2, 1, 1, 1, 1, 1, 1]),
+    ],
+    hints: [
+      {
+        en: 'Biggest first: take as many of each note as fit, then go on with what is left.',
+        my: 'အကြီးဆုံးကနေ: စက္ကူ တစ်မျိုးစီကို ဆံ့သလောက် ယူ၊ ပြီးရင် ကျန်တာနဲ့ ဆက်သွား။',
+      },
+      {
+        en: 'Math.floor(left / note) is how many fit, and left % note is what is left after.',
+        my: 'Math.floor(left / note) က ဘယ်နှစ်ရွက် ဆံ့လဲ၊ left % note က အဲဒီနောက် ကျန်တာ။',
+      },
+      code(
+        'const notes = [10000, 5000, 1000, 500, 200, 100, 50];\nlet left = amount;\nreturn notes.map((note) => {\n  const count = Math.floor(left / note);\n  left = left % note;\n  return count;\n});',
+      ),
+    ],
+    lesson: {
+      en: 'Greedy — always take the biggest that fits — gives the fewest notes for kyat, and for most real money. It is not always right: with notes of 1, 3 and 4 it pays 6 as 4 + 1 + 1, when 3 + 3 is fewer. Knowing when the simple way is safe is the last thing these rungs have to teach.',
+      my: 'greedy — ဆံ့တဲ့ အကြီးဆုံးကို အမြဲ ယူတာ — က ကျပ်ငွေအတွက်နဲ့ တကယ့် ငွေကြေး အများစုအတွက် စက္ကူ အနည်းဆုံး ပေးတယ်။ အမြဲ မှန်တာတော့ မဟုတ်ဘူး: 1၊ 3၊ 4 တန် စက္ကူဆိုရင် 6 ကို 4 + 1 + 1 နဲ့ ပေးတယ်၊ 3 + 3 က ပိုနည်းပေမဲ့။ ရိုးရှင်းတဲ့ နည်းက ဘယ်အချိန် လုံခြုံလဲ သိတာက ဒီအဆင့်တွေ သင်ပေးစရာ နောက်ဆုံး အရာပဲ။',
+    },
+    another:
+      'const notes = [10000, 5000, 1000, 500, 200, 100, 50];\nconst out = [];\nlet left = amount;\nfor (const note of notes) {\n  const count = Math.floor(left / note);\n  out.push(count);\n  left -= count * note;\n}\nreturn out;',
   },
 ];

@@ -536,6 +536,42 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
     "const stack = [];\nfor (const t of tokens) {\n  if ('+-*/'.includes(t)) {\n    const left = stack.pop();\n    const right = stack.pop();\n    if (t === '+') stack.push(left + right);\n    if (t === '-') stack.push(left - right);\n    if (t === '*') stack.push(left * right);\n    if (t === '/') stack.push(left / right);\n  } else stack.push(Number(t));\n}\nreturn stack.pop();",
     'the two popped the wrong way round',
   ],
+  // Small programs
+  [
+    'fizzbuzz',
+    "const out = [];\nfor (let i = 1; i <= n; i += 1) {\n  if (i % 3 === 0) out.push('Fizz');\n  else if (i % 5 === 0) out.push('Buzz');\n  else if (i % 15 === 0) out.push('FizzBuzz');\n  else out.push(String(i));\n}\nreturn out;",
+    'the most specific question asked last',
+  ],
+  [
+    'fizzbuzz',
+    "const out = [];\nfor (let i = 1; i <= n; i += 1) {\n  if (i % 15 === 0) out.push('FizzBuzz');\n  else if (i % 3 === 0) out.push('Fizz');\n  else if (i % 5 === 0) out.push('Buzz');\n  else out.push(i);\n}\nreturn out;",
+    'numbers where strings were promised',
+  ],
+  [
+    'wordcount',
+    "const counts = {};\nfor (const word of text.toLowerCase().split(' ')) counts[word] = (counts[word] ?? 0) + 1;\nreturn counts;",
+    'doubled spaces counted as words',
+  ],
+  [
+    'runlength',
+    "let out = '';\nlet count = 1;\nfor (let i = 1; i < text.length; i += 1) {\n  if (text[i] === text[i - 1]) count += 1;\n  else {\n    out += text[i - 1] + count;\n    count = 1;\n  }\n}\nreturn out;",
+    'the last run never written out',
+  ],
+  [
+    'caesar',
+    "let out = '';\nfor (const ch of word) out += String.fromCharCode(97 + ((ch.charCodeAt(0) - 97 + shift) % 26));\nreturn out;",
+    '% keeping the sign of a negative shift',
+  ],
+  [
+    'roman',
+    "const table = [[1000, 'M'], [500, 'D'], [100, 'C'], [50, 'L'], [10, 'X'], [5, 'V'], [1, 'I']];\nlet out = '';\nfor (const [value, letters] of table) {\n  while (n >= value) {\n    out += letters;\n    n -= value;\n  }\n}\nreturn out;",
+    'no take-away pairs, so 4 is IIII',
+  ],
+  [
+    'change',
+    'const notes = [10000, 5000, 1000, 500, 200, 100, 50];\nlet left = amount;\nreturn notes.map((note) => {\n  const count = left / note;\n  left = left % note;\n  return count;\n});',
+    'counts of notes that are not whole',
+  ],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */
