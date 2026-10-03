@@ -5,6 +5,26 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+### Changed
+
+- The shelf's figure has the whole page now, not a strip of floor along the
+  bottom of the window. He walks the tops of the cards and hops the gaps
+  between them, climbs ladders between the rows, leaps up onto the rule
+  under the masthead, climbs onto the title and jumps down off the readout,
+  sits on the end of a card with his legs over the edge, and looks down over
+  one. He picks what he wants to do and plans his way there, rather than
+  wandering. Somewhere on screen is six times as likely as somewhere off it,
+  and a few seconds out of sight sends him back; resting, he keeps out from
+  in front of the words.
+- The ladders are the shelf's own — two thin rails in the grid's grey, not
+  rope, which is Kyo's — and stand only in the gutters and margins, never
+  across a card or a line of text. Placed by the layout, so a phone gets them
+  down its margins and a wide screen in the gutters.
+- He draws over the page now rather than behind it, still taking no click,
+  on a canvas that moves with him inside a layer the size of the page: he
+  scrolls with the page instead of a frame behind it, and cannot make it any
+  wider or longer.
+
 ## [0.3.0] — 2026-10-03
 
 ### Added

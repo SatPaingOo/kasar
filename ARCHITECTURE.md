@@ -170,6 +170,19 @@ shares nothing — no hat, no wand, no lantern, no colour, a different walk, and
 no import across the boundary. Taking the idea is allowed. Taking the file is
 how the night sky got here.
 
+He has the whole page now, not a strip of floor along the bottom of the
+window: the top of every card, the rule under the masthead, the title and the
+readout, the floor, and ladders between them. The rule held there too. A rope
+was the obvious way up and is Kyo's, so the ladders are rigid, two thin rails
+in the grid's grey; and they stand in the gutters and the margins, never
+across a card or a line of text, because a figure in the way of reading is a
+shelf getting in the way of its games. The page is turned into that world in
+`world.ts`, routes across it are planned in `route.ts`, and what he wants and
+does with it is `roam.ts` — all three pure, so that nowhere being cut off and
+nothing chasing him off a ledge are tested rather than hoped. He is drawn
+over the page but takes no click, on a small canvas that moves inside a layer
+the size of the page, so he scrolls with it and can never make it wider.
+
 ### Logic the tools decide is split from the scripts that run it
 
 `tools/lib/` holds what each tool judges — which file a request may have,

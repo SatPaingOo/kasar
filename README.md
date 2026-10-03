@@ -172,6 +172,9 @@ tests/unit/tools/saing-e2e.test.ts      and in Saing, and that it listens for wh
 tests/unit/tools/smoke.test.ts          how the smoke test tells a game that works
 tests/unit/shell/colour.test.ts         contrast on an accent nobody here chose
 tests/unit/shell/lang.test.ts           which language the shelf opens in
+tests/unit/shell/world.test.ts          the page as somewhere to live: nowhere cut off, no ladder across a card
+tests/unit/shell/roam.test.ts           the shelf's figure run for twenty minutes: never on nothing, never lost
+tests/unit/shell/walk.test.ts           his feet carry him forwards, not in a moonwalk
 ```
 
 They cover the judgment calls rather than the happy path, and in several cases

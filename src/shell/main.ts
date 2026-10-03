@@ -137,7 +137,7 @@ langButton?.addEventListener('click', () => {
 
 // He has nothing to do with the shelf's contents, so he starts before the
 // fetch and keeps going whether or not it succeeds.
-const walkway = document.querySelector<HTMLCanvasElement>('#walker');
+const walkway = document.querySelector<HTMLElement>('#walkway');
 if (walkway !== null) startWalker(walkway);
 
 try {
