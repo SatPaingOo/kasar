@@ -5,6 +5,8 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-04
+
 ### Fixed
 
 - The walker's layer could hold the page fifteen pixels wider than the
