@@ -190,11 +190,21 @@ async function playHman(driver: Driver, site: string, version: string, engine: E
 
   // ── Phone width: the row of symbols ──────────────────────────────────
   await forget();
-  await driver.viewport(375, 760);
+  await driver.viewport(375, 600);
   await open();
   await driver.evaluate(`document.getElementById('curtainGo').click(); return true;`);
-  const shown = await driver.evaluate<string>(`return getComputedStyle(document.getElementById('symbols')).display;`);
-  check('the row of symbols is there at phone width', shown === 'flex', shown);
+  // There, and big enough to press: once it was there and flat, a line one
+  // pixel high, because the desk squeezed it on a screen with larger fonts.
+  const shown = await driver.evaluate<{ display: string; height: number }>(`
+    const row = document.getElementById('symbols');
+    // The row, not a button in it: squeezed, the row clips its buttons and they
+    // keep their own height while showing almost none of it.
+    return { display: getComputedStyle(row).display, height: Math.round(row.getBoundingClientRect().height) };`);
+  check(
+    'the row of symbols is there at phone width, big enough to press',
+    shown.display === 'flex' && shown.height >= 36,
+    shown,
+  );
   const symbol = async (label: string): Promise<void> => {
     const at = await driver.evaluate<Box>(`
       const b = [...document.querySelectorAll('#symbols button')].find((x) => x.textContent === ${JSON.stringify(label)});

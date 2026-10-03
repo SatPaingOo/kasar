@@ -64,6 +64,15 @@
         gap: 0.7rem;
       }
 
+      /* The desk scrolls; what is on it never squeezes to fit. A column of
+         flex items shrinks them when it runs out of room, and the first to go
+         is anything that scrolls itself, whose least height is nothing — the
+         row of symbols went flat to a line on a phone whose fonts were a
+         little larger than the ones this was built with. */
+      .desk > * {
+        flex-shrink: 0;
+      }
+
       .concept {
         font-family: var(--mono);
         font-size: 0.68rem;

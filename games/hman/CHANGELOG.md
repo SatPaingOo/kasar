@@ -2,6 +2,21 @@
 
 Keep a Changelog, newest first.
 
+## [0.7.3] — 2026-10-03
+
+### Fixed
+
+- On a phone with fonts a little larger than the ones it was built with, the
+  row of symbols went flat — a line eleven pixels high with its buttons cut
+  off inside it — and pressing one hit whatever was underneath. The desk is a
+  column that shrinks its contents when they do not fit, and the first thing
+  it shrinks is anything that scrolls itself, whose least height is nothing.
+  Nothing on the desk shrinks now; the desk scrolls instead.
+
+  Found by the end-to-end run's first time in CI, on a Linux runner whose
+  fonts are wider than Windows ones. The check now measures the row itself,
+  on a phone as short as an iPhone SE, and fails without the fix.
+
 ## [0.7.2] — 2026-10-03
 
 ### Added
