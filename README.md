@@ -26,7 +26,7 @@ npm run play      # build the shelf and every game, then serve on :5190
 | `npm run stage` | collect only what the site is into `site/` |
 | `npm run typecheck` | check the shelf and every game at once |
 | `npm test` | the rules, headlessly |
-| `npm run e2e` | build, then play Hman in the installed Firefox and Chrome — see **End to end** |
+| `npm run e2e` | build, then smoke-test every game and play Hman in the installed Firefox and Chrome — see **End to end** |
 | `npm run lint` | ESLint |
 | `npm run format` / `format:check` | Prettier |
 
@@ -57,17 +57,19 @@ with what is in it. See `ARCHITECTURE.md`.
 
 ## Branches, tags and deploying
 
-`main` is what is live. `dev` is where work lands. Pages deploys from `main`
-and nowhere else, so the published site is only ever something that was
-merged there on purpose.
+`main` is what is live. `dev` is where work lands. The site deploys from
+`main` and nowhere else, and only after every check has passed, so the
+published site is only ever something that was merged there on purpose and
+came through CI green.
 
 ```text
 feat/<slug>  →  dev  →  main  →  the site
 ```
 
 CI runs on both branches and on pull requests: lint, format, typecheck,
-tests, build, and stage — and, as a second job beside them, Hman played end
-to end in Firefox and Chrome. Canon 09 wants all of lint, typecheck and tests or
+tests, build, and stage — and, as a second job beside them, the shelf and
+every game smoke-tested and Hman played end to end, in Firefox and Chrome.
+On `main` a last job deploys, and it needs both of the others to pass. Canon 09 wants all of lint, typecheck and tests or
 it is not CI. A game that does not compile, or whose rules have changed
 under it, fails there and never reaches `main`.
 
@@ -96,8 +98,11 @@ It is listed as a project on the portfolio at
 <https://satpaingoo.github.io/portfolio/>, and links back to it from the
 shelf, so someone who arrives at a game can find out who made it.
 
-Published by `.github/workflows/pages.yml`, which builds, stages and uploads
-`site/`. Only built files go up — no sources, no `node_modules`. Every path in
+Published by the `site` and `deploy` jobs at the end of
+`.github/workflows/ci.yml`, which run on `main` only and only once the checks
+and the end-to-end run have passed; they build, stage and upload `site/`.
+Deploying used to be a workflow of its own that raced CI instead of waiting
+for it. `workflow_dispatch` re-runs the lot by hand. Only built files go up — no sources, no `node_modules`. Every path in
 the shelf and the games is relative, so serving from a subpath needs no
 configuration.
 
@@ -136,7 +141,7 @@ tools/manifest.ts      games/*/game.json → games.json
 tools/build-games.ts   tsc per game
 tools/serve.ts         dev static server, serves folder indexes
 tools/stage.ts         collects what the site is into site/
-tools/e2e.ts           plays Hman in real browsers, end to end
+tools/e2e.ts           smoke-tests every game and plays Hman, in real browsers
 ```
 
 ## On the shelf
@@ -160,7 +165,8 @@ tests/unit/tools/request.test.ts        what the dev server may serve
 tests/unit/tools/manifest.test.ts       what counts as a describable game
 tests/unit/tools/site.test.ts           what goes live
 tests/unit/tools/browsers.test.ts       which installed browser the end-to-end run uses
-tests/unit/tools/hman-e2e.test.ts       how the end-to-end run tells a pass
+tests/unit/tools/hman-e2e.test.ts       how the end-to-end run tells a pass in Hman
+tests/unit/tools/smoke.test.ts          how the smoke test tells a game that works
 tests/unit/shell/colour.test.ts         contrast on an accent nobody here chose
 tests/unit/shell/lang.test.ts           which language the shelf opens in
 ```
@@ -182,9 +188,18 @@ checked by looking at them.
 
 ### End to end
 
-`npm run e2e` builds, serves the working tree on a free port, and plays Hman
-in every installed browser — Firefox and Chrome (or Edge) — and then says
-what passed. `npm run e2e -- firefox` runs one; `npm run e2e -- --url <site>`
+`npm run e2e` builds, serves the working tree on a free port, and then, in
+every installed browser — Firefox and Chrome (or Edge) — smoke-tests the shelf
+and every game on it and plays Hman through, and says what passed.
+
+The smoke test asks every game the same few questions, because every game
+here draws on a canvas and runs a loop: does it open without an error, is
+anything drawn, is it still moving a moment later, does it survive a click
+and a key, and does it fit a phone. The shelf is asked whether it has one
+card for each game the manifest lists. None of it knows how any game is
+played — a broken deploy is what it is there to catch. Errors are listened
+for from before the page's own scripts start, and a check that finds nothing
+listening fails rather than passing for having heard nothing. `npm run e2e -- firefox` runs one; `npm run e2e -- --url <site>`
 plays a site that is already up, such as the live one.
 
 It plays the way a person does: the editor by real key presses, undo and

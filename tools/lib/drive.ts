@@ -45,6 +45,8 @@ export interface Driver {
   click(x: number, y: number): Promise<void>;
   viewport(width: number, height: number): Promise<void>;
   screenshot(file: string, clip?: Box): Promise<void>;
+  /** Run a script at the start of every page loaded from now on, before the page's own. */
+  preload(source: string): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -245,6 +247,9 @@ async function firefox(path: string): Promise<Driver> {
       );
       await writeFile(file, Buffer.from(r.data, 'base64'));
     },
+    preload: async (source) => {
+      await wire.call('script.addPreloadScript', { functionDeclaration: `() => { ${source} }` });
+    },
     close: async () => {
       await wire.call('browser.close', {}).catch(() => undefined);
       wire.close();
@@ -358,6 +363,9 @@ async function chromium(path: string): Promise<Driver> {
         clip === undefined ? { format: 'png' } : { format: 'png', clip: { ...clip, scale: 1 } },
       );
       await writeFile(file, Buffer.from(r.data, 'base64'));
+    },
+    preload: async (source) => {
+      await wire.call('Page.addScriptToEvaluateOnNewDocument', { source });
     },
     close: async () => {
       await wire.call('Browser.close').catch(() => undefined);

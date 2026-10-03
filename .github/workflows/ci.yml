@@ -1,10 +1,22 @@
 name: ci
 
+# One workflow from check to deploy, so that a red check cannot reach the
+# site. Deploying used to be its own workflow, started by the same push and
+# racing the checks rather than waiting for them: it ran lint and the unit
+# tests again itself, but not the end-to-end run, and nothing made it stop
+# when this workflow failed. Now the deploy is a job here that needs every
+# check to pass first.
+
 on:
   push:
     branches: [dev, main]
   pull_request:
     branches: [dev, main]
+  # Re-run the whole thing by hand — checks and then, on main, the deploy.
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -30,10 +42,11 @@ jobs:
       - run: npm run build
       - run: npm run stage
 
-  # Hman played end to end, in the Firefox and Chrome the runner already has.
-  # Its own job, so it runs beside the checks rather than after them and a red
-  # one says which half failed. --all makes a missing browser a failure: on a
-  # runner, a skipped browser would otherwise read as a passed one.
+  # The shelf and every game smoke-tested, then Hman played end to end, in the
+  # Firefox and Chrome the runner already has. Its own job, so it runs beside
+  # the checks rather than after them and a red one says which half failed.
+  # --all makes a missing browser a failure: on a runner, a skipped browser
+  # would otherwise read as a passed one.
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -56,3 +69,48 @@ jobs:
           name: e2e-screenshots
           path: /tmp/kasar-e2e
           if-no-files-found: ignore
+
+  # Only main is a deployment, and only once everything above has passed.
+  site:
+    needs: [check, e2e]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run stage
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: site
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    # Never let two deploys race; let a running one finish rather than
+    # publishing a half-built site.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

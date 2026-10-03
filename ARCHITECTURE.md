@@ -123,6 +123,12 @@ review, and this is not about review: `main` is wired to a public site, so a
 commit to it is a publish. Work lands on `dev`, CI gates both, and reaching
 `main` is a decision rather than a side effect.
 
+The deploy is the last job of CI and needs every other job to pass. It used
+to be a workflow of its own, started by the same push and racing the checks
+instead of waiting for them, so the gate between `main` and the site was a
+habit — CI green on `dev` first — rather than anything the workflows
+enforced.
+
 ### Tags carry the name in front of the version
 
 Canon 09 tags `v<semver>` because a repository has one version, held in one
@@ -179,6 +185,8 @@ much less for much more work.
   and a pixel snapshot says something changed, not whether it looks right.
 - `src/shell/main.ts` wires the DOM and is not covered; the judgments it used
   to hold were moved to `colour.ts` and `lang.ts`, which are.
-- End to end covers Hman only (`npm run e2e`, in Firefox and Chrome, locally
-  and as a CI job). That the shelf links to a game that loads, and the other
-  three games, are still checked by opening them.
+- End to end (`npm run e2e`, in Firefox and Chrome, locally and as a CI job)
+  plays Hman through, but only smoke-tests the shelf and the other three
+  games: each loads without an error, draws, keeps drawing, survives a click
+  and a key, and fits a phone. Whether Tazaung, Hlaykar and Kyo play right is
+  still for their unit tests and headless bots, and for playing them.

@@ -28,6 +28,8 @@ import type { Engine } from './lib/browsers.ts';
 import { launch } from './lib/drive.ts';
 import type { Box, Driver } from './lib/drive.ts';
 import { ADVICE, HARNESS, judgeAdvice, showsVersion } from './lib/hman-e2e.ts';
+import { CATCHER, SAMPLER, cardsMatch, isDrawn, isMoving, noErrors } from './lib/smoke.ts';
+import type { Card, Frame, Listed } from './lib/smoke.ts';
 import type { Said } from './lib/hman-e2e.ts';
 import { mimeFor, resolveRequest } from './lib/request.ts';
 
@@ -61,6 +63,72 @@ async function serve(): Promise<{ base: string; stop: () => void }> {
 }
 
 const wait = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms));
+
+/** The shelf and every game it lists: opened, looked at, pressed, and shrunk to a phone. */
+async function smoke(driver: Driver, site: string): Promise<Outcome[]> {
+  const out: Outcome[] = [];
+  const check = (name: string, ok: boolean, detail?: unknown): void => {
+    out.push(detail === undefined || ok ? { name, ok } : { name, ok, detail });
+  };
+  const look = async (url: string): Promise<void> => {
+    await driver.navigate(url);
+    await wait(1200);
+    await driver.evaluate(`${SAMPLER}; return true;`);
+  };
+  const frame = (): Promise<Frame | null> => driver.evaluate<Frame | null>(`return SMOKE.frame();`);
+  const errors = (): Promise<string[] | null> => driver.evaluate<string[] | null>(`return SMOKE.errors();`);
+
+  await driver.viewport(900, 1000);
+  await look(site);
+  const listed = await driver.evaluate<{ games: Listed[] }>(
+    `return await (await fetch('games.json', { cache: 'no-store' })).json();`,
+  );
+  const cards = await driver.evaluate<Card[]>(`return SMOKE.cards();`);
+  check(`the shelf has a card for each of its ${listed.games.length} games`, cardsMatch(cards, listed.games), {
+    cards,
+  });
+  const shelfBefore = await frame();
+  await wait(700);
+  check('the shelf is drawn, and its walker walks', isMoving(shelfBefore, await frame()), shelfBefore);
+  const shelfErrors = await errors();
+  check('the shelf opens without an error', noErrors(shelfErrors), shelfErrors);
+
+  for (const game of listed.games) {
+    const url = new URL(game.href, site).href;
+    await driver.viewport(900, 1000);
+    await look(url);
+    const opened = await errors();
+    check(`${game.id} opens without an error`, noErrors(opened), opened);
+    const first = await frame();
+    await wait(700);
+    const second = await frame();
+    check(`${game.id} draws, and keeps drawing`, isDrawn(first) && isMoving(first, second), { first, second });
+    const back = await driver.evaluate<boolean>(`return document.querySelector('a.back[href="../../"]') !== null;`);
+    check(`${game.id} has a way back to the shelf`, back);
+
+    // Pressed the ways a player would start: a click in the middle, Space, Enter.
+    const at = await driver.evaluate<{ x: number; y: number }>(`return SMOKE.centre();`);
+    await driver.click(at.x, at.y);
+    await driver.press(' ');
+    await driver.press('Enter');
+    await wait(1000);
+    const pressed = await errors();
+    const third = await frame();
+    await wait(500);
+    check(`${game.id} takes a click and a key without breaking`, noErrors(pressed) && isMoving(third, await frame()), {
+      errors: pressed,
+    });
+
+    await driver.viewport(375, 667);
+    await look(url);
+    const fits = await driver.evaluate<{ wide: boolean; canvas: number }>(
+      `const c = document.querySelector('canvas'); return { wide: SMOKE.wide(), canvas: c ? Math.round(c.getBoundingClientRect().width) : 0 };`,
+    );
+    check(`${game.id} fits a phone`, !fits.wide && fits.canvas <= 375, fits);
+  }
+  await driver.viewport(900, 1000);
+  return out;
+}
 
 /**
  * Whether a browser is there. An app alias — the way the Microsoft Store build
@@ -272,12 +340,17 @@ async function main(): Promise<void> {
       continue;
     }
     console.log(`\n${driver.name} — ${site}`);
-    try {
-      const outcomes = await playHman(driver, site, manifest.version, engine);
+    const report = (title: string, outcomes: readonly Outcome[]): void => {
+      console.log(`  ${title}`);
       for (const one of outcomes) {
-        console.log(`  ${one.ok ? '✓' : '✗'} ${one.name}${one.ok ? '' : `\n      ${JSON.stringify(one.detail)}`}`);
+        console.log(`    ${one.ok ? '✓' : '✗'} ${one.name}${one.ok ? '' : `\n        ${JSON.stringify(one.detail)}`}`);
         if (!one.ok) failed += 1;
       }
+    };
+    try {
+      await driver.preload(CATCHER);
+      report('the shelf and every game on it', await smoke(driver, site));
+      report('hman, played', await playHman(driver, site, manifest.version, engine));
       console.log(`  ${Math.round((Date.now() - started) / 1000)}s`);
       ran += 1;
     } finally {
