@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.5.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.6.0
 
 မှန် — correct.
 
@@ -31,7 +31,7 @@ Write the body, then **Strike** (or `Ctrl`/`Cmd` + `Enter`).
 Where you got to is kept — the rungs beaten and what was in the box for each —
 in the browser's own storage, and nothing leaves the machine. Coming back,
 the title offers to carry on, and every rung up to one past the furthest
-beaten can be gone back to from the map on it. Seventeen rungs is not one
+beaten can be gone back to from the map on it. Seventy-five rungs is not one
 sitting, and a ladder that started from the bottom every time the tab closed
 would only ever be climbed as far as one evening reaches.
 
@@ -65,16 +65,28 @@ So it starts at the first thing that produces something visible, and a variable
 arrives at the rung where it first makes the answer easier rather than at the
 rung where it would be named.
 
-Seventeen rungs in three chapters. The aim is logic before vocabulary: by the
-end of the third chapter someone can write a loop that totals, counts, finds
-and builds, and only then is `map` named — as the short way of saying the loop
-they just wrote.
+Seventy-five rungs in thirteen chapters, ordered so that logic comes before
+vocabulary: by the end of the third chapter someone can write a loop that
+totals, counts, finds and builds, and only then is `map` named — as the short
+way of saying the loop they just wrote. The types chapter comes straight after
+objects rather than at the end, because narrowing and unions are the part of
+TypeScript that is not JavaScript, and they need something to narrow.
 
 | chapter | rungs | what it is really teaching |
 |---|---|---|
 | Values and lists | 1–5 | indexing from 0, `length` and the last index, a name for a value, `Math.floor`, and that `number` and `number[]` are different promises |
 | Choosing | 6–10 | `?:` and `if`, a comparison *is* a boolean, `else if`, `&&` and inclusive edges, the empty list and `??` against `\|\|` |
 | Again and again | 11–17 | the accumulator, counting with an `if` inside, where a loop starts, returning early with an index, the empty list being `true` for "all", building a list with `push`, and `map` |
+| Array methods | 18–24 | `filter`, a closure over a limit, `find` and `??`, `includes`, `sort` and why it sorts `10` before `9`, a `Set` spread back into a list, and a chain of three |
+| Text | 25–31 | strings never change, indexing past the end of one, counting in either case, `split` and `join`, normalising before comparing, `'4' + '1'`, and a template literal |
+| Things with names | 32–38 | a type alias as a promise, plucking a field, filtering whole objects, keeping the best object, `reduce` to a number, a copy with one field changed, and a record as a dictionary |
+| Shapes of things | 39–45 | a union narrowed by `typeof`, an optional field, a tuple, literal types and `switch`, a discriminated union, a generic, and `unknown` |
+| Moves of your own | 46–50 | a helper named once, composition, an optional parameter, a closure with state, and a table of functions |
+| Himself again | 51–55 | the base case, the argument that shrinks, correct-and-slow, and two over a type that mentions itself |
+| Rows and columns | 56–60 | rows, a column, the diagonal by index, transpose, and a cell's neighbours with `?.` at the edges |
+| Doing it well | 61–66 | binary search, a `Map` of what has been seen, insertion, merging, √n, and Euclid |
+| One on top of another | 67–69 | the stack: brackets, undo, and a calculator that reads its numbers first |
+| Small programs | 70–75 | FizzBuzz, words in untidy text, run-length encoding, a Caesar shift and `%` with negatives, Roman numerals from a table, and when greedy is safe |
 
 **A rung is named only after it is beaten.** Its label says what is being
 asked — "how many", "the heaviest" — never which tool does it. The card that
@@ -154,6 +166,15 @@ out `parts.filter` is part of learning it, and type checking is a compiler.
 There is no type checking, and there will not be one here. `tsc` in the page
 is a large runtime dependency and this shelf has none.
 
+What there is instead is a reader for the signature, `src/types.ts`, which
+understands the types the ladder uses — unions, literals, tuples, optional
+fields, records, generics, and an alias that mentions itself — and holds what
+comes back to them. Narrowing, a discriminated union and `unknown` are all
+checked at run time without a compiler, because narrowing *is* ordinary
+JavaScript that TypeScript reads. A type the reader does not understand is
+not checked at all, which is the safe way round: it never blames a right
+answer.
+
 So the signature above the box is TypeScript — reading it and satisfying it is
 most of what relearning the language actually is — and the box itself runs as
 JavaScript. Writing `const x: number` in the box fails, and `src/advice.ts`
@@ -175,7 +196,7 @@ literals and conditionals alone, colons and all.
 | `src/advice.ts` | why an answer was wrong, and the line an error is on. String work only, so it is testable |
 | `src/highlight.ts` | the colour under the code: a scanner, not a parser |
 | `src/progress.ts` | what survives closing the tab, with the storage passed in so it can be tested |
-| `src/beat.ts` | the timing of one blow and of a topple. No canvas, so it is testable |
+| `src/beat.ts` | the timing of a blow, a topple and the end of a won run. No canvas, so it is testable |
 | `src/editing.ts` | what makes the box an editor: indent, brackets, line counting. String work, so it is testable |
 | `src/sound.ts` | every sound, made from oscillators and one noise buffer |
 | `src/figure.ts` | the man, drawn in code. Drawn twice: the second is him, flipped and colder |
@@ -221,6 +242,12 @@ scheduling the next frame — left the run stuck with nothing to press. A timer
 drives it when frames are not arriving, and the drawing is wrapped so a fault
 in it cannot take the run down.
 
+Winning the whole run is the one ending that does not happen per rung. The
+mirror does not get up again: it comes apart, the pieces go up and out of the
+room, and he is left in it alone, arms up — the version of him that kept
+getting it wrong is not coming back. Losing a rung keeps its own ending: he
+topples, the light goes, and you get that rung again.
+
 Sound is the other half of it, and this is the only game on the shelf with
 nothing running underneath. The other three always have something happening.
 Here you are thinking most of the time, and the silence is what makes a blow
@@ -228,12 +255,13 @@ land when it comes.
 
 ## Still to come
 
-- The rest of the ladder, towards fifty: array methods properly (`filter`,
-  `reduce`, `find`, `some`, `sort` and its numeric trap, `Set`), text,
-  records and `Record<string, T>`, functions of your own, and small whole
-  programs. Written a chapter at a time and played before the next, because a
-  difficulty curve that is wrong is wrong for every rung written after it.
-- An ending worth watching, for both ways a run can finish.
+- The difficulty curve, which only playing can settle. Every rung is proved
+  solvable and every trap proved to spring, by the tests; whether a rung is
+  too easy or too hard where it sits is not something a test can say.
+- The edge of what fits here. Everything that can be checked without a
+  compiler is on the ladder. Asking the player to *write* types — an alias, an
+  interface, an annotation — needs `tsc` in the page, and that is the point
+  at which this stops being a shelf game.
 - Whether this belongs on the shelf at all. It is here to find that out: if it
   gets replayed to practise rather than to play, it wants to be its own thing,
   with more languages and saved progress — and a Python runtime is ten

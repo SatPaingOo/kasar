@@ -2,6 +2,44 @@
 
 Keep a Changelog, newest first.
 
+## [0.6.0] — 2026-10-03
+
+### Added
+
+- The rest of the ladder: seventy-five rungs in thirteen chapters, where
+  there were seventeen in three. Array methods, text, things with names, the
+  shapes of things, moves of your own, recursion, rows and columns, doing it
+  well, the stack, and small whole programs. The types chapter comes straight
+  after objects, because unions and narrowing are the part of TypeScript that
+  is not JavaScript.
+- Every rung has the trap its subject is known for in its hidden cases, and
+  the tests hold each one to springing: `sort()` putting 10 before 9, a Set
+  handed back as a list, `'4' + '1'`, a switch with no breaks, `-1 % 26`, a
+  base case that 0 never reaches, and the rest.
+- An ending for winning the whole run. The mirror does not get up again: it
+  comes apart and the pieces go up and out of the room, and he stands there
+  on his own with both arms up.
+- The signature reader understands unions, literal types, tuples, optional
+  fields and parameters, generics, and an alias that mentions itself. A long
+  union alias is laid out a member to a line, as Prettier would.
+- Running out of stack is said in terms of the base case and of getting
+  smaller.
+
+### Changed
+
+- Examples on the desk are one to a line and shown in full.
+- Against a return type made of exact values, a broken promise names the value
+  that came back rather than its type.
+- With every rung beaten, the title offers the first rung rather than carrying
+  on at the last.
+
+### Fixed
+
+- A bare `return`, or one with its value on the next line, was explained as
+  returning something that was not there. Both give back undefined and both
+  are the missing-return mistake.
+- The NaN advice named `parts[parts.length]` on rungs that have no parts.
+
 ## [0.5.0] — 2026-10-03
 
 ### Added
