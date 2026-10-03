@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Saing</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0e0708;
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      #stage {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /*
+       * The way back to the shelf is a plain link in this page, not something
+       * the shelf reaches in and adds: a game here owes the shelf nothing.
+       * Small and faint so it never competes with the game or swallows a tap
+       * meant for a drum.
+       */
+      .back {
+        position: fixed;
+        top: 0.6rem;
+        left: 0.75rem;
+        z-index: 2;
+        color: #e7ecf8;
+        opacity: 0.35;
+        font:
+          400 1.1rem/1 system-ui,
+          sans-serif;
+        text-decoration: none;
+        padding: 0.35rem 0.5rem;
+        transition: opacity 0.15s ease;
+      }
+
+      .back:hover,
+      .back:focus-visible {
+        opacity: 0.9;
+      }
+
+      .say {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../" aria-label="Back to the shelf">&larr;</a>
+    <canvas id="stage" aria-label="A circle of drums. Keys A to K strike them, low to high."></canvas>
+    <!-- What is starting, for anyone not watching the screen. -->
+    <p id="say" class="say" role="status" aria-live="polite"></p>
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>

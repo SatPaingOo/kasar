@@ -152,6 +152,7 @@ tools/e2e.ts           smoke-tests every game and plays Hman, in real browsers
 | [Hlaykar](games/hlaykar/README.md) | The water is rising. Stack the stones; he climbs whatever you build. |
 | [Kyo](games/kyo/README.md) | A gorge, and one rope. The only thing to decide is when to let go. |
 | [Hman](games/hman/README.md) | Write the move and he makes it — seventy-five rungs of TypeScript, where a right answer lands on the mirror and a wrong one lands on you. |
+| [Saing](games/saing/README.md) | A circle of tuned drums plays a phrase. Play it back — same drums, same rhythm. |
 
 ## Tests
 

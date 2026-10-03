@@ -5,6 +5,12 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+### Added
+
+- Saing, the fifth game: a circle of tuned drums plays a phrase and you play
+  it back by ear. The shelf needed no change to take it — the manifest, the
+  build, the stage and the smoke test all found it by its folder.
+
 ## [0.2.0] — 2026-10-03
 
 All of this was already live — `main` deploys as it lands — and was still

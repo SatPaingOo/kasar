@@ -1,0 +1,14 @@
+{
+  "id": "saing",
+  "version": "0.1.0",
+  "title": {
+    "en": "Saing",
+    "my": "ဆိုင်း"
+  },
+  "blurb": {
+    "en": "A circle of tuned drums plays a phrase. Play it back — same drums, same rhythm.",
+    "my": "ပတ်ဝိုင်းက အပိုဒ်တစ်ခု တီးပြမယ်။ ပတ်တူတူ၊ စည်းချက်တူတူ ပြန်တီးပါ။"
+  },
+  "accent": "#e07a5f",
+  "year": 2026
+}

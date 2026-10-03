@@ -186,7 +186,8 @@ much less for much more work.
 - `src/shell/main.ts` wires the DOM and is not covered; the judgments it used
   to hold were moved to `colour.ts` and `lang.ts`, which are.
 - End to end (`npm run e2e`, in Firefox and Chrome, locally and as a CI job)
-  plays Hman through, but only smoke-tests the shelf and the other three
+  plays Hman through, but only smoke-tests the shelf and the other four
   games: each loads without an error, draws, keeps drawing, survives a click
-  and a key, and fits a phone. Whether Tazaung, Hlaykar and Kyo play right is
-  still for their unit tests and headless bots, and for playing them.
+  and a key, and fits a phone. Whether Tazaung, Hlaykar, Kyo and Saing play
+  right is still for their unit tests and headless bots, and for playing
+  them.
