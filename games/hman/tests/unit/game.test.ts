@@ -519,6 +519,23 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
     '1 called prime',
   ],
   ['gcd', 'if (b === 0) return b;\nreturn strike(b, a % b);', 'a base case that returns the zero'],
+  // One on top of another
+  [
+    'brackets',
+    "let open = 0;\nfor (const ch of text) {\n  if ('([{'.includes(ch)) open += 1;\n  if (')]}'.includes(ch)) open -= 1;\n  if (open < 0) return false;\n}\nreturn open === 0;",
+    'counting brackets instead of matching them',
+  ],
+  ['undo', "return steps.filter((s) => s !== 'undo');", 'undo dropped instead of undoing'],
+  [
+    'undo',
+    "const done = [];\nfor (const step of steps) {\n  if (step === 'undo') done.shift();\n  else done.push(step);\n}\nreturn done;",
+    'undo taking back the first move, not the last',
+  ],
+  [
+    'rpn',
+    "const stack = [];\nfor (const t of tokens) {\n  if ('+-*/'.includes(t)) {\n    const left = stack.pop();\n    const right = stack.pop();\n    if (t === '+') stack.push(left + right);\n    if (t === '-') stack.push(left - right);\n    if (t === '*') stack.push(left * right);\n    if (t === '/') stack.push(left / right);\n  } else stack.push(Number(t));\n}\nreturn stack.pop();",
+    'the two popped the wrong way round',
+  ],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */

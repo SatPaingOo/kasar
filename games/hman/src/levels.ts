@@ -74,6 +74,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Himself again', my: 'ကိုယ့်ကိုယ်ကို ပြန်ခေါ်' },
   { en: 'Rows and columns', my: 'အတန်းနဲ့ အတိုင်' },
   { en: 'Doing it well', my: 'ကောင်းကောင်း လုပ်' },
+  { en: 'One on top of another', my: 'တစ်ခုပေါ် တစ်ခု' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -2396,5 +2397,118 @@ export const LEVELS: readonly Level[] = [
       my: 'Euclid က ဒါကို လွန်ခဲ့တဲ့ နှစ် ၂၃၀၀ လောက်က ရေးခဲ့တာ၊ အခုထိ ဒီနည်းနဲ့ပဲ လုပ်ကြတုန်း: အဆင့်တိုင်းမှာ ဂဏန်းတွေ မြန်မြန် သေးသွားလို့ ဂဏန်း အကြီးကြီးတွေတောင် ခေါ်ရတာ ဆယ်ဂဏန်းလောက်ပဲ။ algorithm ဆိုတာ ပြီးဆုံးမယ်လို့ သေချာတဲ့ ချက်ပြုတ်နည်း တစ်ခု၊ ဒါက အခုထိ သုံးနေတုန်း ဖြစ်တဲ့ အဟောင်းဆုံးပဲ။',
     },
     another: 'while (b !== 0) [a, b] = [b, a % b];\nreturn a;',
+  },
+
+  // ── One on top of another ───────────────────────────────────────────
+  {
+    id: 'brackets',
+    chapter: 11,
+    concept: { en: 'every one closed', my: 'ဖွင့်တိုင်း ပိတ်' },
+    brief: {
+      en: 'Give back true if every bracket in the text is closed by the right kind, in the right order: ( by ), [ by ], { by }.',
+      my: 'စာသားထဲက ကွင်းတိုင်းကို အမျိုးအစား မှန်တဲ့ ကွင်းနဲ့၊ အစီအစဉ် မှန်မှန် ပိတ်ထားရင် true ပြန်ပေးပါ: ( ကို ) နဲ့၊ [ ကို ] နဲ့၊ { ကို } နဲ့။',
+    },
+    signature: 'function strike(text: string): boolean',
+    starter: '',
+    shown: [one('(a[b]c)', true), one('(]', false)],
+    cases: [
+      one('', true),
+      one('([)]', false),
+      one('(((', false),
+      one(')(', false),
+      one('{[()()]}', true),
+      one('a(b)c', true),
+    ],
+    hints: [
+      {
+        en: 'Counting opens and closes is not enough: ([)] has two of each and is still wrong. The last one opened has to be the first one closed.',
+        my: 'ဖွင့်တာနဲ့ ပိတ်တာ ရေတွက်ရုံနဲ့ မလုံလောက်ဘူး: ([)] မှာ တစ်မျိုးစီ နှစ်ခုစီ ရှိပေမဲ့ မှားနေဆဲ။ နောက်ဆုံး ဖွင့်ခဲ့တာကို အရင်ဆုံး ပိတ်ရမယ်။',
+      },
+      {
+        en: 'That is a stack: push each opener; at a closer, pop and check it matches. At the end the stack must be empty.',
+        my: 'အဲဒါ stack တစ်ခုပဲ: ဖွင့်တာ တစ်ခုစီကို push လုပ်၊ ပိတ်တာ တွေ့ရင် pop လုပ်ပြီး ကိုက်လား စစ်။ အဆုံးမှာ stack က ဗလာ ဖြစ်ရမယ်။',
+      },
+      code(
+        "const pairs = { ')': '(', ']': '[', '}': '{' };\nconst stack = [];\nfor (const ch of text) {\n  if ('([{'.includes(ch)) stack.push(ch);\n  else if (ch in pairs) {\n    if (stack.pop() !== pairs[ch]) return false;\n  }\n}\nreturn stack.length === 0;",
+      ),
+    ],
+    lesson: {
+      en: 'A stack is a list touched only at one end: push to add, pop to take the last thing added. Anything nested — brackets, undo, a function calling a function — is a stack underneath, and this exact check runs in every code editor.',
+      my: 'stack ဆိုတာ အစွန်း တစ်ဖက်ကနေပဲ ထိတဲ့ စာရင်း: ထည့်ဖို့ push၊ နောက်ဆုံး ထည့်ခဲ့တာကို ယူဖို့ pop။ အထပ်ထပ် ဖြစ်တဲ့ အရာမှန်သမျှ — ကွင်းတွေ၊ undo၊ function တစ်ခုက function တစ်ခုကို ခေါ်တာ — အောက်ခံမှာ stack ပဲ၊ ဒီစစ်ချက်က code editor တိုင်းမှာ run နေတယ်။',
+    },
+  },
+  {
+    id: 'undo',
+    chapter: 11,
+    concept: { en: 'take it back', my: 'ပြန်ရုပ်' },
+    brief: {
+      en: "He makes moves one by one, and 'undo' takes back the last move still standing. Give back the moves that are left, in order. An undo with nothing to take back does nothing.",
+      my: "သူက ထိုးချက်တွေကို တစ်ခုချင်း လုပ်တယ်၊ 'undo' က ကျန်နေသေးတဲ့ နောက်ဆုံး ထိုးချက်ကို ပြန်ရုပ်တယ်။ ကျန်တဲ့ ထိုးချက်တွေကို အစီအစဉ်အတိုင်း ပြန်ပေးပါ။ ပြန်ရုပ်စရာ မရှိတဲ့ undo က ဘာမှ မလုပ်ဘူး။",
+    },
+    signature: 'function strike(steps: string[]): string[]',
+    starter: '',
+    shown: [one(['jab', 'kick', 'undo', 'hook'], ['jab', 'hook']), one(['jab', 'undo', 'undo'], [])],
+    cases: [
+      one([], []),
+      one(['undo', 'jab'], ['jab']),
+      one(['a', 'b', 'c', 'undo', 'undo'], ['a']),
+      one(['a', 'undo', 'b', 'undo', 'c'], ['c']),
+      one(['x', 'y'], ['x', 'y']),
+    ],
+    hints: [
+      {
+        en: 'The moves still standing are a stack: a move is a push, an undo is a pop.',
+        my: 'ကျန်နေသေးတဲ့ ထိုးချက်တွေက stack တစ်ခုပဲ: ထိုးချက်က push၊ undo က pop။',
+      },
+      {
+        en: 'pop on an empty list gives back undefined and changes nothing — which is exactly what an undo with nothing to take back should do.',
+        my: 'စာရင်း ဗလာပေါ်မှာ pop လုပ်ရင် undefined ပြန်ပေးပြီး ဘာမှ မပြောင်းဘူး — ပြန်ရုပ်စရာ မရှိတဲ့ undo လုပ်ရမှာ အဲဒါ အတိအကျပဲ။',
+      },
+      code(
+        "const done = [];\nfor (const step of steps) {\n  if (step === 'undo') done.pop();\n  else done.push(step);\n}\nreturn done;",
+      ),
+    ],
+    lesson: {
+      en: 'Undo in every editor works like this, with a second stack for redo: whatever pop takes off the first goes onto the second. The list is the history, and the end you touch is now.',
+      my: 'editor တိုင်းရဲ့ undo က ဒီလိုပဲ အလုပ်လုပ်တယ်၊ redo အတွက် stack ဒုတိယ တစ်ခုနဲ့: ပထမ stack ကနေ pop ယူလိုက်တာက ဒုတိယ stack ပေါ် ရောက်သွားတယ်။ စာရင်းက မှတ်တမ်း၊ ထိနေတဲ့ အစွန်းက အခု။',
+    },
+  },
+  {
+    id: 'rpn',
+    chapter: 11,
+    concept: { en: 'numbers first', my: 'ဂဏန်း အရင်' },
+    brief: {
+      en: "The move is written numbers first and then the operation: '3 4 +' is 3 + 4. Each operation takes the two numbers before it and leaves its answer in their place. Give back the result.",
+      my: "ထိုးချက်ကို ဂဏန်း အရင်၊ ပြီးမှ လုပ်ဆောင်ချက် ရေးထားတယ်: '3 4 +' က 3 + 4။ လုပ်ဆောင်ချက် တစ်ခုစီက သူ့ရှေ့က ဂဏန်း နှစ်လုံးကို ယူပြီး အဖြေကို သူတို့နေရာမှာ ထားခဲ့တယ်။ ရလဒ်ကို ပြန်ပေးပါ။",
+    },
+    signature: 'function strike(tokens: string[]): number',
+    starter: '',
+    shown: [one(['3', '4', '+'], 7), one(['2', '3', '4', '*', '+'], 14)],
+    cases: [
+      one(['5'], 5),
+      one(['10', '2', '-'], 8),
+      one(['8', '2', '/'], 4),
+      one(['3', '4', '+', '2', '*'], 14),
+      one(['1', '2', '3', '+', '-'], -4),
+    ],
+    hints: [
+      {
+        en: 'Numbers go onto a stack. An operation pops two, works them out, and pushes the answer.',
+        my: 'ဂဏန်းတွေက stack ပေါ် တင်တယ်။ လုပ်ဆောင်ချက် တစ်ခုက နှစ်လုံး pop လုပ်၊ တွက်ပြီး အဖြေကို push လုပ်တယ်။',
+      },
+      {
+        en: "Mind the order: the first pop is the right-hand number. '10 2 -' is 10 - 2, not 2 - 10.",
+        my: "အစီအစဉ်ကို သတိထား: ပထမ pop က ညာဘက် ဂဏန်း။ '10 2 -' က 10 - 2၊ 2 - 10 မဟုတ်ဘူး။",
+      },
+      code(
+        "const stack = [];\nfor (const t of tokens) {\n  if ('+-*/'.includes(t)) {\n    const right = stack.pop();\n    const left = stack.pop();\n    if (t === '+') stack.push(left + right);\n    if (t === '-') stack.push(left - right);\n    if (t === '*') stack.push(left * right);\n    if (t === '/') stack.push(left / right);\n  } else {\n    stack.push(Number(t));\n  }\n}\nreturn stack.pop();",
+      ),
+    ],
+    lesson: {
+      en: 'This is how calculators, and the insides of most programming languages, work sums out: no brackets and no precedence to remember, only a stack. Written the ordinary way, 3 + 4 × 2 needs rules for what goes first; written this way, the order is the order.',
+      my: 'calculator တွေနဲ့ programming language အများစုရဲ့ အတွင်းပိုင်းက တွက်ချက်မှုတွေကို ဒီလိုပဲ လုပ်တယ်: ကွင်း မလို၊ ဘာက အရင်လဲ စည်းကမ်း မှတ်စရာ မလို၊ stack တစ်ခုပဲ။ ပုံမှန်အတိုင်း ရေးရင် 3 + 4 × 2 မှာ ဘာ အရင်လုပ်ရမလဲ စည်းကမ်း လိုတယ်၊ ဒီလို ရေးရင်တော့ အစီအစဉ်က အစီအစဉ်ပဲ။',
+    },
+    another:
+      "const ops = { '+': (a, b) => a + b, '-': (a, b) => a - b, '*': (a, b) => a * b, '/': (a, b) => a / b };\nconst stack = [];\nfor (const t of tokens) {\n  if (t in ops) {\n    const right = stack.pop();\n    stack.push(ops[t](stack.pop(), right));\n  } else stack.push(Number(t));\n}\nreturn stack.pop();",
   },
 ];
