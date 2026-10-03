@@ -2,6 +2,21 @@
 
 Keep a Changelog, newest first.
 
+## [0.7.1] — 2026-10-03
+
+### Fixed
+
+- In Firefox a syntax error said only "the code could not be started", with
+  no message and no line. Firefox reports a worker script that will not parse
+  with neither, so the source is now parsed again on the page — parsed only,
+  never run — and the engine's own message and line are used.
+
+Played through in Firefox 157 as well as Chromium: the editor by real keys,
+undo and redo, every kind of advice and its line, all seventy-five rungs from
+an empty save, the row of symbols at phone width, and the colour under the
+text laid over the text itself in red to see that the two line up to the
+pixel.
+
 ## [0.7.0] — 2026-10-03
 
 ### Added

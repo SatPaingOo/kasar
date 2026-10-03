@@ -83,6 +83,32 @@ interface Posted {
 /** "Uncaught SyntaxError: …" is the engine talking to itself. */
 const tidy = (message: string): string => message.replace(/^Uncaught\s+/, '');
 
+/**
+ * Lines above the body in what `new Function` builds: `function anonymous(…`,
+ * `) {`, then the `"use strict";` added here to match the worker.
+ */
+const PARSED_ABOVE = 3;
+
+/**
+ * Why a body will not parse, from the engine itself.
+ *
+ * Parsing only: the function this builds is thrown away uncalled, so nothing
+ * the player wrote runs on the page — a loop cannot hang it, because a loop
+ * that is never called never starts. Firefox puts the line on its errors as
+ * `lineNumber`; an engine that does not just gives the message.
+ */
+function parseError(params: readonly string[], source: string): { message: string; line: number | null } | null {
+  try {
+    new Function(...params, `"use strict";\n${source}`);
+    return null;
+  } catch (err) {
+    if (!(err instanceof Error)) return { message: String(err), line: null };
+    const at = (err as Error & { lineNumber?: unknown }).lineNumber;
+    const line = typeof at === 'number' && at > PARSED_ABOVE ? at - PARSED_ABOVE : null;
+    return { message: `${err.name}: ${err.message}`, line };
+  }
+}
+
 export async function run(source: string, params: readonly string[], cases: readonly Case[]): Promise<RunOutcome> {
   const blob = new Blob([script(params, source)], { type: 'text/javascript' });
   const url = URL.createObjectURL(blob);
@@ -113,15 +139,20 @@ export async function run(source: string, params: readonly string[], cases: read
         resolve({ results, fatal: null, line: null });
       };
 
-      // A mistake the script could not even be read past arrives here, with
-      // the line it is on — which is the whole reason the code is in the
-      // script rather than passed to `new Function`.
+      // A mistake the script could not even be read past arrives here. In
+      // Chrome it comes with what and where — which is the whole reason the
+      // code is in the script rather than passed to `new Function`. Firefox
+      // reports a worker script that will not parse with neither: just "it
+      // failed". So when the event says nothing, the source is parsed again
+      // here and the engine asked directly.
       worker.onerror = (event: ErrorEvent): void => {
         event.preventDefault();
         window.clearTimeout(timer);
-        const message = tidy(event.message || 'the code could not be started');
-        const line = event.lineno > ABOVE ? event.lineno - ABOVE : null;
-        resolve({ results: [], fatal: message, line });
+        const said = typeof event.message === 'string' && event.message.length > 0;
+        const parsed = said ? null : parseError(params, source);
+        const message = tidy(said ? event.message : (parsed?.message ?? 'the code could not be started'));
+        const where = typeof event.lineno === 'number' && event.lineno > ABOVE ? event.lineno - ABOVE : null;
+        resolve({ results: [], fatal: message, line: where ?? parsed?.line ?? null });
       };
 
       worker.postMessage(cases.map((one) => one.args));

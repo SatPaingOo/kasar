@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.7.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.7.1
 
 မှန် — correct.
 
@@ -114,6 +114,13 @@ is written into that blob as the body of a function, rather than handed to
 `new Function` says what is wrong and never where, while one in a worker's
 own script comes back with its line, and so does the stack of anything that
 throws. The line is marked in the gutter.
+
+Firefox is the exception, and only for a script that will not parse: it
+reports the worker as failed with no message and no line, so the player saw
+"the code could not be started" and nothing else. When the event says
+nothing, the source is parsed again on the page with `new Function` —
+parsed only, the function is thrown away uncalled, so nothing the player
+wrote runs there — and Firefox's own `lineNumber` gives the line.
 
 It runs in strict mode, because TypeScript does. Assigning to a name that was
 never declared quietly makes a global in sloppy JavaScript and is an error
@@ -274,10 +281,6 @@ land when it comes.
   compiler is on the ladder. Asking the player to *write* types — an alias, an
   interface, an annotation — needs `tsc` in the page, and that is the point
   at which this stops being a shelf game.
-- A run in a real Firefox. Every API the page uses is in Firefox 121 and
-  later, but whether the colour under the text lines up with a Firefox
-  textarea to the pixel can only be seen there; so far it has only been played
-  in Chromium.
 - Whether this belongs on the shelf at all. It is here to find that out: if it
   gets replayed to practise rather than to play, it wants to be its own thing,
   with more languages and saved progress — and a Python runtime is ten
