@@ -107,7 +107,7 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     noReturn:
       'Nothing came back — that is undefined. Nothing is returned: write return, then what to give back, on the same line.',
     notThere: 'undefined came back — what was returned is not there. An index past the end, or a property spelt wrong?',
-    nan: "NaN came back — 'not a number'. It is nearly always a number added to undefined: a part that is not there, like parts[parts.length].",
+    nan: "NaN came back — 'not a number'. It is nearly always a number added to undefined: something that is not there yet, like an index past the end or a key never set.",
     carryOn: (rung) => `Carry on — rung ${rung}`,
     chapterDone: (name) => `That is the end of “${name}”.`,
     onLine: (line) => `line ${line}`,
@@ -157,7 +157,7 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
       'ဘာမှ ပြန်မလာဘူး — အဲဒါ undefined။ ဘာမှ return မလုပ်ထားဘူး: return ပြီးရင် ပြန်ပေးမယ့်အရာကို စာကြောင်းတစ်ကြောင်းတည်းမှာ ရေးပါ။',
     notThere:
       'undefined ပြန်လာတယ် — return လုပ်လိုက်တဲ့ အရာက မရှိဘူး။ အဆုံးကို ကျော်သွားတဲ့ index လား၊ စာလုံးပေါင်း မှားနေတဲ့ property လား?',
-    nan: 'NaN ပြန်လာတယ် — "ဂဏန်း မဟုတ်" လို့ ဆိုလိုတယ်။ များသောအားဖြင့် ဂဏန်း တစ်ခုကို undefined နဲ့ ပေါင်းမိလို့ ဖြစ်တာ: parts[parts.length] လို မရှိတဲ့ အပိုင်း တစ်ခု။',
+    nan: 'NaN ပြန်လာတယ် — "ဂဏန်း မဟုတ်" လို့ ဆိုလိုတယ်။ များသောအားဖြင့် ဂဏန်း တစ်ခုကို undefined နဲ့ ပေါင်းမိလို့ ဖြစ်တာ: အဆုံးကို ကျော်သွားတဲ့ index၊ ဒါမှမဟုတ် တစ်ခါမှ မထည့်ရသေးတဲ့ key လို မရှိသေးတဲ့ အရာ တစ်ခု။',
     carryOn: (rung) => `ဆက်ကစားမယ် — အဆင့် ${rung}`,
     chapterDone: (name) => `“${name}” အခန်း ပြီးပြီ။`,
     onLine: (line) => `စာကြောင်း ${line}`,

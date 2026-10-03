@@ -414,6 +414,25 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
   ['palindrome', "return word === word.split('').reverse().join('');", 'capitals compared as they are'],
   ['addup', 'return a + b;', '+ joining two strings instead of adding them'],
   ['label', 'return `${name}: ${hits} hits`;', 'one hit called hits'],
+  // Things with names
+  ['name', 'return f.nmae;', 'a field name spelt wrong'],
+  ['strong', 'return crew.filter((f) => f.power >= 5);', 'a power of exactly 5 let in'],
+  [
+    'strongest',
+    'let best = crew[0];\nfor (const f of crew) if (f.power >= best.power) best = f;\nreturn best.name;',
+    'the second of two equals taken',
+  ],
+  [
+    'strongest',
+    "let best = { name: '', power: 0 };\nfor (const f of crew) if (f.power > best.power) best = f;\nreturn best.name;",
+    'a strongest that starts at 0',
+  ],
+  ['totalpower', 'return crew.reduce((sum, f) => sum + f.power);', 'reduce starting from the first fighter'],
+  [
+    'tally',
+    'const counts = {};\nfor (const m of moves) counts[m] += 1;\nreturn counts;',
+    'undefined + 1 on a key not seen yet',
+  ],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */

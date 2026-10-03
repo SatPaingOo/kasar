@@ -68,6 +68,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Again and again', my: 'ထပ်ခါ ထပ်ခါ' },
   { en: 'Array methods', my: 'Array method တွေ' },
   { en: 'Text', my: 'စာသား' },
+  { en: 'Things with names', my: 'နာမည်ပါတဲ့ အရာတွေ' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -76,6 +77,9 @@ const one = (input: Value, want: Value): Case => ({ args: [input], want });
 const many = (args: readonly Value[], want: Value): Case => ({ args, want });
 /** Code reads the same in both languages. */
 const code = (text: string): Words => ({ en: text, my: text });
+/** The shape the chapter on objects fights, and one of it. */
+const FIGHTER = 'type Fighter = { name: string; power: number };';
+const fighter = (name: string, power: number): Value => ({ name, power });
 
 export const LEVELS: readonly Level[] = [
   // ── Values and lists ────────────────────────────────────────────────
@@ -1004,5 +1008,240 @@ export const LEVELS: readonly Level[] = [
       my: "template literal က တန်ဖိုးတွေကနေ စာသား တည်ဆောက်တဲ့ ဖတ်ရလွယ်တဲ့ နည်း: မြင်ရတဲ့အတိုင်း ရတယ်။ ပြီးတော့ တစ်ခု/အများ ရွေးတာက လက်တွေ့ bug တွေထဲမှာ အသေးဆုံးပဲ — '1 hits' လို့ ပေါ်နေတဲ့ screen တွေ အများကြီး ရှိတယ်။",
     },
     another: "return name + ': ' + hits + (hits === 1 ? ' hit' : ' hits');",
+  },
+
+  // ── Things with names ───────────────────────────────────────────────
+  {
+    id: 'name',
+    chapter: 5,
+    concept: { en: 'by name', my: 'နာမည်နဲ့' },
+    brief: {
+      en: "Now he faces someone with a name. Give back the fighter's name.",
+      my: 'အခု သူက နာမည်ရှိတဲ့ တစ်ယောက်ကို ရင်ဆိုင်တယ်။ တိုက်ခိုက်သူရဲ့ နာမည်ကို ပြန်ပေးပါ။',
+    },
+    signature: `${FIGHTER}\nfunction strike(f: Fighter): string`,
+    starter: 'return ',
+    shown: [one(fighter('Aung', 5), 'Aung'), one(fighter('Mya', 9), 'Mya')],
+    cases: [
+      one(fighter('Kyaw', 1), 'Kyaw'),
+      one(fighter('Hla', 0), 'Hla'),
+      one(fighter('', 3), ''),
+      one(fighter('Zaw Zaw', 7), 'Zaw Zaw'),
+    ],
+    hints: [
+      {
+        en: 'An object keeps values under names. Read the type above: a Fighter has a name and a power.',
+        my: 'object တစ်ခုက တန်ဖိုးတွေကို နာမည်နဲ့ သိမ်းထားတယ်။ အပေါ်က type ကို ဖတ်ပါ: Fighter တစ်ယောက်မှာ name နဲ့ power ရှိတယ်။',
+      },
+      {
+        en: 'A dot reads one of them: f.power.',
+        my: 'အစက် (.) က တစ်ခုကို ဖတ်ပေးတယ်: f.power။',
+      },
+      code('return f.name;'),
+    ],
+    lesson: {
+      en: 'A type alias like Fighter is a name for a shape, and the shape is a promise about what every Fighter has. f.name reads what is kept under name; f.nmae would be undefined, which TypeScript would catch and plain JavaScript will not.',
+      my: 'Fighter လို type alias က ပုံသဏ္ဌာန် တစ်ခုအတွက် နာမည်၊ အဲဒီ ပုံသဏ္ဌာန်က Fighter တိုင်းမှာ ဘာတွေ ရှိမလဲ ဆိုတဲ့ ကတိ။ f.name က name အောက်မှာ သိမ်းထားတာကို ဖတ်တယ်၊ f.nmae ဆိုရင် undefined — TypeScript က ဖမ်းပေးမယ်၊ ရိုးရိုး JavaScript က မဖမ်းပေးဘူး။',
+    },
+    another: 'const { name } = f;\nreturn name;',
+  },
+  {
+    id: 'names',
+    chapter: 5,
+    concept: { en: 'the whole crew', my: 'အဖွဲ့ တစ်ဖွဲ့လုံး' },
+    brief: {
+      en: 'A crew comes at him. Give back all their names, in order.',
+      my: 'အဖွဲ့ တစ်ဖွဲ့ ဝင်လာတယ်။ သူတို့ နာမည်အားလုံးကို အစီအစဉ်အတိုင်း ပြန်ပေးပါ။',
+    },
+    signature: `${FIGHTER}\nfunction strike(crew: Fighter[]): string[]`,
+    starter: 'return ',
+    shown: [one([fighter('Aung', 5), fighter('Mya', 9)], ['Aung', 'Mya']), one([], [])],
+    cases: [
+      one([fighter('Kyaw', 1)], ['Kyaw']),
+      one([fighter('Hla', 0), fighter('Zaw', 7), fighter('Ni', 3)], ['Hla', 'Zaw', 'Ni']),
+      one([fighter('Aung', 5), fighter('Aung', 2)], ['Aung', 'Aung']),
+      one([fighter('Su', 4), fighter('Thant', 8)], ['Su', 'Thant']),
+    ],
+    hints: [
+      {
+        en: 'A list of objects is still a list: map over it.',
+        my: 'object တွေရဲ့ စာရင်းကလည်း စာရင်းပဲ: map လုပ်ပါ။',
+      },
+      {
+        en: 'crew.map((f) => ___) — and f is one Fighter each time.',
+        my: 'crew.map((f) => ___) — f က တစ်ခါစီမှာ Fighter တစ်ယောက်။',
+      },
+      code('return crew.map((f) => f.name);'),
+    ],
+    lesson: {
+      en: 'Picking one field out of every object in a list is the most common map there is. It turns Fighter[] into string[], and the two types say exactly what changed.',
+      my: 'စာရင်းထဲက object တိုင်းကနေ field တစ်ခု ဆွဲထုတ်တာက အသုံးအများဆုံး map ပဲ။ Fighter[] ကို string[] ဖြစ်အောင် ပြောင်းတယ်၊ ဘာပြောင်းသွားလဲ ဆိုတာ type နှစ်ခုက တိတိကျကျ ပြောပြတယ်။',
+    },
+    another: 'return crew.map(({ name }) => name);',
+  },
+  {
+    id: 'strong',
+    chapter: 5,
+    concept: { en: 'the strong ones', my: 'အားကောင်းသူတွေ' },
+    brief: {
+      en: 'He only bothers with fighters whose power is above 5. Give back those fighters — the whole of each, not just the name.',
+      my: 'power 5 ထက် ကြီးတဲ့ တိုက်ခိုက်သူတွေကိုပဲ သူ ဂရုစိုက်တယ်။ အဲဒီ တိုက်ခိုက်သူတွေကို ပြန်ပေးပါ — နာမည်တင် မဟုတ်ဘဲ တစ်ယောက်လုံး။',
+    },
+    signature: `${FIGHTER}\nfunction strike(crew: Fighter[]): Fighter[]`,
+    starter: 'return ',
+    shown: [one([fighter('Aung', 5), fighter('Mya', 9)], [fighter('Mya', 9)]), one([fighter('Kyaw', 1)], [])],
+    cases: [
+      one([fighter('Hla', 6), fighter('Zaw', 7)], [fighter('Hla', 6), fighter('Zaw', 7)]),
+      one([fighter('Ni', 5)], []),
+      one([], []),
+      one([fighter('Su', 10), fighter('Thant', 2), fighter('Win', 8)], [fighter('Su', 10), fighter('Win', 8)]),
+    ],
+    hints: [
+      {
+        en: 'The answer is a list of Fighters — the same ones that came in, fewer of them.',
+        my: 'အဖြေက Fighter တွေရဲ့ စာရင်း — ဝင်လာတဲ့ သူတွေပဲ၊ အရေအတွက် နည်းသွားတာပဲ။',
+      },
+      {
+        en: 'filter keeps whole items. The test reads f.power.',
+        my: 'filter က item တစ်ခုလုံးကို ချန်ထားတယ်။ စစ်ချက်က f.power ကို ဖတ်တယ်။',
+      },
+      code('return crew.filter((f) => f.power > 5);'),
+    ],
+    lesson: {
+      en: 'filter never takes an object apart; it keeps or drops each one whole. Fighter[] in, Fighter[] out: the same shape, a shorter list.',
+      my: 'filter က object တွေကို ဘယ်တော့မှ မခွဲဘူး၊ တစ်ခုချင်းစီကို တစ်ခုလုံး ချန်တာ ဒါမှမဟုတ် ဖယ်တာ။ Fighter[] ဝင်၊ Fighter[] ထွက်: ပုံသဏ္ဌာန် အတူတူ၊ စာရင်းပဲ တိုသွားတယ်။',
+    },
+  },
+  {
+    id: 'strongest',
+    chapter: 5,
+    concept: { en: 'the strongest', my: 'အားအကောင်းဆုံး' },
+    brief: {
+      en: "He goes for the strongest of the crew. Give back that fighter's name — the first of them, if two are equal. The crew is never empty.",
+      my: 'သူက အဖွဲ့ထဲက အားအကောင်းဆုံးကို သွားတယ်။ အဲဒီလူရဲ့ နာမည်ကို ပြန်ပေးပါ — နှစ်ယောက် တူနေရင် ရှေ့က လူ။ အဖွဲ့က ဘယ်တော့မှ ဗလာ မဖြစ်ဘူး။',
+    },
+    signature: `${FIGHTER}\nfunction strike(crew: Fighter[]): string`,
+    starter: 'return ',
+    shown: [one([fighter('Aung', 5), fighter('Mya', 9)], 'Mya'), one([fighter('Kyaw', 1)], 'Kyaw')],
+    cases: [
+      one([fighter('Hla', 6), fighter('Zaw', 7), fighter('Ni', 2)], 'Zaw'),
+      one([fighter('Su', 8), fighter('Win', 8)], 'Su'),
+      one([fighter('Thant', -1), fighter('Min', -3)], 'Thant'),
+      one([fighter('Ko', 3), fighter('Ma', 9), fighter('Ye', 9)], 'Ma'),
+    ],
+    hints: [
+      {
+        en: 'The best-so-far loop from chapter three — but keep the whole fighter, not just the number.',
+        my: 'အခန်း ၃ က အခုထိ အကောင်းဆုံး loop ပဲ — ဒါပေမဲ့ ဂဏန်းတင် မဟုတ်ဘဲ တိုက်ခိုက်သူ တစ်ယောက်လုံးကို မှတ်ထား။',
+      },
+      {
+        en: 'Start with crew[0], and replace it only when someone is strictly stronger: > rather than >=, so the first of two equals stays.',
+        my: 'crew[0] ကနေ စ၊ တကယ် ပိုအားကောင်းမှပဲ အစားထိုး: >= မဟုတ်ဘဲ >၊ ဒါမှ တူနေတဲ့ နှစ်ယောက်ထဲက ရှေ့လူ ကျန်မယ်။',
+      },
+      code('let best = crew[0];\nfor (const f of crew) {\n  if (f.power > best.power) best = f;\n}\nreturn best.name;'),
+    ],
+    lesson: {
+      en: 'Keep the whole object while you compare one field, and take the field you want only at the end. reduce, below, is the same walk said as one expression.',
+      my: 'field တစ်ခုကို နှိုင်းယှဉ်နေတုန်း object တစ်ခုလုံးကို မှတ်ထား၊ လိုတဲ့ field ကို နောက်ဆုံးမှ ယူ။ အောက်က reduce က အဲဒီ လျှောက်ပုံကိုပဲ expression တစ်ခုတည်းနဲ့ ပြောတာ။',
+    },
+    another: 'return crew.reduce((best, f) => (f.power > best.power ? f : best)).name;',
+  },
+  {
+    id: 'totalpower',
+    chapter: 5,
+    concept: { en: 'all their power', my: 'အားအားလုံး' },
+    brief: {
+      en: 'They all come at once. Give back their power, added together.',
+      my: 'သူတို့ အကုန် တစ်ပြိုင်နက် ဝင်လာတယ်။ သူတို့ရဲ့ power ကို ပေါင်းပြီး ပြန်ပေးပါ။',
+    },
+    signature: `${FIGHTER}\nfunction strike(crew: Fighter[]): number`,
+    starter: 'return ',
+    shown: [one([fighter('Aung', 5), fighter('Mya', 9)], 14), one([fighter('Kyaw', 1)], 1)],
+    cases: [
+      one([fighter('Hla', 6), fighter('Zaw', 7), fighter('Ni', 2)], 15),
+      one([], 0),
+      one([fighter('Su', -2), fighter('Win', 2)], 0),
+      one([fighter('Thant', 10)], 10),
+    ],
+    hints: [
+      {
+        en: 'A total, as in chapter three — of one field.',
+        my: 'အခန်း ၃ လိုပဲ စုစုပေါင်း — field တစ်ခုရဲ့။',
+      },
+      code('crew.reduce((sum, f) => sum + ___, 0)'),
+      code('return crew.reduce((sum, f) => sum + f.power, 0);'),
+    ],
+    lesson: {
+      en: 'reduce can turn a list of anything into one value of any type: here, Fighters into a number. Without the 0, the first Fighter itself becomes the starting sum — and an object plus a number is a string.',
+      my: 'reduce က ဘာစာရင်းကိုမဆို ဘယ် type တန်ဖိုး တစ်ခုအဖြစ်မဆို ပြောင်းနိုင်တယ်: ဒီမှာ Fighter တွေကို ဂဏန်း တစ်ခုအဖြစ်။ 0 မပါရင် ပထမ Fighter ကိုယ်တိုင်က စတင်ပေါင်းလဒ် ဖြစ်သွားတယ် — object နဲ့ ဂဏန်း ပေါင်းရင် string ရတယ်။',
+    },
+    another: 'let sum = 0;\nfor (const f of crew) sum += f.power;\nreturn sum;',
+  },
+  {
+    id: 'powerup',
+    chapter: 5,
+    concept: { en: 'one stronger', my: 'တစ်ဆင့် ပိုအား' },
+    brief: {
+      en: 'Give him a boost: give back a fighter just like this one, with power one higher — without changing the one you were given.',
+      my: 'အားတိုးပေးပါ: ဒီတိုက်ခိုက်သူနဲ့ အတူတူပဲ၊ power တစ် ပိုများတဲ့ တိုက်ခိုက်သူ တစ်ယောက်ကို ပြန်ပေးပါ — ပေးထားတဲ့လူကို မပြောင်းဘဲ။',
+    },
+    signature: `${FIGHTER}\nfunction strike(f: Fighter): Fighter`,
+    starter: 'return ',
+    shown: [one(fighter('Aung', 5), fighter('Aung', 6)), one(fighter('Mya', 9), fighter('Mya', 10))],
+    cases: [
+      one(fighter('Kyaw', 1), fighter('Kyaw', 2)),
+      one(fighter('Hla', -1), fighter('Hla', 0)),
+      one(fighter('Zaw', 0), fighter('Zaw', 1)),
+      one(fighter('Ni', 99), fighter('Ni', 100)),
+    ],
+    hints: [
+      {
+        en: 'f.power += 1 and then return f would pass here — and it changes the fighter that was handed in, which whoever handed it in never asked for.',
+        my: 'f.power += 1 ပြီး f ကို return ရင် ဒီမှာ အောင်မှာပဲ — ဒါပေမဲ့ ပေးလိုက်တဲ့ တိုက်ခိုက်သူကိုယ်တိုင်ကို ပြောင်းပစ်တယ်၊ ပေးလိုက်တဲ့သူက အဲဒါ ဘယ်တုန်းကမှ မတောင်းဆိုခဲ့ဘူး။',
+      },
+      {
+        en: '{ ...f } makes a copy, and fields written after the spread replace the ones it copied: { ...f, power: ___ }.',
+        my: '{ ...f } က မိတ္တူ တစ်ခု လုပ်တယ်၊ spread ရဲ့ နောက်မှာ ရေးတဲ့ field တွေက ကူးလာတဲ့ဟာတွေကို အစားထိုးတယ်: { ...f, power: ___ }။',
+      },
+      code('return { ...f, power: f.power + 1 };'),
+    ],
+    lesson: {
+      en: 'Spread copies an object, and anything written after it overrides. Making a new object instead of changing the old one is called immutability, and it is how most TypeScript code changes what it was given.',
+      my: 'spread က object ကို ကူးယူတယ်၊ နောက်မှာ ရေးတာက အစားထိုးတယ်။ အဟောင်းကို မပြောင်းဘဲ object အသစ် လုပ်တာကို immutability လို့ ခေါ်တယ်၊ TypeScript code အများစုက ပေးလာတဲ့ အရာကို ဒီလိုပဲ ပြောင်းတယ်။',
+    },
+  },
+  {
+    id: 'tally',
+    chapter: 5,
+    concept: { en: 'how many of each', my: 'တစ်မျိုးစီ ဘယ်နှစ်ခု' },
+    brief: {
+      en: 'He keeps score of the moves. Give back how many times each move appears, as a record from move to count.',
+      my: 'သူက ထိုးချက်တွေရဲ့ အမှတ်ကို မှတ်တယ်။ ထိုးချက် တစ်မျိုးစီ ဘယ်နှစ်ခါ ပါလဲ ဆိုတာကို ထိုးချက် → အရေအတွက် record တစ်ခုအဖြစ် ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(moves: string[]): Record<string, number>',
+    starter: '',
+    shown: [one(['jab', 'kick', 'jab'], { jab: 2, kick: 1 }), one([], {})],
+    cases: [
+      one(['kick'], { kick: 1 }),
+      one(['a', 'b', 'a', 'a'], { a: 3, b: 1 }),
+      one(['jab', 'jab'], { jab: 2 }),
+      one(['x', 'y', 'z'], { x: 1, y: 1, z: 1 }),
+    ],
+    hints: [
+      {
+        en: 'Start with an empty object, {}, and add to it as you walk the moves.',
+        my: 'object ဗလာ {} နဲ့ စပြီး ထိုးချက်တွေကို လျှောက်ရင်း ထည့်သွားပါ။',
+      },
+      {
+        en: 'counts[m] is undefined the first time, and undefined + 1 is NaN. (counts[m] ?? 0) + 1 starts it at 0.',
+        my: 'ပထမဆုံးအကြိမ်မှာ counts[m] က undefined၊ undefined + 1 က NaN။ (counts[m] ?? 0) + 1 က 0 ကနေ စပေးတယ်။',
+      },
+      code('const counts = {};\nfor (const m of moves) {\n  counts[m] = (counts[m] ?? 0) + 1;\n}\nreturn counts;'),
+    ],
+    lesson: {
+      en: 'An object can be a dictionary: keys made up as you go, square brackets to read and write them. In a real .ts file it would be const counts: Record<string, number> = {} — the box cannot take the annotation, but the signature above already says it.',
+      my: 'object က dictionary လိုလည်း သုံးလို့ရတယ်: key တွေကို သွားရင်း ဖန်တီး၊ လေးထောင့်ကွင်းနဲ့ ဖတ်/ရေး။ တကယ့် .ts file မှာဆိုရင် const counts: Record<string, number> = {} လို့ ရေးမယ် — box က annotation ကို လက်မခံပေမဲ့ အပေါ်က signature က ပြောပြီးသား။',
+    },
+    another: 'return moves.reduce((counts, m) => ({ ...counts, [m]: (counts[m] ?? 0) + 1 }), {});',
   },
 ];
