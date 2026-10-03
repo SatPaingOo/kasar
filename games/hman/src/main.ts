@@ -11,6 +11,8 @@ import type { Game } from './game.js';
 import { run } from './runner.js';
 import { adviseOn } from './advice.js';
 import { draw } from './render.js';
+import { BLOW, swingAt } from './beat.js';
+import { MUTE_LABEL, createSound } from './sound.js';
 import type { Blow, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
 import type { Lang } from './strings.js';
@@ -40,6 +42,7 @@ const curtainTitleEl = need<HTMLElement>('#curtainTitle');
 const curtainLeadEl = need<HTMLElement>('#curtainLead');
 const curtainBodyEl = need<HTMLElement>('#curtainBody');
 const curtainGoEl = need<HTMLButtonElement>('#curtainGo');
+const muteEl = need<HTMLButtonElement>('#mute');
 
 const lang: Lang = pickLang([navigator.language, ...navigator.languages]);
 document.documentElement.lang = lang;
@@ -54,7 +57,10 @@ let busy = false;
 /** The blows from the last submit, played one at a time. */
 let queue: Blow[] = [];
 let blow: Blow | null = null;
-let swing = 0;
+let since = 0;
+/** Whether this blow has already sounded, so it lands once and not every frame. */
+let rang = false;
+const sound = createSound();
 
 function resize(): void {
   const ratio = window.devicePixelRatio || 1;
@@ -160,8 +166,17 @@ async function strike(): Promise<void> {
   }
 
   resolve(game, outcome.results);
-  queue = game.attempts.filter((a) => !a.repeat).map((a) => ({ landed: a.hit }));
-  if (queue.length === 0) queue = [{ landed: false }];
+  // Every blow carries the case it came from, because the case is the part
+  // worth watching: a lunge says something happened, the numbers say what.
+  queue = game.attempts
+    .filter((a) => !a.repeat)
+    .map((a) => ({ landed: a.hit, parts: a.parts, got: a.got, want: a.want, error: a.error }));
+  if (queue.length === 0) {
+    const first = game.attempts[0];
+    if (first !== undefined) {
+      queue = [{ landed: true, parts: first.parts, got: first.got, want: first.want, error: null }];
+    }
+  }
 
   const missed = game.attempts.find((a) => !a.hit);
   if (missed === undefined) {
@@ -184,8 +199,11 @@ function playOut(dt: number): void {
       if (busy) {
         busy = false;
         advance(game);
-        if (game.phase === 'won' || game.phase === 'lost') showEnd();
-        else {
+        if (game.phase === 'won' || game.phase === 'lost') {
+          sound.play(game.phase === 'won' ? 'won' : 'lost');
+          showEnd();
+        } else {
+          if (game.solved.every((d) => d)) sound.play('cleared');
           showRung();
           submitEl.disabled = false;
         }
@@ -194,14 +212,26 @@ function playOut(dt: number): void {
       return;
     }
     blow = next;
-    swing = 0;
+    since = 0;
+    rang = false;
     return;
   }
 
-  swing += dt * 2.6;
-  if (swing >= 1) {
+  since += dt;
+  // The sound belongs at the moment of contact, not at the start of the
+  // wind-up: a thud that arrives before the fist does reads as a glitch.
+  if (!rang && swingAt(since).struck) {
+    rang = true;
+    if (blow.error !== null) sound.play('broke');
+    else if (blow.landed) {
+      sound.play('hit');
+      sound.play('shatter');
+    } else sound.play('miss');
+  }
+
+  if (since >= BLOW) {
     blow = null;
-    swing = 0;
+    since = 0;
   }
 }
 
@@ -237,13 +267,31 @@ function begin(): void {
 }
 
 submitEl.textContent = t.submit;
+labelMute();
 hintEl.textContent = t.hint;
-submitEl.addEventListener('click', () => void strike());
+submitEl.addEventListener('click', () => {
+  sound.unlock();
+  void strike();
+});
 hintEl.addEventListener('click', () => {
-  takeHint(game);
+  sound.unlock();
+  if (takeHint(game)) sound.play('hint');
   drawHints();
 });
-curtainGoEl.addEventListener('click', begin);
+
+function labelMute(): void {
+  const [on, off] = MUTE_LABEL[lang];
+  muteEl.textContent = sound.muted ? off : on;
+}
+muteEl.addEventListener('click', () => {
+  sound.unlock();
+  sound.toggle();
+  labelMute();
+});
+curtainGoEl.addEventListener('click', () => {
+  sound.unlock();
+  begin();
+});
 
 // Ctrl/Cmd+Enter submits, because reaching for the mouse mid-thought is the
 // one thing a box like this must not make you do.
@@ -260,7 +308,7 @@ function tick(now: number): void {
   last = now;
   clock += dt;
   playOut(dt);
-  draw(paint, view, game, { lang, time: clock, blow, swing });
+  draw(paint, view, game, { lang, time: clock, blow, since });
   requestAnimationFrame(tick);
 }
 

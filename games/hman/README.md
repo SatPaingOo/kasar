@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.1.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.2.0
 
 မှန် — correct.
 
@@ -92,6 +92,8 @@ literals and conditionals alone, colons and all.
 | `src/game.ts` | the rules. Pure, and it never runs anything — it takes the results of a run and decides what they do |
 | `src/runner.ts` | the worker, the blob and the timeout. The only part that executes anything |
 | `src/advice.ts` | what to say when the code did not run. String work only, so it is testable |
+| `src/beat.ts` | the timing of one blow. No canvas, so it is testable |
+| `src/sound.ts` | every sound, made from oscillators and one noise buffer |
 | `src/figure.ts` | the man, drawn in code. Drawn twice: the second is him, flipped and colder |
 | `src/render.ts` | the fight. The only thing on the canvas |
 | `src/main.ts` | the loop, the desk and the keyboard |
@@ -100,10 +102,28 @@ The split that matters is `game.ts` never executing anything. Running code
 needs a worker and a clock and is therefore the browser's problem; the damage
 model is not, so the whole of it plays out headlessly in the tests.
 
+## Showing what happened
+
+The first version drew two small figures nudging each other for a third of a
+second and nothing else. It animated correctly and it was useless: you could
+not tell who had hit whom, or why, which is the only thing the game exists to
+show you.
+
+What was missing was never the animation. It was the answer. A blow now
+carries the case it came from and holds it up afterwards —
+`[6, 6, 1, 9] → 99 ✗`, and what was needed under it — and most of a blow is
+that hold rather than the swing. The mirror is a row of blocks, one per case,
+so a hit visibly takes one; a life that goes is drawn going.
+
+Sound is the other half of it, and this is the only game on the shelf with
+nothing running underneath. The other three always have something happening.
+Here you are thinking most of the time, and the silence is what makes a blow
+land when it comes.
+
 ## Still to come
 
 - More rungs. Six to eight was the plan; there are four.
-- Sound, and an ending worth watching.
+- An ending worth watching, for both ways a run can finish.
 - Whether this belongs on the shelf at all. It is here to find that out: if it
   gets replayed to practise rather than to play, it wants to be its own thing,
   with more languages and saved progress — and a Python runtime is ten

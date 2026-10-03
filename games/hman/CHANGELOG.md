@@ -2,6 +2,36 @@
 
 Keep a Changelog, newest first.
 
+## [0.2.0] — 2026-10-03
+
+### Changed
+
+- You can see what happened. The first version threw two small figures at each
+  other for a third of a second and showed nothing else, and it was impossible
+  to tell who had hit whom or why — which is the only thing the game is for.
+  A blow now carries the case it came from and holds it up after landing:
+  `[6, 6, 1, 9] → 99 ✗` with what was needed underneath. The hold is the point;
+  the swing was never the problem.
+- The mirror is a row of blocks, one per case, and a hit takes one visibly. A
+  life that goes is drawn going, broken rather than simply missing.
+- A blow winds up, lands and holds, over about a second instead of a third of
+  one. There is a flash at the point of contact, shards off it, and a shake
+  that is harder when the blow is against you.
+- The figures no longer stand in a T-pose. Their arms rested at about a
+  hundred degrees above horizontal, so neither of them read as fighting; they
+  hang now and come up into the strike.
+- The eye moved out to the edge of the head. Centred and large it read as one
+  eye in the middle of a face rather than as a man looking at something.
+
+### Added
+
+- Sound, synthesised at runtime: the connect, the duller and lower note of
+  being hit, a buzz for code that threw, a block breaking, and an ending each
+  way. No bed underneath — this game is silent while you think, which is most
+  of the time, and the silence is what makes a blow land. A mute button.
+- `src/beat.ts`, the timing of one blow, apart from the drawing so that the
+  thing that was wrong is the thing under test.
+
 ## [0.1.0] — 2026-10-03
 
 ### Added

@@ -99,24 +99,37 @@ export function drawFigure(
 
   line(ctx, hip, shoulder, neck);
 
-  // The striking arm reaches out; the other stays in.
-  const strikeAngle = face === 1 ? -0.18 - lunge * 0.1 : Math.PI + 0.18 + lunge * 0.1;
-  const bent = face === 1 ? -1.9 : Math.PI + 1.9;
-  const armAngle = bent + (strikeAngle - bent) * lunge;
+  // Arms hang and come up, rather than starting up and going out. The first
+  // version rested them at about a hundred degrees above horizontal, which is
+  // a T-pose: both figures stood there with their arms spread and neither of
+  // them read as fighting at all.
+  //
+  // Angles are measured the way the canvas does, so zero is forward-right and
+  // a half turn is straight down.
+  const forward = face === 1 ? 0 : Math.PI;
+  const down = face === 1 ? 1.18 : Math.PI - 1.18;
+  const out = face === 1 ? -0.1 : Math.PI + 0.1;
+
+  const armAngle = down + (out - down) * lunge;
   const elbow = reach(shoulder, armAngle, BODY.upperArm);
-  const fist = reach(elbow, armAngle + face * (0.5 - lunge * 0.5), BODY.forearm);
+  const fist = reach(elbow, armAngle + face * (0.55 - lunge * 0.55), BODY.forearm);
   line(ctx, shoulder, elbow, fist);
 
-  const guardAngle = face === 1 ? -2.4 + recoil * 0.6 : Math.PI + 2.4 - recoil * 0.6;
+  // The other hangs back, and comes up across him when he is hit.
+  const guardRest = face === 1 ? 1.95 : Math.PI - 1.95;
+  const guardAngle = guardRest - face * recoil * 0.95;
   const guardElbow = reach(shoulder, guardAngle, BODY.upperArm);
-  line(ctx, shoulder, guardElbow, reach(guardElbow, guardAngle - face * 0.7, BODY.forearm));
+  line(ctx, shoulder, guardElbow, reach(guardElbow, guardAngle - face * 0.75, BODY.forearm));
+  void forward;
 
   ctx.beginPath();
   ctx.arc(head.x, head.y, BODY.headRadius, 0, Math.PI * 2);
   ctx.stroke();
 
+  // Small, and out at the edge. Centred and large it read as one big eye in
+  // the middle of the face rather than as a man looking somewhere.
   ctx.beginPath();
-  ctx.arc(head.x + face * 1.9, head.y - 0.6, 0.95, 0, Math.PI * 2);
+  ctx.arc(head.x + face * (BODY.headRadius * 0.55), head.y - 0.8, 0.8, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
