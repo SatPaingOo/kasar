@@ -71,6 +71,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Things with names', my: 'နာမည်ပါတဲ့ အရာတွေ' },
   { en: 'Shapes of things', my: 'အရာတွေရဲ့ ပုံသဏ္ဌာန်' },
   { en: 'Moves of your own', my: 'ကိုယ်ပိုင် ထိုးချက်တွေ' },
+  { en: 'Himself again', my: 'ကိုယ့်ကိုယ်ကို ပြန်ခေါ်' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -1646,5 +1647,176 @@ export const LEVELS: readonly Level[] = [
     },
     another:
       'const moves = { double: (x) => x * 2, inc: (x) => x + 1, square: (x) => x * x };\nreturn combo.reduce((power, name) => moves[name](power), start);',
+  },
+
+  // ── Himself again ───────────────────────────────────────────────────
+  {
+    id: 'factorial',
+    chapter: 8,
+    concept: { en: 'all the way down', my: 'အောက်ဆုံးအထိ' },
+    brief: {
+      en: 'His move for n is n times his move for n − 1, all the way down — and his move for 0 is 1. Give back his move for n. strike can call strike.',
+      my: 'n အတွက် သူ့ထိုးချက်က n နဲ့ n − 1 အတွက် ထိုးချက်ကို မြှောက်တာ၊ အောက်ဆုံးအထိ — 0 အတွက် ထိုးချက်ကတော့ 1။ n အတွက် ထိုးချက်ကို ပြန်ပေးပါ။ strike က strike ကို ပြန်ခေါ်လို့ရတယ်။',
+    },
+    signature: 'function strike(n: number): number',
+    starter: 'return ',
+    shown: [one(3, 6), one(1, 1)],
+    cases: [one(0, 1), one(4, 24), one(5, 120), one(10, 3628800)],
+    hints: [
+      {
+        en: 'The brief already gives the answer in two parts: what to do at 0, and how n is made from n − 1.',
+        my: 'brief က အဖြေကို နှစ်ပိုင်းနဲ့ ပေးပြီးသား: 0 မှာ ဘာလုပ်ရမလဲ၊ n ကို n − 1 ကနေ ဘယ်လို လုပ်ရမလဲ။',
+      },
+      {
+        en: 'The part for 0 is the base case. Without it the calls never stop.',
+        my: '0 အတွက် အပိုင်းကို base case လို့ ခေါ်တယ်။ မပါရင် ခေါ်တာတွေ ဘယ်တော့မှ မရပ်ဘူး။',
+      },
+      code('if (n === 0) return 1;\nreturn n * strike(n - 1);'),
+    ],
+    lesson: {
+      en: 'A recursive function has two halves: a base case that answers at once, and a step that answers using a smaller version of the same question. Every call has to get closer to the base, or it runs until the stack runs out.',
+      my: 'ကိုယ့်ကိုယ်ကို ပြန်ခေါ်တဲ့ (recursive) function မှာ နှစ်ပိုင်း ရှိတယ်: ချက်ချင်း ဖြေပေးတဲ့ base case နဲ့ မေးခွန်းတူရဲ့ ပိုသေးတဲ့ ပုံစံကို သုံးပြီး ဖြေတဲ့ အဆင့်။ ခေါ်တိုင်း base ကို ပိုနီးလာရမယ်၊ မဟုတ်ရင် stack ကုန်တဲ့အထိ run နေမှာ။',
+    },
+    another: 'let out = 1;\nfor (let i = 2; i <= n; i += 1) out *= i;\nreturn out;',
+  },
+  {
+    id: 'power',
+    chapter: 8,
+    concept: { en: 'smaller each time', my: 'တစ်ခါထက် တစ်ခါ သေး' },
+    brief: {
+      en: 'base to the power exp is base multiplied by itself exp times, and anything to the power 0 is 1. Write it by calling strike with a smaller exp.',
+      my: 'base ရဲ့ exp ထပ်ကိန်း ဆိုတာ base ကို exp ကြိမ် ကိုယ့်ကိုယ်ကို မြှောက်တာ၊ ဘာမဆို 0 ထပ်ဆိုရင် 1။ exp ကို သေးသွားအောင် strike ကို ပြန်ခေါ်ပြီး ရေးပါ။',
+    },
+    signature: 'function strike(base: number, exp: number): number',
+    starter: '',
+    shown: [many([2, 3], 8), many([5, 0], 1)],
+    cases: [many([3, 2], 9), many([2, 10], 1024), many([7, 1], 7), many([-2, 3], -8), many([0, 0], 1)],
+    hints: [
+      {
+        en: 'Two numbers come in, and only one of them shrinks.',
+        my: 'ဂဏန်း နှစ်လုံး ဝင်လာတယ်၊ တစ်လုံးပဲ သေးသေးလာတယ်။',
+      },
+      {
+        en: 'base^exp is base × base^(exp − 1), and the base case is exp === 0.',
+        my: 'base^exp က base × base^(exp − 1)၊ base case က exp === 0။',
+      },
+      code('if (exp === 0) return 1;\nreturn base * strike(base, exp - 1);'),
+    ],
+    lesson: {
+      en: 'The argument that gets smaller is what makes recursion finish; the others are passed along unchanged. Math.pow and ** already do this — the point was seeing how.',
+      my: 'သေးသေးလာတဲ့ argument က recursion ကို ပြီးဆုံးစေတာ၊ ကျန်တာတွေကို မပြောင်းဘဲ ဆက်ပို့တယ်။ Math.pow နဲ့ ** က ဒါကို လုပ်ပြီးသား — အဓိကက ဘယ်လို လုပ်လဲ မြင်ဖို့ပဲ။',
+    },
+    another: 'return base ** exp;',
+  },
+  {
+    id: 'fib',
+    chapter: 8,
+    concept: { en: 'the two before', my: 'အရှေ့ နှစ်ခု' },
+    brief: {
+      en: 'Each number in the line is the sum of the two before it: 0, 1, 1, 2, 3, 5, 8… Give back the nth, counting from 0.',
+      my: 'အတန်းထဲက ဂဏန်း တစ်ခုစီက သူ့ရှေ့ နှစ်ခုရဲ့ ပေါင်းလဒ်: 0, 1, 1, 2, 3, 5, 8… n ခုမြောက်ကို ပြန်ပေးပါ၊ 0 ကနေ ရေတွက်ပါ။',
+    },
+    signature: 'function strike(n: number): number',
+    starter: '',
+    shown: [one(6, 8), one(1, 1)],
+    cases: [one(0, 0), one(2, 1), one(10, 55), one(20, 6765), one(25, 75025)],
+    hints: [
+      {
+        en: 'Two base cases this time: the 0th is 0 and the 1st is 1.',
+        my: 'ဒီတစ်ခါ base case နှစ်ခု: 0 ခုမြောက်က 0၊ 1 ခုမြောက်က 1။',
+      },
+      {
+        en: 'strike(n - 1) + strike(n - 2) — two calls, each one smaller.',
+        my: 'strike(n - 1) + strike(n - 2) — ခေါ်တာ နှစ်ခါ၊ တစ်ခုစီက ပိုသေးတယ်။',
+      },
+      code('if (n < 2) return n;\nreturn strike(n - 1) + strike(n - 2);'),
+    ],
+    lesson: {
+      en: 'This is correct, and slow: strike(25) calls itself nearly a quarter of a million times, working out the same small answers over and over. The loop below keeps only the last two and is done in 25 steps. Recursion is the clearest way to say it, not always the best way to run it.',
+      my: 'ဒါ မှန်တယ်၊ ဒါပေမဲ့ နှေးတယ်: strike(25) က ကိုယ့်ကိုယ်ကို အကြိမ် နှစ်သိန်းကျော် ခေါ်ပြီး အဖြေ သေးသေးလေးတွေကို ထပ်ခါထပ်ခါ ပြန်တွက်နေတယ်။ အောက်က loop က နောက်ဆုံး နှစ်ခုကိုပဲ မှတ်ပြီး အဆင့် ၂၅ ဆင့်နဲ့ ပြီးတယ်။ recursion က ပြောဖို့ အရှင်းဆုံး နည်း၊ run ဖို့တော့ အမြဲ အကောင်းဆုံး မဟုတ်ဘူး။',
+    },
+    another: 'let a = 0;\nlet b = 1;\nfor (let i = 0; i < n; i += 1) [a, b] = [b, a + b];\nreturn a;',
+  },
+  {
+    id: 'deepsum',
+    chapter: 8,
+    concept: { en: 'lists inside lists', my: 'စာရင်းထဲက စာရင်း' },
+    brief: {
+      en: 'The parts are nested now: a part can be a number or a whole list of parts, as deep as it likes. Give back the total of every number in it.',
+      my: 'အခု အပိုင်းတွေက အထပ်ထပ်: အပိုင်း တစ်ခုက ဂဏန်း ဖြစ်နိုင်သလို အပိုင်းတွေရဲ့ စာရင်း တစ်ခုလုံးလည်း ဖြစ်နိုင်တယ်၊ ကြိုက်သလောက် နက်နိုင်တယ်။ အထဲက ဂဏန်း အားလုံးရဲ့ စုစုပေါင်းကို ပြန်ပေးပါ။',
+    },
+    signature: 'type Nested = number | Nested[];\nfunction strike(parts: Nested[]): number',
+    starter: '',
+    shown: [one([1, [2, 3]], 6), one([], 0)],
+    cases: [
+      one([[[[4]]]], 4),
+      one([1, 2, 3], 6),
+      one(
+        [
+          [1, [2]],
+          [3, [4, [5]]],
+        ],
+        15,
+      ),
+      one([[], [[]]], 0),
+    ],
+    hints: [
+      {
+        en: 'A loop cannot know how deep to go. But each part is only ever one of two things: a number, or a list — and a list is exactly what strike already sums.',
+        my: 'loop က ဘယ်လောက် နက်နက် သွားရမလဲ မသိနိုင်ဘူး။ ဒါပေမဲ့ အပိုင်း တစ်ခုစီက အမြဲ နှစ်မျိုးထဲက တစ်မျိုးပဲ: ဂဏန်း ဒါမှမဟုတ် စာရင်း — စာရင်းဆိုတာ strike က ပေါင်းပြီးသား အရာ အတိအကျပဲ။',
+      },
+      {
+        en: 'For each part, Array.isArray(p) ? strike(p) : p — then add those up.',
+        my: 'အပိုင်း တစ်ခုစီအတွက် Array.isArray(p) ? strike(p) : p — ပြီးရင် အဲဒါတွေကို ပေါင်း။',
+      },
+      code('let total = 0;\nfor (const p of parts) {\n  total += Array.isArray(p) ? strike(p) : p;\n}\nreturn total;'),
+    ],
+    lesson: {
+      en: "The type says it before the code does: Nested is a number or a list of Nested, and the function follows the type's shape exactly, one branch for each half. Recursion is the natural fit for anything defined in terms of itself — folders, comments with replies, the page you are reading.",
+      my: 'code မတိုင်ခင် type က ပြောပြီးသား: Nested က ဂဏန်း ဒါမှမဟုတ် Nested တွေရဲ့ စာရင်း၊ function က type ရဲ့ ပုံသဏ္ဌာန်အတိုင်း အတိအကျ လိုက်တယ်၊ တစ်ခြမ်းစီအတွက် branch တစ်ခု။ ကိုယ့်ကိုယ်ကို ပြန်ညွှန်ပြီး သတ်မှတ်ထားတဲ့ အရာမှန်သမျှ (folder တွေ၊ reply ပါတဲ့ comment တွေ၊ မင်းဖတ်နေတဲ့ page) အတွက် recursion က သဘာဝကျဆုံးပဲ။',
+    },
+    another: 'return parts.reduce((sum, p) => sum + (Array.isArray(p) ? strike(p) : p), 0);',
+  },
+  {
+    id: 'flatten',
+    chapter: 8,
+    concept: { en: 'all on one level', my: 'အလွှာ တစ်ခုတည်း' },
+    brief: {
+      en: 'Lay the nested parts out flat: give back every number, in the order you would meet them reading left to right.',
+      my: 'အထပ်ထပ် အပိုင်းတွေကို အလွှာ တစ်ခုတည်း ဖြန့်ချပါ: ဘယ်ကနေ ညာ ဖတ်သွားရင် တွေ့မယ့် အစီအစဉ်အတိုင်း ဂဏန်း အားလုံးကို ပြန်ပေးပါ။',
+    },
+    signature: 'type Nested = number | Nested[];\nfunction strike(parts: Nested[]): number[]',
+    starter: '',
+    shown: [one([1, [2, 3]], [1, 2, 3]), one([], [])],
+    cases: [
+      one([[[[4]]]], [4]),
+      one(
+        [
+          [1, [2]],
+          [3, [4, [5]]],
+        ],
+        [1, 2, 3, 4, 5],
+      ),
+      one([5, [], [6]], [5, 6]),
+      one([[3, 2], 1], [3, 2, 1]),
+    ],
+    hints: [
+      {
+        en: 'The same two cases as the last rung — but instead of adding, collect.',
+        my: 'အရင်အဆင့်က ဖြစ်နိုင်ချေ နှစ်ခုပဲ — ဒါပေမဲ့ ပေါင်းမယ့်အစား စုပါ။',
+      },
+      {
+        en: 'For a list, strike(p) gives back a flat list: put all of it in with out.push(...strike(p)).',
+        my: 'စာရင်းအတွက် strike(p) က အလွှာတစ်ခုတည်း စာရင်း ပြန်ပေးတယ်: အကုန်လုံးကို out.push(...strike(p)) နဲ့ ထည့်ပါ။',
+      },
+      code(
+        'const out = [];\nfor (const p of parts) {\n  if (Array.isArray(p)) out.push(...strike(p));\n  else out.push(p);\n}\nreturn out;',
+      ),
+    ],
+    lesson: {
+      en: 'Spread in a call — push(...list) — passes every item as an argument of its own. And this one is built into the language: flat(Infinity), below, flattens to any depth.',
+      my: 'ခေါ်တဲ့နေရာမှာ spread — push(...list) — က item တိုင်းကို ကိုယ်ပိုင် argument အဖြစ် ပေးတယ်။ ပြီးတော့ ဒီအလုပ်က language ထဲမှာ ပါပြီးသား: အောက်က flat(Infinity) က ဘယ်လောက်နက်နက် ဖြန့်ပေးတယ်။',
+    },
+    another: 'return parts.flat(Infinity);',
   },
 ];

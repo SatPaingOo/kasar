@@ -466,6 +466,12 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
     'const moves = { double: (x) => x * 2, inc: (x) => x + 1, square: (x) => x * x };\nlet power = 0;\nfor (const name of combo) power = moves[name](power);\nreturn power;',
     'a combo that ignores where it starts',
   ],
+  // Himself again
+  ['factorial', 'if (n === 1) return 1;\nreturn n * strike(n - 1);', 'a base case at 1 that 0 never reaches'],
+  ['power', 'if (exp === 0) return 1;\nreturn base * strike(base - 1, exp - 1);', 'the wrong argument made smaller'],
+  ['fib', 'if (n < 2) return 1;\nreturn strike(n - 1) + strike(n - 2);', 'the 0th counted as 1'],
+  ['deepsum', 'return parts.flat().reduce((s, p) => s + p, 0);', 'one level flattened where any depth was promised'],
+  ['flatten', 'return parts.flat();', 'flat with no depth, which is one level'],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */
