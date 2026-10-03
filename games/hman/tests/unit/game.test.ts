@@ -433,6 +433,21 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
     'const counts = {};\nfor (const m of moves) counts[m] += 1;\nreturn counts;',
     'undefined + 1 on a key not seen yet',
   ],
+  // Shapes of things
+  ['either', "return typeof guard === 'string' ? Number(guard) : guard;", "a word's digits read as its strength"],
+  ['nickname', 'return f.nick || f.name;', '|| skipping an empty nickname'],
+  [
+    'path',
+    "let x = 0;\nlet y = 0;\nfor (const d of path) {\n  switch (d) {\n    case 'up': y += 1;\n    case 'down': y -= 1;\n    case 'left': x -= 1;\n    case 'right': x += 1;\n  }\n}\nreturn [x, y];",
+    'a switch with no breaks, falling through',
+  ],
+  [
+    'area',
+    "switch (shape.kind) {\n  case 'square': return shape.side * shape.side;\n  case 'rect': return shape.w * shape.h;\n  case 'triangle': return shape.base * shape.height;\n}",
+    'a triangle not halved',
+  ],
+  ['swap', 'const [first, second, ...rest] = items;\nreturn [second, first, ...rest];', 'a list too short to swap'],
+  ['what', 'return typeof thing;', "typeof calling a list 'object'"],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */

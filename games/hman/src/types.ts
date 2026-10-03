@@ -233,6 +233,19 @@ export function readSignature(text: string): Signature {
   return { above, head, params, returnsText, returns: parseType(returnsText, aliases, generics) };
 }
 
+/**
+ * A long union alias, laid out the way Prettier would lay it out: one member
+ * to a line. On one line `type Shape = { … } | { … } | { … }` wraps wherever
+ * the box happens to end, and the bars that matter are lost in the middle.
+ */
+export function layoutAlias(line: string, width: number = 64): string {
+  const found = /^(\s*type\s+[A-Za-z_$][\w$]*\s*=)\s*([\s\S]*?)(;?)\s*$/.exec(line);
+  if (found === null || line.length <= width) return line;
+  const members = splitTop(found[2] ?? '', '|');
+  if (members.length < 2) return line;
+  return `${found[1] ?? ''}\n${members.map((one) => `  | ${one}`).join('\n')}${found[3] ?? ''}`;
+}
+
 const isRecord = (value: Value): value is { readonly [key: string]: Value } =>
   typeof value === 'object' && !Array.isArray(value);
 

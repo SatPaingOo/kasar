@@ -31,8 +31,8 @@ import { tokenize } from './highlight.js';
 import { CHAPTERS, LEVELS } from './levels.js';
 import { nextUnbeaten, openUpTo, readProgress, withCleared, withDraft, writeProgress } from './progress.js';
 import type { Progress, Store } from './progress.js';
-import { readSignature } from './types.js';
-import type { Signature } from './types.js';
+import { layoutAlias, readSignature } from './types.js';
+import type { Signature, Type } from './types.js';
 import { callOf, show } from './values.js';
 import type { Blow, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
@@ -303,7 +303,7 @@ function showRung(): void {
     shownEl.append(bit);
   }
 
-  colour(headEl, [...sig.above, `${sig.head} {`].join('\n'), false);
+  colour(headEl, [...sig.above.map((line) => layoutAlias(line)), `${sig.head} {`].join('\n'), false);
   bodyEl.value = progress.drafts[level.id] ?? level.starter;
   badLine = null;
   refresh();
@@ -369,13 +369,24 @@ function explainMiss(source: string): void {
     case 'nan':
       say(`${call} — ${t.nan}`, 'bad');
       return;
-    case 'promise':
-      say(`${call} → ${missed.seen}. ${t.promised(sig.returnsText, missed.type)}`, 'bad');
+    case 'promise': {
+      // Against a list of exact values, the value says more than its type:
+      // "gave back "object"" rather than "gave back string".
+      const gave = namesValues(sig.returns) ? missed.seen : missed.type;
+      say(`${call} → ${missed.seen}. ${t.promised(sig.returnsText, gave)}`, 'bad');
       return;
+    }
     case 'value':
       say(t.gaveBack(call, missed.seen, show(missed.want)), 'bad');
       return;
   }
+}
+
+/** Whether a type is made of exact values, like 'up' | 'down'. */
+function namesValues(type: Type | null): boolean {
+  if (type === null) return false;
+  if (type.kind === 'literal') return true;
+  return type.kind === 'union' && type.of.some((one) => one.kind === 'literal');
 }
 
 async function strike(): Promise<void> {

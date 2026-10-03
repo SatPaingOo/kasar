@@ -69,6 +69,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Array methods', my: 'Array method တွေ' },
   { en: 'Text', my: 'စာသား' },
   { en: 'Things with names', my: 'နာမည်ပါတဲ့ အရာတွေ' },
+  { en: 'Shapes of things', my: 'အရာတွေရဲ့ ပုံသဏ္ဌာန်' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -1243,5 +1244,247 @@ export const LEVELS: readonly Level[] = [
       my: 'object က dictionary လိုလည်း သုံးလို့ရတယ်: key တွေကို သွားရင်း ဖန်တီး၊ လေးထောင့်ကွင်းနဲ့ ဖတ်/ရေး။ တကယ့် .ts file မှာဆိုရင် const counts: Record<string, number> = {} လို့ ရေးမယ် — box က annotation ကို လက်မခံပေမဲ့ အပေါ်က signature က ပြောပြီးသား။',
     },
     another: 'return moves.reduce((counts, m) => ({ ...counts, [m]: (counts[m] ?? 0) + 1 }), {});',
+  },
+
+  // ── Shapes of things ────────────────────────────────────────────────
+  {
+    id: 'either',
+    chapter: 6,
+    concept: { en: 'one or the other', my: 'တစ်ခုခု' },
+    brief: {
+      en: "The mirror's guard is either a number or a word now. A number is its own strength; a word's strength is how long it is. Give back the strength.",
+      my: 'အခု မှန်ထဲကလူရဲ့ ကာကွယ်မှုက ဂဏန်း ဒါမှမဟုတ် စကားလုံး။ ဂဏန်းဆိုရင် သူ့ဘာသာ အားပဲ၊ စကားလုံးဆိုရင် အရှည်က အား။ အားကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(guard: number | string): number',
+    starter: 'return ',
+    shown: [one(5, 5), one('hello', 5)],
+    cases: [one(12, 12), one('ab', 2), one('', 0), one(0, 0), one('42', 2)],
+    hints: [
+      {
+        en: 'number | string is a union: it is one or the other, and you have to find out which before you use it.',
+        my: 'number | string က union တစ်ခု: တစ်ခုခု ဖြစ်နိုင်တယ်၊ မသုံးခင် ဘယ်ဟာလဲ အရင် သိရမယ်။',
+      },
+      {
+        en: "typeof guard === 'string' tells them apart. And '42' is a string — its strength is 2, not 42.",
+        my: "typeof guard === 'string' က သူတို့ကို ခွဲပေးတယ်။ ပြီးတော့ '42' က string — အားက 42 မဟုတ်ဘဲ 2။",
+      },
+      code("if (typeof guard === 'string') {\n  return guard.length;\n}\nreturn guard;"),
+    ],
+    lesson: {
+      en: 'Checking typeof inside an if is called narrowing: after it, TypeScript knows guard is a string on one side and a number on the other, and lets you use each as what it is. The check is ordinary JavaScript; TypeScript only reads it.',
+      my: 'if ထဲမှာ typeof ကို စစ်တာကို narrowing လို့ ခေါ်တယ်: အဲဒီနောက်မှာ တစ်ဖက်မှာ guard က string၊ နောက်တစ်ဖက်မှာ number ဆိုတာ TypeScript သိပြီး တစ်ခုစီကို သူ့အတိုင်း သုံးခွင့်ပေးတယ်။ စစ်တာကတော့ ရိုးရိုး JavaScript ပဲ၊ TypeScript က ဖတ်ရုံပဲ။',
+    },
+    another: "return typeof guard === 'string' ? guard.length : guard;",
+  },
+  {
+    id: 'nickname',
+    chapter: 6,
+    concept: { en: 'if there is one', my: 'ရှိရင်' },
+    brief: {
+      en: 'Some fighters have a nickname. Call him by it if he has one — even an empty one — and by his name if he has none.',
+      my: 'တိုက်ခိုက်သူ တချို့မှာ နာမည်ပြောင် ရှိတယ်။ ရှိရင် (ဗလာဖြစ်နေရင်တောင်) အဲဒီနာမည်နဲ့ ခေါ်ပါ၊ မရှိရင် နာမည်ရင်းနဲ့ ခေါ်ပါ။',
+    },
+    signature: 'function strike(f: { name: string; nick?: string }): string',
+    starter: 'return ',
+    shown: [one({ name: 'Aung', nick: 'Ko Aung' }, 'Ko Aung'), one({ name: 'Mya' }, 'Mya')],
+    cases: [
+      one({ name: 'Kyaw' }, 'Kyaw'),
+      one({ name: 'Hla', nick: 'Hla Hla' }, 'Hla Hla'),
+      one({ name: 'Zaw', nick: '' }, ''),
+      one({ name: 'Ni' }, 'Ni'),
+    ],
+    hints: [
+      {
+        en: 'nick?: string means nick may not be there at all — and reading it then gives undefined.',
+        my: 'nick?: string ဆိုတာ nick က လုံးဝ မရှိနိုင်ဘူး လို့ ဆိုလိုတယ် — အဲဒီအခါ ဖတ်ရင် undefined ရတယ်။',
+      },
+      {
+        en: '?? steps in only for undefined and null, so an empty nickname still counts. || would skip it.',
+        my: '?? က undefined နဲ့ null အတွက်ပဲ ဝင်ပေးတယ်၊ ဒါကြောင့် နာမည်ပြောင် ဗလာကလည်း ထည့်တွက်တယ်။ || ဆိုရင် ကျော်သွားမယ်။',
+      },
+      code('return f.nick ?? f.name;'),
+    ],
+    lesson: {
+      en: "A ? after a field's name makes it optional: its type is really string | undefined, and TypeScript makes you deal with the undefined before you use it. ?? is the usual way, and the whole difference from || is the empty string.",
+      my: 'field နာမည်နောက်က ? က အဲဒါကို optional ဖြစ်စေတယ်: သူ့ type က တကယ်တော့ string | undefined၊ မသုံးခင် undefined ကို ကိုင်တွယ်ဖို့ TypeScript က တောင်းတယ်။ ?? က ပုံမှန် နည်း၊ || နဲ့ ကွာတာက string ဗလာ တစ်ခုတည်းပဲ။',
+    },
+  },
+  {
+    id: 'repeat',
+    chapter: 6,
+    concept: { en: 'a pair', my: 'အတွဲ' },
+    brief: {
+      en: 'The move comes as a pair: a word, and how many times. Give back the word repeated that many times.',
+      my: 'ထိုးချက်က အတွဲ တစ်ခုအဖြစ် ရောက်လာတယ်: စကားလုံး တစ်ခုနဲ့ အကြိမ်ရေ။ စကားလုံးကို အဲဒီ အကြိမ်ရေအတိုင်း ထပ်ပြီး ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(move: [string, number]): string',
+    starter: 'return ',
+    shown: [one(['ha', 3], 'hahaha'), one(['go', 1], 'go')],
+    cases: [one(['ab', 2], 'abab'), one(['x', 0], ''), one(['!', 5], '!!!!!'), one(['', 4], '')],
+    hints: [
+      {
+        en: '[string, number] is a tuple: a list of fixed length, where each place has its own type.',
+        my: '[string, number] က tuple တစ်ခု: အရှည် သတ်မှတ်ထားတဲ့ စာရင်း၊ နေရာ တစ်ခုစီမှာ ကိုယ်ပိုင် type ရှိတယ်။',
+      },
+      {
+        en: 'Take it apart by place: const [word, times] = move;',
+        my: 'နေရာအလိုက် ခွဲထုတ်ပါ: const [word, times] = move;',
+      },
+      code('const [word, times] = move;\nreturn word.repeat(times);'),
+    ],
+    lesson: {
+      en: "A tuple is how TypeScript types a small fixed group of different things — React's useState hands one back. Destructuring names the parts by position, which reads far better than move[0] and move[1].",
+      my: 'tuple က မတူတဲ့ အရာ အနည်းငယ်ကို အုပ်စုလိုက် type ပေးတဲ့ TypeScript ရဲ့ နည်း — React ရဲ့ useState က tuple တစ်ခု ပြန်ပေးတယ်။ destructuring က အစိတ်အပိုင်းတွေကို နေရာအလိုက် နာမည်ပေးတယ်၊ move[0]၊ move[1] ထက် အများကြီး ပိုဖတ်ရလွယ်တယ်။',
+    },
+    another: "let out = '';\nfor (let i = 0; i < move[1]; i += 1) out += move[0];\nreturn out;",
+  },
+  {
+    id: 'path',
+    chapter: 6,
+    concept: { en: 'four ways to go', my: 'သွားစရာ လေးလမ်း' },
+    brief: {
+      en: 'He walks a path, one square a step. Give back where he ends up as [x, y], starting from [0, 0]: right adds 1 to x and left takes 1 off; up adds 1 to y and down takes 1 off.',
+      my: 'သူက တစ်လှမ်းကို တစ်ကွက်နဲ့ လမ်းကြောင်း တစ်ခုအတိုင်း လျှောက်တယ်။ [0, 0] ကနေ စပြီး နောက်ဆုံး ဘယ်ရောက်လဲကို [x, y] အဖြစ် ပြန်ပေးပါ: right က x ကို 1 တိုး၊ left က 1 လျော့၊ up က y ကို 1 တိုး၊ down က 1 လျော့။',
+    },
+    signature: "type Dir = 'up' | 'down' | 'left' | 'right';\nfunction strike(path: Dir[]): [number, number]",
+    starter: '',
+    shown: [one(['right', 'right', 'up'], [2, 1]), one([], [0, 0])],
+    cases: [
+      one(['left'], [-1, 0]),
+      one(['up', 'down'], [0, 0]),
+      one(['down', 'down', 'left'], [-1, -2]),
+      one(['up', 'right', 'up', 'right'], [2, 2]),
+    ],
+    hints: [
+      {
+        en: 'A Dir can only ever be one of four words, so there are exactly four things to handle.',
+        my: 'Dir က စကားလုံး လေးလုံးထဲက တစ်လုံးပဲ ဖြစ်နိုင်တယ်၊ ဒါကြောင့် ကိုင်တွယ်ရမှာ လေးခု အတိအကျပဲ။',
+      },
+      {
+        en: "switch (d) { case 'up': …; break; … } picks one by value. Keep x and y in two lets.",
+        my: "switch (d) { case 'up': …; break; … } က တန်ဖိုးအလိုက် တစ်ခုကို ရွေးတယ်။ x နဲ့ y ကို let နှစ်ခုမှာ မှတ်ထား။",
+      },
+      code(
+        "let x = 0;\nlet y = 0;\nfor (const d of path) {\n  switch (d) {\n    case 'up':\n      y += 1;\n      break;\n    case 'down':\n      y -= 1;\n      break;\n    case 'left':\n      x -= 1;\n      break;\n    case 'right':\n      x += 1;\n      break;\n  }\n}\nreturn [x, y];",
+      ),
+    ],
+    lesson: {
+      en: "A union of literal types is a closed list of allowed values: TypeScript refuses 'upp' before anything runs. switch fits it exactly — and a missing break falls through into the next case, which is the oldest bug a switch has.",
+      my: "literal type တွေရဲ့ union က ခွင့်ပြုထားတဲ့ တန်ဖိုး စာရင်း ပိတ်ထားတာ: 'upp' ဆိုရင် ဘာမှ မ run ခင်ကတည်းက TypeScript က ငြင်းတယ်။ switch က အဲဒါနဲ့ အတိအကျ ကိုက်တယ် — break မေ့ရင် နောက် case ထဲ ဆက်ကျသွားတယ်၊ switch ရဲ့ အဟောင်းဆုံး bug ပဲ။",
+    },
+    another:
+      'const steps = { up: [0, 1], down: [0, -1], left: [-1, 0], right: [1, 0] };\nlet x = 0;\nlet y = 0;\nfor (const d of path) {\n  x += steps[d][0];\n  y += steps[d][1];\n}\nreturn [x, y];',
+  },
+  {
+    id: 'area',
+    chapter: 6,
+    concept: { en: 'which shape', my: 'ဘယ်ပုံ' },
+    brief: {
+      en: "The mirror's guard is a shape now, and every shape says which kind it is. Give back its area: a square is side × side, a rect w × h, and a triangle base × height ÷ 2.",
+      my: 'အခု မှန်ထဲကလူရဲ့ ကာကွယ်မှုက ပုံ တစ်ခု၊ ပုံတိုင်းက ကိုယ် ဘယ်အမျိုးအစားလဲ ပြောတယ်။ ဧရိယာကို ပြန်ပေးပါ: square က side × side၊ rect က w × h၊ triangle က base × height ÷ 2။',
+    },
+    signature:
+      "type Shape = { kind: 'square'; side: number } | { kind: 'rect'; w: number; h: number } | { kind: 'triangle'; base: number; height: number };\nfunction strike(shape: Shape): number",
+    starter: '',
+    shown: [one({ kind: 'square', side: 3 }, 9), one({ kind: 'rect', w: 2, h: 5 }, 10)],
+    cases: [
+      one({ kind: 'triangle', base: 4, height: 3 }, 6),
+      one({ kind: 'square', side: 0 }, 0),
+      one({ kind: 'rect', w: 7, h: 1 }, 7),
+      one({ kind: 'triangle', base: 10, height: 10 }, 50),
+    ],
+    hints: [
+      {
+        en: 'Every Shape has a kind, and the kind says which other fields it has.',
+        my: 'Shape တိုင်းမှာ kind ရှိတယ်၊ kind က ကျန်တဲ့ field တွေ ဘာတွေလဲ ပြောပြတယ်။',
+      },
+      {
+        en: "switch (shape.kind) — and inside case 'rect', TypeScript knows shape has a w and an h.",
+        my: "switch (shape.kind) — case 'rect' ထဲမှာ shape မှာ w နဲ့ h ရှိတယ်ဆိုတာ TypeScript သိတယ်။",
+      },
+      code(
+        "switch (shape.kind) {\n  case 'square':\n    return shape.side * shape.side;\n  case 'rect':\n    return shape.w * shape.h;\n  case 'triangle':\n    return (shape.base * shape.height) / 2;\n}",
+      ),
+    ],
+    lesson: {
+      en: "This is a discriminated union, and it is the most useful thing TypeScript's types do: one field, kind, tells the shapes apart, and checking it narrows all the rest. With a return in every case there is no break to forget.",
+      my: 'ဒါကို discriminated union လို့ ခေါ်တယ်၊ TypeScript type တွေ လုပ်နိုင်တာထဲမှာ အသုံးအဝင်ဆုံးပဲ: kind ဆိုတဲ့ field တစ်ခုက ပုံတွေကို ခွဲပေးတယ်၊ အဲဒါကို စစ်လိုက်တာနဲ့ ကျန်တာ အားလုံး narrow ဖြစ်သွားတယ်။ case တိုင်းမှာ return ပါရင် မေ့စရာ break မရှိတော့ဘူး။',
+    },
+    another:
+      "if (shape.kind === 'square') return shape.side ** 2;\nif (shape.kind === 'rect') return shape.w * shape.h;\nreturn (shape.base * shape.height) / 2;",
+  },
+  {
+    id: 'swap',
+    chapter: 6,
+    concept: { en: 'whatever it is', my: 'ဘာပဲဖြစ်ဖြစ်' },
+    brief: {
+      en: 'He switches the first two round, whatever they are — numbers, words, anything. Give back the list with the first two swapped; a list shorter than two comes back as it was.',
+      my: 'သူက ရှေ့ဆုံး နှစ်ခုကို နေရာ လဲလိုက်တယ် — ဂဏန်း၊ စကားလုံး၊ ဘာပဲ ဖြစ်ဖြစ်။ ရှေ့ဆုံး နှစ်ခု နေရာလဲထားတဲ့ စာရင်းကို ပြန်ပေးပါ၊ နှစ်ခုအောက် နည်းတဲ့ စာရင်းကိုတော့ ဒီအတိုင်း ပြန်ပေးပါ။',
+    },
+    signature: 'function strike<T>(items: T[]): T[]',
+    starter: 'return ',
+    shown: [one([1, 2, 3], [2, 1, 3]), one(['a', 'b'], ['b', 'a'])],
+    cases: [
+      one([true, false, true], [false, true, true]),
+      one([{ n: 1 }, { n: 2 }], [{ n: 2 }, { n: 1 }]),
+      one([5], [5]),
+      one([], []),
+      one(['x', 1, 'y'], [1, 'x', 'y']),
+    ],
+    hints: [
+      {
+        en: '<T> means the function works for any type at all, and promises a list of the same type back.',
+        my: '<T> ဆိုတာ function က ဘယ် type အတွက်မဆို အလုပ်လုပ်ပြီး type အတူတူ စာရင်း ပြန်ပေးမယ်လို့ ကတိပေးတာ။',
+      },
+      {
+        en: 'Destructuring takes the first two off and the rest with them: const [first, second, ...rest] = items. Mind a list too short to have two.',
+        my: 'destructuring က ရှေ့ နှစ်ခုနဲ့ ကျန်တာကို ခွဲထုတ်ပေးတယ်: const [first, second, ...rest] = items။ နှစ်ခုမပြည့်တဲ့ စာရင်းကို သတိထားပါ။',
+      },
+      code(
+        'if (items.length < 2) return [...items];\nconst [first, second, ...rest] = items;\nreturn [second, first, ...rest];',
+      ),
+    ],
+    lesson: {
+      en: 'A generic is a type filled in by whoever calls: strike<string> and strike<number> are the same code. Inside, nothing can be done that only some types allow — which is exactly why the same code is right for all of them.',
+      my: 'generic ဆိုတာ ခေါ်တဲ့သူက ဖြည့်ပေးတဲ့ type: strike<string> နဲ့ strike<number> က code တစ်ခုတည်း။ အထဲမှာ type တချို့ပဲ ခွင့်ပြုတဲ့ အရာကို ဘာမှ မလုပ်နိုင်ဘူး — type အားလုံးအတွက် code တစ်ခုတည်းက မှန်နေတာ ဒါကြောင့်ပဲ။',
+    },
+    another: 'const out = [...items];\nif (out.length >= 2) [out[0], out[1]] = [out[1], out[0]];\nreturn out;',
+  },
+  {
+    id: 'what',
+    chapter: 6,
+    concept: { en: 'what is it', my: 'ဘာလဲ' },
+    brief: {
+      en: "Something has been thrown at him and he has to know what it is. Give back 'number', 'string', 'boolean', 'list' or 'record'.",
+      my: "တစ်ခုခု သူ့ဆီ ပစ်လာတယ်၊ ဘာလဲ သူ သိရမယ်။ 'number'၊ 'string'၊ 'boolean'၊ 'list' ဒါမှမဟုတ် 'record' ပြန်ပေးပါ။",
+    },
+    signature: "function strike(thing: unknown): 'number' | 'string' | 'boolean' | 'list' | 'record'",
+    starter: 'return ',
+    shown: [one(5, 'number'), one('hi', 'string')],
+    cases: [
+      one(true, 'boolean'),
+      one([1, 2], 'list'),
+      one({ a: 1 }, 'record'),
+      one([], 'list'),
+      one('', 'string'),
+      one(0, 'number'),
+    ],
+    hints: [
+      {
+        en: 'unknown is the honest type for something not yet checked: TypeScript will not let you use it until you have checked it.',
+        my: 'unknown က မစစ်ရသေးတဲ့ အရာအတွက် ရိုးသားတဲ့ type: မစစ်မချင်း TypeScript က သုံးခွင့် မပေးဘူး။',
+      },
+      {
+        en: "typeof says 'object' for a list as well as a record. Array.isArray(thing) tells them apart — so ask that first.",
+        my: "typeof က စာရင်းအတွက်ရော record အတွက်ရော 'object' လို့ ပြောတယ်။ Array.isArray(thing) က သူတို့ကို ခွဲပေးတယ် — ဒါကြောင့် အဲဒါကို အရင် မေးပါ။",
+      },
+      code(
+        "if (Array.isArray(thing)) return 'list';\nif (typeof thing === 'object') return 'record';\nreturn typeof thing;",
+      ),
+    ],
+    lesson: {
+      en: "typeof answers for the simple types and says 'object' for nearly everything else — lists and null included. Narrowing an unknown is asking the most specific question first.",
+      my: "typeof က ရိုးရှင်းတဲ့ type တွေအတွက် ဖြေပေးပြီး ကျန်တာ အားလုံးနီးပါးအတွက် 'object' လို့ပဲ ပြောတယ် — စာရင်းနဲ့ null ပါ အပါအဝင်။ unknown ကို narrow လုပ်တာက အတိကျဆုံး မေးခွန်းကို အရင် မေးတာပဲ။",
+    },
   },
 ];

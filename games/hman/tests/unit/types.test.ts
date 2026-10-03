@@ -8,7 +8,22 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { fits, parseType, readSignature } from '../../src/types.js';
+import { fits, layoutAlias, parseType, readSignature } from '../../src/types.js';
+
+describe('laying out a long alias', () => {
+  it('puts each member of a long union on a line of its own', () => {
+    const line = "type Shape = { kind: 'square'; side: number } | { kind: 'rect'; w: number; h: number };";
+    expect(layoutAlias(line)).toBe(
+      "type Shape =\n  | { kind: 'square'; side: number }\n  | { kind: 'rect'; w: number; h: number };",
+    );
+  });
+
+  it('leaves a short one, or one that is not a union, as it was', () => {
+    expect(layoutAlias("type Dir = 'up' | 'down';")).toBe("type Dir = 'up' | 'down';");
+    const record = 'type Fighter = { name: string; power: number; team: string; rank: number; since: number };';
+    expect(layoutAlias(record)).toBe(record);
+  });
+});
 
 describe('reading a type', () => {
   it('reads the simple ones', () => {
