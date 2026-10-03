@@ -57,6 +57,26 @@ const curtainBodyEl = need<HTMLElement>('#curtainBody');
 const curtainGoEl = need<HTMLButtonElement>('#curtainGo');
 const muteEl = need<HTMLButtonElement>('#mute');
 const gutterEl = need<HTMLElement>('#gutter');
+const buildEl = need<HTMLElement>('#build');
+
+/**
+ * Which build is on screen.
+ *
+ * Read out of the shelf's own manifest rather than written here, so it cannot
+ * drift from the version the game actually ships as — and shown in the corner,
+ * because a whole round of "nothing has changed" turned out to be an old copy
+ * of the page and there was no way to tell by looking.
+ */
+async function showBuild(): Promise<void> {
+  try {
+    const response = await fetch('../../games.json', { cache: 'no-store' });
+    const data = (await response.json()) as { games?: readonly { id: string; version: string }[] };
+    const mine = data.games?.find((g) => g.id === 'hman');
+    buildEl.textContent = mine === undefined ? '' : `v${mine.version}`;
+  } catch {
+    buildEl.textContent = '';
+  }
+}
 
 const lang: Lang = pickLang([navigator.language, ...navigator.languages]);
 document.documentElement.lang = lang;
@@ -529,4 +549,5 @@ window.addEventListener('resize', resize);
 resize();
 showRung();
 showTitle();
+void showBuild();
 requestAnimationFrame(tick);

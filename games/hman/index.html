@@ -124,8 +124,10 @@
         font-family: var(--mono);
         font-size: 0.88rem;
         line-height: 1.55;
-        color: var(--line);
-        background: rgba(0, 0, 0, 0.18);
+        /* --line is a border colour. As text on a dark gutter it was very
+           nearly the background, so the numbers were not there at all. */
+        color: #6f6694;
+        background: rgba(0, 0, 0, 0.22);
         overflow: hidden;
         user-select: none;
         white-space: pre;
@@ -280,6 +282,20 @@
       .curtain p.lead {
         color: var(--ink);
       }
+
+      /* Which build this is. Small, dim, and the fastest way to settle an
+         argument about whether a change actually reached the screen. */
+      .build {
+        position: fixed;
+        right: 0.6rem;
+        bottom: 0.5rem;
+        z-index: 4;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--ink-dim);
+        opacity: 0.55;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
@@ -303,6 +319,8 @@
       </div>
       <div class="hints" id="hints"></div>
     </div>
+
+    <div class="build" id="build"></div>
 
     <div class="curtain" id="curtain">
       <h1 id="curtainTitle"></h1>
