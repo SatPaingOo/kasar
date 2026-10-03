@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.2.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.2.1
 
 မှန် — correct.
 
@@ -114,6 +114,13 @@ carries the case it came from and holds it up afterwards —
 `[6, 6, 1, 9] → 99 ✗`, and what was needed under it — and most of a blow is
 that hold rather than the swing. The mirror is a row of blocks, one per case,
 so a hit visibly takes one; a life that goes is drawn going.
+
+The desk is locked while the blows play, so the fight finishing is not
+optional. It used to be advanced only by animation frames, which meant a
+backgrounded tab — or one throw inside the drawing, which stops the loop
+scheduling the next frame — left the run stuck with nothing to press. A timer
+drives it when frames are not arriving, and the drawing is wrapped so a fault
+in it cannot take the run down.
 
 Sound is the other half of it, and this is the only game on the shelf with
 nothing running underneath. The other three always have something happening.

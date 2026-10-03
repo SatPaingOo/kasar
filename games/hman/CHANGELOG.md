@@ -2,6 +2,24 @@
 
 Keep a Changelog, newest first.
 
+## [0.2.1] — 2026-10-03
+
+### Fixed
+
+- The run got stuck after the first answer, right or wrong, with the Strike
+  button disabled and nothing left to press.
+
+  The desk is locked while the blows play, and the blows were advanced only by
+  animation frames — so progress depended entirely on frames arriving. A
+  backgrounded tab stops them, and a single throw inside the drawing stops
+  them for good, because the loop schedules the next frame at the end and a
+  throw means it never gets there.
+
+  The step is out of the frame callback now and a timer drives it when frames
+  are not coming, so the fight always finishes and the desk always comes back.
+  The drawing is wrapped as well: a drawing fault reports itself once and the
+  run carries on without it.
+
 ## [0.2.0] — 2026-10-03
 
 ### Changed

@@ -303,14 +303,49 @@ bodyEl.addEventListener('keydown', (event) => {
 });
 
 let last = performance.now();
-function tick(now: number): void {
-  const dt = Math.min((now - last) / 1000, 0.05);
+let drawFailed = false;
+
+/**
+ * One step of the world.
+ *
+ * Split out of the frame callback on purpose. The desk is locked while the
+ * blows play and the blows were advanced only by animation frames, so
+ * anything that stopped the frames arriving left the run stuck with the
+ * Strike button disabled and nothing the player could press. A backgrounded
+ * tab does exactly that, and so does one throw inside the drawing, which
+ * takes the whole loop with it and never schedules another frame.
+ *
+ * So the drawing is wrapped, and progress does not depend on it.
+ */
+function step(now: number, cap: number): void {
+  const dt = Math.min((now - last) / 1000, cap);
+  if (dt <= 0) return;
   last = now;
   clock += dt;
   playOut(dt);
-  draw(paint, view, game, { lang, time: clock, blow, since });
+  try {
+    draw(paint, view, game, { lang, time: clock, blow, since });
+  } catch (err) {
+    if (!drawFailed) {
+      drawFailed = true;
+      console.error('hman: the fight could not be drawn', err);
+    }
+  }
+}
+
+function tick(now: number): void {
+  step(now, 0.05);
   requestAnimationFrame(tick);
 }
+
+/**
+ * Frames are a nicety; finishing the fight is not. If they stop coming the
+ * blows still play out, slower and unwatched, and the desk comes back.
+ */
+window.setInterval(() => {
+  const now = performance.now();
+  if (now - last > 220) step(now, 0.3);
+}, 140);
 
 const watcher = new ResizeObserver(() => resize());
 watcher.observe(canvas);
