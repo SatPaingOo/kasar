@@ -5,11 +5,24 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-03
+
 ### Added
 
 - Saing, the fifth game: a circle of tuned drums plays a phrase and you play
   it back by ear. The shelf needed no change to take it — the manifest, the
   build, the stage and the smoke test all found it by its folder.
+- `npm run e2e` plays Saing by ear. A script in the page wraps the audio
+  context's oscillators before the page makes one, hears every sound it
+  schedules, and plays each call back by key; whether a phrase was kept is
+  heard too, so the game needs no hook for it. It plays the first section
+  with one phrase wrong on purpose, and the drum that joins.
+
+### Fixed
+
+- CI's end-to-end job starts a sound server with a sink that goes nowhere.
+  Without one, Firefox on the runner never let an audio context leave
+  "suspended", and a game played by ear could not be heard.
 
 ## [0.2.0] — 2026-10-03
 
