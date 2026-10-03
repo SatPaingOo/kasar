@@ -13,7 +13,7 @@
 
 import { RULES, levelCount, standing } from './game.js';
 import type { Game } from './game.js';
-import { fallAt, swingAt } from './beat.js';
+import { fallAt, swingAt, winAt } from './beat.js';
 import { drawFigure } from './figure.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
@@ -58,6 +58,8 @@ export interface Ui {
   readonly downFor: number | null;
   /** Seconds since the mirror went down, or null while it still stands. */
   readonly clearedFor: number | null;
+  /** Seconds since the last rung of all was beaten, or null before then. */
+  readonly wonFor: number | null;
   /** How long the blow on screen lasts. */
   readonly span: number;
 }
@@ -134,6 +136,35 @@ function drawLives(ctx: CanvasRenderingContext2D, game: Game, cx: number, y: num
   }
 }
 
+/**
+ * The mirror coming apart at the very end: pieces thrown up and out of the
+ * room, fading as they go. Placed by index rather than at random, so the end
+ * of a run looks the same every time it is won.
+ */
+function drawPieces(ctx: CanvasRenderingContext2D, x: number, y: number, unit: number, run: number): void {
+  if (run <= 0 || run >= 1) return;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  const count = 18;
+  for (let i = 0; i < count; i += 1) {
+    const spread = (i / (count - 1) - 0.5) * 1.9;
+    const angle = -Math.PI / 2 + spread;
+    const speed = 0.55 + ((i * 37) % 11) / 11;
+    const far = run * unit * 2.4 * speed;
+    const px = x + Math.cos(angle) * far;
+    const py = y + Math.sin(angle) * far - run * run * unit * 0.6;
+    const turn = i * 1.7 + run * 5;
+    const half = 3 + (i % 4);
+    ctx.globalAlpha = (1 - run) * (0.55 + (i % 3) * 0.15);
+    ctx.strokeStyle = i % 2 === 0 ? INK.mirror : INK.accent;
+    ctx.beginPath();
+    ctx.moveTo(px - Math.cos(turn) * half, py - Math.sin(turn) * half);
+    ctx.lineTo(px + Math.cos(turn) * half, py + Math.sin(turn) * half);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
 /** What came off the hit, thrown from the point of contact. */
 function drawShards(ctx: CanvasRenderingContext2D, x: number, y: number, run: number, colour: string): void {
   if (run <= 0 || run >= 1) return;
@@ -201,7 +232,8 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   const blow = ui.blow;
   const going = ui.downFor === null ? null : fallAt(ui.downFor);
   const beaten = ui.clearedFor === null ? null : fallAt(ui.clearedFor);
-  const settling = going !== null || beaten !== null;
+  const winning = ui.wonFor === null ? null : winAt(ui.wonFor);
+  const settling = going !== null || beaten !== null || winning !== null;
   const swing = blow === null || settling ? null : swingAt(ui.since, blow.landed ? 1 : 1.5, ui.span);
   const hitting = blow !== null && blow.landed;
   const struck = swing?.struck === true;
@@ -241,7 +273,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   drawFigure(
     ctx,
     mid - gap,
-    ground,
+    ground - (winning?.hop ?? 0) * unit * 0.14,
     unit,
     {
       facing: 1,
@@ -249,24 +281,32 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       recoil: blow !== null && !hitting && struck ? reach : 0,
       fall: going?.over ?? 0,
       time: ui.time,
+      cheer: winning?.cheer ?? 0,
     },
     INK.him,
   );
 
-  drawFigure(
-    ctx,
-    mid + gap,
-    ground,
-    unit,
-    {
-      facing: -1,
-      lunge: blow !== null && !hitting ? reach : 0,
-      recoil: hitting && struck ? reach : 0,
-      fall: beaten?.over ?? 0,
-      time: ui.time + 1.3,
-    },
-    INK.mirror,
-  );
+  // At the very end the mirror does not get up again: it lies where the last
+  // rung put it, and goes.
+  if (winning === null || winning.fade < 1) {
+    if (winning !== null) ctx.globalAlpha = 1 - winning.fade;
+    drawFigure(
+      ctx,
+      mid + gap,
+      ground,
+      unit,
+      {
+        facing: -1,
+        lunge: blow !== null && !hitting ? reach : 0,
+        recoil: hitting && struck ? reach : 0,
+        fall: winning !== null ? 1 : (beaten?.over ?? 0),
+        time: ui.time + 1.3,
+      },
+      INK.mirror,
+    );
+    ctx.globalAlpha = 1;
+  }
+  if (winning !== null) drawPieces(ctx, mid + gap, ground - unit * 0.2, unit, winning.shards);
 
   // The point of contact, which is where everything comes off.
   const contact = { x: hitting ? mid + gap * 0.45 : mid - gap * 0.45, y: ground - unit * 0.56 };
@@ -282,7 +322,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
     drawShards(ctx, contact.x, contact.y, swing.shards, hitting ? INK.accent : INK.wrong);
   }
 
-  drawShell(ctx, game, mid + gap, 16, hitting && struck && swing !== null && swing.flash > 0.3);
+  if (winning === null) drawShell(ctx, game, mid + gap, 16, hitting && struck && swing !== null && swing.flash > 0.3);
   drawLives(ctx, game, mid - gap, 20, blow !== null && !hitting && struck);
 
   ctx.font = '500 11px ui-monospace, Menlo, Consolas, monospace';
@@ -299,9 +339,22 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
     ctx.fillStyle = `rgba(12, 9, 18, ${going.dim})`;
     ctx.fillRect(0, 0, view.width, view.height);
   }
-  if (beaten !== null && beaten.dim > 0) {
+  if (beaten !== null && beaten.dim > 0 && winning === null) {
     ctx.fillStyle = `rgba(185, 160, 224, ${beaten.dim * 0.4})`;
     ctx.fillRect(0, 0, view.width, view.height);
+  }
+  if (winning !== null) {
+    ctx.fillStyle = `rgba(185, 160, 224, ${0.16 + winning.glow})`;
+    ctx.fillRect(0, 0, view.width, view.height);
+    if (winning.caption > 0) {
+      ctx.globalAlpha = winning.caption;
+      ctx.fillStyle = INK.him;
+      ctx.textAlign = 'center';
+      ctx.font = `600 ${Math.max(16, Math.min(26, view.width * 0.05))}px ${MONO}`;
+      ctx.fillText(`${levelCount()} / ${levelCount()}`, mid, view.height * 0.8);
+      ctx.textAlign = 'left';
+      ctx.globalAlpha = 1;
+    }
   }
 
   ctx.restore();

@@ -23,7 +23,7 @@ import type { Game } from './game.js';
 import { run } from './runner.js';
 import { adviseOn, whyMissed } from './advice.js';
 import { draw } from './render.js';
-import { DOWN, blowSeconds, swingAt } from './beat.js';
+import { DOWN, WIN, blowSeconds, swingAt } from './beat.js';
 import { MUTE_LABEL, createSound } from './sound.js';
 import { lineCount, onBackspace, onEnter, onTab, onType, toggleComment } from './editing.js';
 import type { Edit } from './editing.js';
@@ -615,9 +615,12 @@ function showTitle(): void {
   curtainTitleEl.textContent = t.title;
   curtainLeadEl.textContent = t.premise;
   curtainBodyEl.textContent = `${t.howWrite} ${t.howWrong} ${t.howJs}`;
-  startAt = nextUnbeaten(progress, ids);
-  const returning = progress.cleared.length > 0;
-  curtainGoEl.textContent = returning ? t.carryOn(startAt + 1) : t.begin;
+  // With every rung beaten there is nothing to carry on to: the way in is the
+  // first rung again, and the map for any other.
+  const allBeaten = ids.every((id) => progress.cleared.includes(id));
+  startAt = allBeaten ? 0 : nextUnbeaten(progress, ids);
+  const returning = progress.cleared.length > 0 && !allBeaten;
+  curtainGoEl.textContent = allBeaten ? t.fromStart : returning ? t.carryOn(startAt + 1) : t.begin;
   curtainAltEl.textContent = t.fromStart;
   curtainAltEl.hidden = !returning || startAt === 0;
   drawMap();
@@ -628,6 +631,7 @@ function begin(start: number): void {
   onDesk = -1;
   downFor = null;
   clearedFor = null;
+  wonFor = null;
   queue = [];
   blow = null;
   busy = false;
@@ -699,7 +703,9 @@ curtainGoEl.addEventListener('click', () => {
     busy = false;
     curtainEl.hidden = true;
     if (wasLast) {
-      showEnd();
+      // The whole run is won. The card waits while it is seen to be.
+      wonFor = 0;
+      sound.play('won');
       return;
     }
     showRung();
@@ -786,6 +792,8 @@ let drawFailed = false;
 let downFor: number | null = null;
 /** Seconds since the mirror went down, or null while it still stands. */
 let clearedFor: number | null = null;
+/** Seconds since the last rung of all was beaten, or null before then. */
+let wonFor: number | null = null;
 
 /**
  * One step of the world.
@@ -809,13 +817,17 @@ function step(now: number, cap: number): void {
     downFor += dt;
     if (downFor >= DOWN && curtainEl.hidden) showEnd();
   }
+  if (wonFor !== null) {
+    wonFor += dt;
+    if (wonFor >= WIN && curtainEl.hidden) showEnd();
+  }
   if (clearedFor !== null) {
     clearedFor += dt;
     if (clearedFor >= DOWN && curtainEl.hidden) showCleared();
   }
   playOut(dt);
   try {
-    draw(paint, view, game, { lang, time: clock, blow, since, downFor, clearedFor, span });
+    draw(paint, view, game, { lang, time: clock, blow, since, downFor, clearedFor, wonFor, span });
   } catch (err) {
     if (!drawFailed) {
       drawFailed = true;

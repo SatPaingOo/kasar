@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { BLOW, swingAt } from '../../src/beat.js';
+import { BLOW, WIN, swingAt, winAt } from '../../src/beat.js';
 
 const over = (steps = 200): ReturnType<typeof swingAt>[] =>
   Array.from({ length: steps }, (_, i) => swingAt((i / steps) * BLOW * 1.4));
@@ -75,6 +75,47 @@ describe('past the end', () => {
       expect(s.caption).toBe(1);
       expect(s.reach).toBeLessThan(0.2);
       expect(Number.isFinite(s.shake)).toBe(true);
+    }
+  });
+});
+
+describe('winning the whole run', () => {
+  it('starts with the beaten mirror still there and nothing lit', () => {
+    const start = winAt(0);
+    expect(start.fade).toBe(0);
+    expect(start.cheer).toBe(0);
+    expect(start.glow).toBe(0);
+    expect(start.caption).toBe(0);
+  });
+
+  it('takes the mirror away first, before the arms go up', () => {
+    // It is the mirror going that the arms are for, so it has to be seen first.
+    expect(winAt(0.5).fade).toBeGreaterThan(winAt(0.5).cheer);
+  });
+
+  it('jumps, and lands', () => {
+    const hops = Array.from({ length: 120 }, (_, i) => winAt((i / 120) * WIN).hop);
+    expect(Math.max(...hops)).toBeGreaterThan(0.9);
+    expect(winAt(WIN).hop).toBe(0);
+  });
+
+  it('is settled by the time the card comes up, and stays settled', () => {
+    for (const w of [winAt(WIN), winAt(WIN * 4)]) {
+      expect(w.fade).toBe(1);
+      expect(w.shards).toBe(1);
+      expect(w.cheer).toBeCloseTo(1);
+      expect(w.caption).toBe(1);
+      expect(w.hop).toBe(0);
+    }
+  });
+
+  it('stays in range all the way through', () => {
+    for (let i = 0; i <= 100; i += 1) {
+      const w = winAt((i / 100) * WIN * 1.2);
+      for (const v of [w.fade, w.shards, w.cheer, w.hop, w.caption]) {
+        expect(v).toBeGreaterThanOrEqual(0);
+        expect(v).toBeLessThanOrEqual(1);
+      }
     }
   });
 });

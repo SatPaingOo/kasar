@@ -37,6 +37,8 @@ export interface Pose {
   readonly recoil: number;
   /** 0 on his feet, 1 flat on the floor. */
   readonly fall: number;
+  /** 0 arms where a fight puts them, 1 both straight up: the run is won. */
+  readonly cheer?: number;
   /** Seconds, for the small motion of standing there. */
   readonly time: number;
 }
@@ -119,16 +121,25 @@ export function drawFigure(
   const down = face === 1 ? 1.18 : Math.PI - 1.18;
   const out = face === 1 ? -0.1 : Math.PI + 0.1;
 
-  const armAngle = down + (out - down) * lunge;
+  // Up is reached the long way round on purpose: the front arm swings up
+  // through forward and the back arm through behind, the way arms go up,
+  // rather than both crossing the body to get there.
+  const cheer = pose.cheer ?? 0;
+  const upFront = face === 1 ? -Math.PI / 2 + 0.35 : (3 * Math.PI) / 2 - 0.35;
+  const upBack = face === 1 ? (3 * Math.PI) / 2 - 0.35 : -Math.PI / 2 + 0.35;
+
+  const fighting = down + (out - down) * lunge;
+  const armAngle = fighting + (upFront - fighting) * cheer;
   const elbow = reach(shoulder, armAngle, BODY.upperArm);
-  const fist = reach(elbow, armAngle + face * (0.55 - lunge * 0.55), BODY.forearm);
+  const fist = reach(elbow, armAngle + face * (0.55 - lunge * 0.55) * (1 - cheer), BODY.forearm);
   line(ctx, shoulder, elbow, fist);
 
   // The other hangs back, and comes up across him when he is hit.
   const guardRest = face === 1 ? 1.95 : Math.PI - 1.95;
-  const guardAngle = guardRest - face * recoil * 0.95;
+  const guarding = guardRest - face * recoil * 0.95;
+  const guardAngle = guarding + (upBack - guarding) * cheer;
   const guardElbow = reach(shoulder, guardAngle, BODY.upperArm);
-  line(ctx, shoulder, guardElbow, reach(guardElbow, guardAngle - face * 0.75, BODY.forearm));
+  line(ctx, shoulder, guardElbow, reach(guardElbow, guardAngle - face * 0.75 * (1 - cheer), BODY.forearm));
   void forward;
 
   ctx.beginPath();

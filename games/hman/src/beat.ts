@@ -97,3 +97,46 @@ export function fallAt(since: number): Falling {
     caption: clamp01((t - 0.62) / 0.38),
   };
 }
+
+/** How long the end of a whole run plays before its card comes up. */
+export const WIN = 3.2;
+
+export interface Winning {
+  /** 0 the beaten mirror is still lying there, 1 it is gone. */
+  readonly fade: number;
+  /** The pieces of it, 0 to 1 through their flight upwards. */
+  readonly shards: number;
+  /** 0 arms down, 1 both up over his head. */
+  readonly cheer: number;
+  /** How far off the floor he is, 0 to 1, for the jumps. */
+  readonly hop: number;
+  /** How much the room has lit up. */
+  readonly glow: number;
+  /** The count of rungs, coming up last. */
+  readonly caption: number;
+}
+
+const easeOut = (t: number): number => 1 - (1 - t) ** 3;
+
+/**
+ * Winning the whole run.
+ *
+ * Every rung already ends with the mirror going over. The last one has to be
+ * more than that, or seventy-five rungs end the same way the first one did:
+ * so the mirror does not get up again. It comes apart and the pieces go up and
+ * out of the room, and he is left in it on his own, arms up, jumping — the
+ * version of him that kept getting it wrong is not coming back.
+ */
+export function winAt(since: number): Winning {
+  const t = Math.max(0, since);
+  const jumping = t > 0.7 && t < 2.3;
+  return {
+    fade: clamp01(t / 0.9),
+    shards: clamp01(t / 2.4),
+    cheer: easeOut(clamp01((t - 0.45) / 0.55)),
+    // Three small jumps, then he stays down.
+    hop: jumping ? Math.abs(Math.sin(((t - 0.7) / 1.6) * Math.PI * 3)) : 0,
+    glow: clamp01((t - 0.3) / 1.6) * 0.32,
+    caption: clamp01((t - 1.4) / 0.6),
+  };
+}
