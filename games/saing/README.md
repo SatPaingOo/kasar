@@ -175,8 +175,15 @@ the bell, the clapper and the gong, and a third drum half a beat later — sums
 to 1.03 and comes out of the limiter at 0.76; the run up every drum at the
 end comes out at 0.91.
 
+## End to end
+
+`npm run e2e` plays it by ear in Firefox and Chrome: a script in the page
+listens to the audio graph and plays each call back by key, through the
+first section with one phrase wrong on purpose and the drum that joins. The
+same harness played the whole piece through once by hand, all twenty-five
+phrases, every strike on the beat. See the shelf's README.
+
 ## Still to come
 
-- A full play-through end to end in a real browser. It has been played by
-  ear by a harness listening to the page's own audio graph — see the shelf's
-  e2e notes — but that is not yet in `npm run e2e`.
+- Played on a real phone, and an iPhone in particular, where the audio
+  context and touch timing are the least like a desktop's.

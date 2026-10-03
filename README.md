@@ -26,7 +26,7 @@ npm run play      # build the shelf and every game, then serve on :5190
 | `npm run stage` | collect only what the site is into `site/` |
 | `npm run typecheck` | check the shelf and every game at once |
 | `npm test` | the rules, headlessly |
-| `npm run e2e` | build, then smoke-test every game and play Hman in the installed Firefox and Chrome — see **End to end** |
+| `npm run e2e` | build, then smoke-test every game and play Hman and Saing in the installed Firefox and Chrome — see **End to end** |
 | `npm run lint` | ESLint |
 | `npm run format` / `format:check` | Prettier |
 
@@ -68,7 +68,8 @@ feat/<slug>  →  dev  →  main  →  the site
 
 CI runs on both branches and on pull requests: lint, format, typecheck,
 tests, build, and stage — and, as a second job beside them, the shelf and
-every game smoke-tested and Hman played end to end, in Firefox and Chrome.
+every game smoke-tested and Hman and Saing played end to end, in Firefox and
+Chrome.
 On `main` a last job deploys, and it needs both of the others to pass. Canon 09 wants all of lint, typecheck and tests or
 it is not CI. A game that does not compile, or whose rules have changed
 under it, fails there and never reaches `main`.
@@ -141,7 +142,7 @@ tools/manifest.ts      games/*/game.json → games.json
 tools/build-games.ts   tsc per game
 tools/serve.ts         dev static server, serves folder indexes
 tools/stage.ts         collects what the site is into site/
-tools/e2e.ts           smoke-tests every game and plays Hman, in real browsers
+tools/e2e.ts           smoke-tests every game and plays Hman and Saing, in real browsers
 ```
 
 ## On the shelf
@@ -167,6 +168,7 @@ tests/unit/tools/manifest.test.ts       what counts as a describable game
 tests/unit/tools/site.test.ts           what goes live
 tests/unit/tools/browsers.test.ts       which installed browser the end-to-end run uses
 tests/unit/tools/hman-e2e.test.ts       how the end-to-end run tells a pass in Hman
+tests/unit/tools/saing-e2e.test.ts      and in Saing, and that it listens for what the game plays
 tests/unit/tools/smoke.test.ts          how the smoke test tells a game that works
 tests/unit/shell/colour.test.ts         contrast on an accent nobody here chose
 tests/unit/shell/lang.test.ts           which language the shelf opens in
@@ -191,7 +193,8 @@ checked by looking at them.
 
 `npm run e2e` builds, serves the working tree on a free port, and then, in
 every installed browser — Firefox and Chrome (or Edge) — smoke-tests the shelf
-and every game on it and plays Hman through, and says what passed.
+and every game on it, plays Hman through and plays Saing by ear, and says
+what passed.
 
 The smoke test asks every game the same few questions, because every game
 here draws on a canvas and runs a loop: does it open without an error, is
@@ -209,6 +212,14 @@ must come back with; all seventy-five rungs in order from an empty save; and
 the row of symbols at phone width. The textarea's own text is drawn in red
 over the colour beneath it and photographed, because whether the two line up
 is a thing to look at — the screenshots' folder is printed at the end.
+
+Saing is played by ear, and checked by ear: a script in the page wraps the
+audio context's oscillators before the page makes one, hears every sound it
+schedules, and plays each call back by key the way a player would. Whether a
+phrase was kept is heard too — a kept one is followed by itself with more on
+the end, a broken one by itself again — so nothing is read out of the game,
+which has no hook for it. It plays the first section with one phrase wrong
+on purpose, and the drum that joins after it.
 
 Hman is the game this exists for. Its two worst failures got past every unit
 test: a race between the worker and the loop that only lost at sixty frames a
