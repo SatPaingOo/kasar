@@ -11,9 +11,9 @@
  * blocks that visibly loses one, and a life that goes is seen going.
  */
 
-import { standing } from './game.js';
+import { RULES, standing } from './game.js';
 import type { Game } from './game.js';
-import { swingAt } from './beat.js';
+import { fallAt, swingAt } from './beat.js';
 import { drawFigure } from './figure.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
@@ -52,6 +52,8 @@ export interface Ui {
   readonly blow: Blow | null;
   /** Seconds into that blow. */
   readonly since: number;
+  /** Seconds since he went down, or null while he is on his feet. */
+  readonly downFor: number | null;
 }
 
 const show = (value: Value | null): string => (value === null ? '—' : JSON.stringify(value));
@@ -81,7 +83,7 @@ function drawShell(ctx: CanvasRenderingContext2D, game: Game, cx: number, y: num
 
 /** His lives, as marks, because a wrong submit costs a whole one. */
 function drawLives(ctx: CanvasRenderingContext2D, game: Game, cx: number, y: number, losing: boolean): void {
-  const total = 5;
+  const total = RULES.lives;
   const gap = 13;
   let x = cx - ((total - 1) * gap) / 2;
   for (let i = 0; i < total; i += 1) {
@@ -170,12 +172,14 @@ function drawCaption(
 export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui): void {
   const t = TEXT[ui.lang];
   const blow = ui.blow;
-  const swing = blow === null ? null : swingAt(ui.since, blow.landed ? 1 : 1.5);
+  const going = ui.downFor === null ? null : fallAt(ui.downFor);
+  const swing = blow === null || going !== null ? null : swingAt(ui.since, blow.landed ? 1 : 1.5);
   const hitting = blow !== null && blow.landed;
   const struck = swing?.struck === true;
 
   ctx.save();
-  if (swing !== null && swing.shake !== 0) ctx.translate(swing.shake, swing.shake * 0.4);
+  const shake = swing?.shake ?? going?.shake ?? 0;
+  if (shake !== 0) ctx.translate(shake, shake * 0.4);
 
   const sky = ctx.createLinearGradient(0, 0, 0, view.height);
   sky.addColorStop(0, INK.far);
@@ -214,6 +218,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       facing: 1,
       lunge: hitting ? reach : 0,
       recoil: blow !== null && !hitting && struck ? reach : 0,
+      fall: going?.over ?? 0,
       time: ui.time,
     },
     INK.him,
@@ -228,6 +233,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       facing: -1,
       lunge: blow !== null && !hitting ? reach : 0,
       recoil: hitting && struck ? reach : 0,
+      fall: 0,
       time: ui.time + 1.3,
     },
     INK.mirror,
@@ -257,6 +263,12 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
   ctx.textAlign = 'right';
   ctx.fillText(`${t.standing} ${Math.round(standing(game) * game.solved.length)}`, view.width - 10, view.height - 8);
   ctx.textAlign = 'left';
+
+  // The light goes out of it as he goes down.
+  if (going !== null && going.dim > 0) {
+    ctx.fillStyle = `rgba(12, 9, 18, ${going.dim})`;
+    ctx.fillRect(0, 0, view.width, view.height);
+  }
 
   ctx.restore();
 

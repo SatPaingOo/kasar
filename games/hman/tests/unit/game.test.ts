@@ -21,6 +21,7 @@ import {
   levelAt,
   levelCount,
   resolve,
+  retry,
   same,
   score,
   standing,
@@ -154,19 +155,20 @@ describe('the run', () => {
     expect(game.cleared).toBe(levelCount());
   });
 
-  it('is lost when the lives run out', () => {
+  it('puts him down when the lives run out', () => {
     const game = createGame();
     for (let i = 0; i < RULES.lives; i += 1) {
       game.phase = 'writing';
       resolve(game, allWrong(game));
     }
-    expect(game.phase).toBe('lost');
+    expect(game.phase).toBe('down');
     expect(game.lives).toBe(0);
+    expect(game.downs).toBe(1);
   });
 
-  it('stops dead once it is over', () => {
+  it('stops dead once he is down', () => {
     const game = createGame();
-    game.phase = 'lost';
+    game.phase = 'down';
     resolve(game, allRight(game));
     expect(game.solved.every((d) => !d)).toBe(true);
   });
@@ -255,5 +257,76 @@ describe('every rung', () => {
         );
       }
     }
+  });
+});
+
+describe('being put down', () => {
+  /** Lose the rung the player is standing on. */
+  function knockDown(game: Game): void {
+    for (let i = 0; i < RULES.lives; i += 1) {
+      game.phase = 'writing';
+      resolve(game, allWrong(game));
+    }
+  }
+
+  it('costs the rung you are on and nothing below it', () => {
+    const game = createGame();
+    resolve(game, allRight(game));
+    advance(game);
+    expect(game.level).toBe(1);
+    expect(game.cleared).toBe(1);
+
+    knockDown(game);
+    retry(game);
+
+    // Still on the second rung, with the first still counted.
+    expect(game.level).toBe(1);
+    expect(game.cleared).toBe(1);
+    expect(game.phase).toBe('writing');
+  });
+
+  it('puts him back on his feet with the rung standing again', () => {
+    const game = createGame();
+    const partial = casesOf(game).map((one, i) => ({ value: i === 0 ? one.want : -1, error: null }));
+    resolve(game, partial);
+    expect(game.solved[0]).toBe(true);
+
+    knockDown(game);
+    retry(game);
+    expect(game.lives).toBe(RULES.lives);
+    expect(game.solved.every((d) => !d)).toBe(true);
+    expect(game.hintsShown).toBe(0);
+  });
+
+  it('can be played on from, rather than ending the run', () => {
+    const game = createGame();
+    knockDown(game);
+    retry(game);
+    resolve(game, allRight(game));
+    advance(game);
+    expect(game.level).toBe(1);
+  });
+
+  it('does nothing unless he is actually down', () => {
+    const game = createGame();
+    game.lives = 1;
+    retry(game);
+    expect(game.lives).toBe(1);
+  });
+
+  it('is counted, and costs score', () => {
+    const clean = createGame();
+    resolve(clean, allRight(clean));
+    advance(clean);
+
+    const bruised = createGame();
+    knockDown(bruised);
+    retry(bruised);
+    resolve(bruised, allRight(bruised));
+    advance(bruised);
+
+    expect(bruised.downs).toBe(1);
+    expect(bruised.cleared).toBe(clean.cleared);
+    expect(score(bruised)).toBeLessThan(score(clean));
   });
 });

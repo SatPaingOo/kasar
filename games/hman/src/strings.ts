@@ -37,8 +37,9 @@ interface Text {
   readonly cleared: string;
   readonly won: string;
   readonly wonWhy: string;
-  readonly lost: string;
-  readonly lostWhy: string;
+  readonly down: string;
+  readonly downWhy: string;
+  readonly sameRung: string;
   readonly hintsTaken: string;
   readonly again: string;
 }
@@ -66,8 +67,9 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     cleared: 'The mirror is down.',
     won: 'Nothing left standing',
     wonWhy: 'All of it, with',
-    lost: 'The mirror had the better of it',
-    lostWhy: 'Rungs cleared:',
+    down: 'He is down',
+    downWhy: 'Beaten by rung',
+    sameRung: 'Back on your feet',
     hintsTaken: 'hints',
     again: 'Again',
   },
@@ -93,8 +95,9 @@ export const TEXT: Readonly<Record<Lang, Text>> = {
     cleared: 'မှန်ထဲကလူ ပြိုသွားပြီ။',
     won: 'ဘာမှ မကျန်တော့ဘူး',
     wonWhy: 'အကုန်ပြီး၊',
-    lost: 'မှန်ထဲကလူက သာသွားတယ်',
-    lostWhy: 'ပြီးခဲ့တဲ့ အဆင့်:',
+    down: 'သူ လဲသွားပြီ',
+    downWhy: 'ရှုံးသွားတဲ့ အဆင့်',
+    sameRung: 'ပြန်ထပြီး ဒီအဆင့်ကို ပြန်စ',
     hintsTaken: 'ကြိမ် အကူအညီယူ',
     again: 'ထပ်ကစားမယ်',
   },

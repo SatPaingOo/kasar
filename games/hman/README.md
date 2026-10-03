@@ -1,6 +1,6 @@
 # Hman
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.2.1
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.3.0
 
 မှန် — correct.
 
@@ -32,6 +32,16 @@ Every case that comes back right takes one more of the mirror down. A submit
 with anything wrong in it costs one life, however much was wrong — so a first
 attempt that gets three of four is progress to edit, not a mauling to start
 over. What you already got right stays down.
+
+**Lives belong to the rung, not to the run.** Run out and he goes down, and
+you get that rung again with what is below it still cleared. Five lives across
+the whole run sounds generous and was not: someone relearning a language tries
+things, so the run kept restarting at the first rung and the later ones were
+never reached at all.
+
+The fight plays the hits and the first miss only — four identical failures
+told you nothing the first had not — and it can be skipped by clicking it or
+pressing Escape.
 
 **Hints** never block and never cost a life. Being stuck with no way to ask is
 how someone stops playing a thing meant to teach them. They cost score, and

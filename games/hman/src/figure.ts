@@ -35,6 +35,8 @@ export interface Pose {
   readonly lunge: number;
   /** 0 upright, 1 knocked back. */
   readonly recoil: number;
+  /** 0 on his feet, 1 flat on the floor. */
+  readonly fall: number;
   /** Seconds, for the small motion of standing there. */
   readonly time: number;
 }
@@ -67,6 +69,13 @@ export function drawFigure(
 
   ctx.save();
   ctx.translate(x, y);
+  // Going down is a topple about the feet, away from whatever hit him, with a
+  // little drop at the end so he lands on the floor rather than hinging on it.
+  if (pose.fall > 0) {
+    const over = pose.fall ** 0.7;
+    ctx.rotate(-face * over * (Math.PI / 2 - 0.12));
+    ctx.translate(0, over * unit * 0.1);
+  }
   ctx.scale(scale, scale);
   ctx.strokeStyle = ink;
   ctx.fillStyle = ink;

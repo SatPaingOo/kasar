@@ -17,16 +17,26 @@ import { LEVELS } from './levels.js';
 import type { Case, Level, Value } from './levels.js';
 
 export const RULES = {
-  /** Lives for the whole run, not per rung. */
-  lives: 5,
+  /**
+   * Lives for the rung you are on, not for the whole run.
+   *
+   * They were for the whole run and that was wrong for what this is. Someone
+   * relearning a language tries things; five wrong tries across four rungs is
+   * nothing, so the run kept ending and restarting at the first rung and the
+   * later ones were never reached at all. Going down now costs you the rung
+   * you are on and nothing else — the rungs below stay cleared, and you are
+   * put back at the top of the one that beat you.
+   */
+  lives: 3,
   /** A submit with anything wrong in it costs this, however much was wrong. */
   costOfBeingWrong: 1,
   /** Points for clearing a rung, and what each hint takes off the total. */
   perLevel: 100,
   perHint: 15,
+  perDown: 25,
 } as const;
 
-export type Phase = 'writing' | 'resolving' | 'won' | 'lost';
+export type Phase = 'writing' | 'resolving' | 'won' | 'down';
 
 /** One case, after the code has been run against it. */
 export interface Attempt {
@@ -49,6 +59,8 @@ export interface Game {
   hintsShown: number;
   hintsTaken: number;
   cleared: number;
+  /** How many times a rung has put him down. */
+  downs: number;
   phase: Phase;
   /** The last submit, which is what the fight animates. */
   attempts: Attempt[];
@@ -62,7 +74,7 @@ export type Event =
   | { readonly kind: 'cleared'; readonly level: number }
   | { readonly kind: 'hint'; readonly depth: number }
   | { readonly kind: 'won' }
-  | { readonly kind: 'lost' };
+  | { readonly kind: 'down' };
 
 export function levelAt(index: number): Level | undefined {
   return LEVELS[index];
@@ -81,6 +93,7 @@ export function createGame(): Game {
     hintsShown: 0,
     hintsTaken: 0,
     cleared: 0,
+    downs: 0,
     phase: 'writing',
     attempts: [],
     events: [],
@@ -114,7 +127,7 @@ export function standing(game: Game): number {
 }
 
 export function score(game: Game): number {
-  return Math.max(0, game.cleared * RULES.perLevel - game.hintsTaken * RULES.perHint);
+  return Math.max(0, game.cleared * RULES.perLevel - game.hintsTaken * RULES.perHint - game.downs * RULES.perDown);
 }
 
 /**
@@ -194,8 +207,9 @@ export function resolve(game: Game, results: readonly RunResult[]): Game {
 
   if (game.lives <= 0) {
     game.lives = 0;
-    game.phase = 'lost';
-    game.events.push({ kind: 'lost' });
+    game.downs += 1;
+    game.phase = 'down';
+    game.events.push({ kind: 'down' });
     return game;
   }
 
@@ -204,6 +218,23 @@ export function resolve(game: Game, results: readonly RunResult[]): Game {
     game.events.push({ kind: 'cleared', level: game.level });
   }
 
+  return game;
+}
+
+/**
+ * Put him back on his feet, at the top of the rung that beat him.
+ *
+ * Not back at the beginning. What is below him is cleared and stays cleared;
+ * the only thing a rung takes when it wins is that rung.
+ */
+export function retry(game: Game): Game {
+  if (game.phase !== 'down') return game;
+  game.lives = RULES.lives;
+  game.solved = new Array<boolean>(LEVELS[game.level]?.cases.length ?? 0).fill(false);
+  game.hintsShown = 0;
+  game.attempts = [];
+  game.events = [];
+  game.phase = 'writing';
   return game;
 }
 

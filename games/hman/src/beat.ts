@@ -10,7 +10,7 @@
  */
 
 /** One blow, start to finish. */
-export const BLOW = 1.05;
+export const BLOW = 0.8;
 
 export interface Swing {
   /** 0 to 1, pulling back. */
@@ -51,5 +51,33 @@ export function swingAt(since: number, hard: number = 1): Swing {
     // well not be there.
     caption: struck ? clamp01(after * 5) : 0,
     struck,
+  };
+}
+
+/** How long the going-down takes before the card is readable. */
+export const DOWN = 1.5;
+
+export interface Falling {
+  /** 0 on his feet, 1 flat out. */
+  readonly over: number;
+  readonly shake: number;
+  readonly dim: number;
+  readonly caption: number;
+}
+
+/**
+ * Going down.
+ *
+ * He topples rather than fading: a run that ends with a figure quietly
+ * replaced by a card never tells you that it was *him* that lost.
+ */
+export function fallAt(since: number): Falling {
+  const t = clamp01(since / DOWN);
+  return {
+    // Slow off the mark and then all at once, the way falling over works.
+    over: clamp01((t / 0.55) ** 1.8),
+    shake: t > 0.5 ? (1 - clamp01((t - 0.5) / 0.2)) ** 2 * Math.sin(since * 70) * 7 : 0,
+    dim: clamp01((t - 0.3) / 0.5) * 0.55,
+    caption: clamp01((t - 0.62) / 0.38),
   };
 }

@@ -6,12 +6,12 @@
  * knows there is a DOM.
  */
 
-import { advance, casesOf, createGame, levelAt, levelCount, resolve, score, takeHint } from './game.js';
+import { advance, casesOf, createGame, levelAt, levelCount, resolve, retry, score, takeHint } from './game.js';
 import type { Game } from './game.js';
 import { run } from './runner.js';
 import { adviseOn } from './advice.js';
 import { draw } from './render.js';
-import { BLOW, swingAt } from './beat.js';
+import { BLOW, DOWN, swingAt } from './beat.js';
 import { MUTE_LABEL, createSound } from './sound.js';
 import type { Blow, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
@@ -166,11 +166,21 @@ async function strike(): Promise<void> {
   }
 
   resolve(game, outcome.results);
-  // Every blow carries the case it came from, because the case is the part
-  // worth watching: a lunge says something happened, the numbers say what.
-  queue = game.attempts
-    .filter((a) => !a.repeat)
-    .map((a) => ({ landed: a.hit, parts: a.parts, got: a.got, want: a.want, error: a.error }));
+  /*
+   * Every blow carries the case it came from, because the case is the part
+   * worth watching: a lunge says something happened, the numbers say what.
+   *
+   * But only the hits and the *first* miss are played. Four identical failures
+   * in a row told the player nothing the first had not, and while they played
+   * nothing could be pressed — six seconds of being unable to touch the thing
+   * you are trying to fix, which is most of why this felt stuck rather than
+   * slow.
+   */
+  const fresh = game.attempts.filter((a) => !a.repeat);
+  const landed = fresh.filter((a) => a.hit);
+  const firstMiss = fresh.find((a) => !a.hit);
+  const shown = firstMiss === undefined ? landed : [...landed, firstMiss];
+  queue = shown.map((a) => ({ landed: a.hit, parts: a.parts, got: a.got, want: a.want, error: a.error }));
   if (queue.length === 0) {
     const first = game.attempts[0];
     if (first !== undefined) {
@@ -199,8 +209,12 @@ function playOut(dt: number): void {
       if (busy) {
         busy = false;
         advance(game);
-        if (game.phase === 'won' || game.phase === 'lost') {
-          sound.play(game.phase === 'won' ? 'won' : 'lost');
+        if (game.phase === 'down') {
+          // He topples first; the card waits until he is on the floor.
+          downFor = 0;
+          sound.play('lost');
+        } else if (game.phase === 'won') {
+          sound.play('won');
           showEnd();
         } else {
           if (game.solved.every((d) => d)) sound.play('cleared');
@@ -237,12 +251,12 @@ function playOut(dt: number): void {
 
 function showEnd(): void {
   const won = game.phase === 'won';
-  curtainTitleEl.textContent = won ? t.won : t.lost;
+  curtainTitleEl.textContent = won ? t.won : t.down;
   curtainLeadEl.textContent = won
     ? `${t.wonWhy} ${game.lives} ${t.lives}`
-    : `${t.lostWhy} ${game.cleared}/${levelCount()}`;
+    : `${t.downWhy} ${game.level + 1}/${levelCount()}`;
   curtainBodyEl.textContent = `${score(game)} · ${game.hintsTaken} ${t.hintsTaken}`;
-  curtainGoEl.textContent = t.again;
+  curtainGoEl.textContent = won ? t.again : t.sameRung;
   curtainEl.hidden = false;
 }
 
@@ -257,6 +271,7 @@ function showTitle(): void {
 function begin(): void {
   game = createGame();
   onDesk = -1;
+  downFor = null;
   queue = [];
   blow = null;
   busy = false;
@@ -269,6 +284,21 @@ function begin(): void {
 submitEl.textContent = t.submit;
 labelMute();
 hintEl.textContent = t.hint;
+/**
+ * Skip the rest of the fight.
+ *
+ * The desk is locked while it plays, so there has to be a way to cut it short:
+ * someone who has already read the answer should not be made to sit through
+ * the rest before they can edit.
+ */
+function skip(): void {
+  if (!busy) return;
+  queue = [];
+  blow = null;
+  since = 0;
+}
+canvas.addEventListener('pointerdown', skip);
+
 submitEl.addEventListener('click', () => {
   sound.unlock();
   void strike();
@@ -290,12 +320,31 @@ muteEl.addEventListener('click', () => {
 });
 curtainGoEl.addEventListener('click', () => {
   sound.unlock();
+  // Beaten by a rung, you get that rung again — not the whole run from the
+  // bottom. What is cleared below stays cleared.
+  if (game.phase === 'down') {
+    retry(game);
+    downFor = null;
+    queue = [];
+    blow = null;
+    busy = false;
+    curtainEl.hidden = true;
+    onDesk = -1;
+    showRung();
+    submitEl.disabled = false;
+    bodyEl.focus();
+    return;
+  }
   begin();
 });
 
 // Ctrl/Cmd+Enter submits, because reaching for the mouse mid-thought is the
 // one thing a box like this must not make you do.
 bodyEl.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    skip();
+    return;
+  }
   if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     void strike();
@@ -304,6 +353,8 @@ bodyEl.addEventListener('keydown', (event) => {
 
 let last = performance.now();
 let drawFailed = false;
+/** Seconds since he went down, or null while he is on his feet. */
+let downFor: number | null = null;
 
 /**
  * One step of the world.
@@ -322,9 +373,14 @@ function step(now: number, cap: number): void {
   if (dt <= 0) return;
   last = now;
   clock += dt;
+
+  if (downFor !== null) {
+    downFor += dt;
+    if (downFor >= DOWN && curtainEl.hidden) showEnd();
+  }
   playOut(dt);
   try {
-    draw(paint, view, game, { lang, time: clock, blow, since });
+    draw(paint, view, game, { lang, time: clock, blow, since, downFor });
   } catch (err) {
     if (!drawFailed) {
       drawFailed = true;

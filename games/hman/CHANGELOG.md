@@ -2,6 +2,32 @@
 
 Keep a Changelog, newest first.
 
+## [0.3.0] — 2026-10-03
+
+### Changed
+
+- Lives belong to the rung you are on, not to the whole run. Five across four
+  rungs sounds generous and is not: someone relearning a language tries
+  things, so the run kept ending and restarting at the first rung and the
+  later ones were never reached at all. Going down now costs that rung and
+  nothing else — what is cleared below stays cleared, and you are put back at
+  the top of the one that beat you.
+- Only the hits and the *first* miss are played out. Four identical failures
+  in a row told the player nothing the first had not, and nothing could be
+  pressed while they played: a fully wrong submit took about six seconds of
+  being unable to touch the thing you were trying to fix. It takes 1.3 now.
+- A blow is 0.8s rather than 1.05s, and the fight can be skipped by clicking
+  it or pressing Escape.
+- The lives row drew five marks whatever the rule said. It draws the real
+  number.
+
+### Added
+
+- He goes down. A run that ends with the figure quietly replaced by a card
+  never says that it was *him* who lost, so he topples — slow off the mark and
+  then all at once — the light goes out of the room, and only then does the
+  card come up, offering that rung again rather than the whole run.
+
 ## [0.2.1] — 2026-10-03
 
 ### Fixed
