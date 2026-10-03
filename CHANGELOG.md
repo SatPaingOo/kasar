@@ -5,6 +5,8 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-04
+
 ### Changed
 
 - The shelf's figure has the whole page now, not a strip of floor along the
