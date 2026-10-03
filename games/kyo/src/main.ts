@@ -11,6 +11,7 @@ import type { Game } from './game.js';
 import { draw, layout } from './render.js';
 import type { Phase, View } from './render.js';
 import { TEXT, pickLang } from './strings.js';
+import { createSound } from './sound.js';
 
 const stage = document.querySelector<HTMLCanvasElement>('#stage');
 const context = stage?.getContext('2d') ?? null;
@@ -31,6 +32,7 @@ let clock = 0;
 let overFor = 0;
 let touch = false;
 let last = performance.now();
+const sound = createSound();
 
 /**
  * Measured from the box the browser gives the canvas, never from the canvas's
@@ -77,21 +79,43 @@ function pause(): void {
  * whatever is furthest ahead within reach — so the only thing the player is
  * ever deciding is when.
  */
+/**
+ * Hand the rules' events to the ear and clear them.
+ *
+ * A grab or a release happens between frames, outside `step`, and `step`
+ * empties the list at the top of the next one — so every path that can make an
+ * event drains it straight away rather than leaving it to be collected later
+ * and silently thrown away.
+ */
+function drain(): void {
+  for (const event of game.events) sound.play(event);
+  game.events = [];
+}
+
 function press(): void {
+  sound.unlock();
   if (phase !== 'playing') {
     advance();
     return;
   }
   grab(game);
+  drain();
 }
 
 function lift(): void {
   if (phase !== 'playing') return;
   release(game);
+  drain();
 }
 
 window.addEventListener('keydown', (event) => {
   const key = event.key;
+  sound.unlock();
+  if (key === 'm' || key === 'M') {
+    sound.toggle();
+    event.preventDefault();
+    return;
+  }
   if (key === 'p' || key === 'P') {
     pause();
     event.preventDefault();
@@ -141,6 +165,7 @@ function frame(dt: number): void {
   clock += dt;
   if (phase === 'playing') {
     step(game, dt);
+    drain();
     if (game.outcome !== 'swinging') {
       phase = 'over';
       overFor = 0;
@@ -148,6 +173,10 @@ function frame(dt: number): void {
   } else if (phase === 'over') {
     overFor += dt;
   }
+  // On a rope you cannot see your own speed, and speed is the whole thing
+  // being managed, so the wind is what reports it.
+  const speed = Math.hypot(game.figure.vx, game.figure.vy);
+  sound.wind(phase === 'playing' ? speed : 0);
   // The camera is rebuilt every frame because the whole world slides past.
   view = layout(view.width, view.height, game);
   draw(ctx, view, game, { lang, phase, time: clock, touch, overFor });

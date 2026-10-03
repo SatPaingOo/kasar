@@ -9,6 +9,7 @@
 import { RULES, bandAt, groundAt, leanOf, progress } from './game.js';
 import type { Game } from './game.js';
 import { drawFigure } from './figure.js';
+import { beatOf } from './ending.js';
 import { TEXT } from './strings.js';
 import type { Lang } from './strings.js';
 
@@ -27,6 +28,9 @@ const JADE = {
   inkDim: '#5c7064',
   veil: 'rgba(227, 233, 214, 0.78)',
   rim: '#3f7a56',
+  glow: '#fff4cf',
+  dusk: '#10180f',
+  grit: '#6e7f6c',
 } as const;
 
 export interface View {
@@ -260,13 +264,19 @@ function centred(
 }
 
 export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: Ui): void {
+  const beat = beatOf(ui.phase === 'over' ? game.outcome : 'swinging', ui.overFor);
+
+  ctx.save();
+  if (beat.shake !== 0) ctx.translate(beat.shake, beat.shake * 0.45);
+
   drawDistance(ctx, view);
   drawFloor(ctx, view);
   drawAnchors(ctx, view, game);
 
   const figure = game.figure;
-  const fx = sx(view, figure.x);
-  const fy = sy(view, figure.y);
+  // Across the far side he sails on rather than stopping dead in the air.
+  const fx = sx(view, figure.x + beat.coast);
+  const fy = sy(view, figure.y - beat.coast * 0.12);
 
   const rope = game.rope;
   if (rope !== null) {
@@ -294,7 +304,37 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
     JADE.figure,
   );
 
+  // The dust he kicks up on landing, drawn straight from the beat — there is
+  // no particle system here and one impact does not earn one.
+  if (beat.puff > 0) {
+    ctx.fillStyle = JADE.grit;
+    for (let i = 0; i < 7; i += 1) {
+      const spread = (i - 3) * 0.55;
+      const size = view.unit * (0.3 + beat.puff * (0.9 + Math.abs(spread) * 0.3));
+      ctx.globalAlpha = beat.puff * 0.4 * (1 - Math.abs(spread) / 4);
+      ctx.beginPath();
+      ctx.arc(fx + spread * view.unit * 1.1, fy + view.unit * 0.3 - beat.puff * view.unit * 0.5, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // The far side opening up, or the gorge closing over him.
+  if (beat.glow > 0) {
+    const light = ctx.createLinearGradient(view.width, 0, view.width * 0.15, view.height);
+    light.addColorStop(0, `rgba(255, 244, 207, ${0.9 * beat.glow})`);
+    light.addColorStop(0.5, `rgba(255, 244, 207, ${0.28 * beat.glow})`);
+    light.addColorStop(1, 'rgba(255, 244, 207, 0)');
+    ctx.fillStyle = light;
+    ctx.fillRect(0, 0, view.width, view.height);
+  }
+  if (beat.dim > 0) {
+    ctx.fillStyle = `rgba(16, 24, 15, ${beat.dim})`;
+    ctx.fillRect(0, 0, view.width, view.height);
+  }
+
   drawHud(ctx, view, game, ui);
+  ctx.restore();
 
   const t = TEXT[ui.lang];
   if (ui.phase === 'title') {
@@ -314,7 +354,10 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       [t.resume, Math.min(15, view.width * 0.042), JADE.inkDim],
     ]);
   } else if (ui.phase === 'over') {
+    // The card arrives behind the ending, not on top of it.
+    ctx.globalAlpha = beat.veil;
     veil(ctx, view);
+    ctx.globalAlpha = beat.text;
     const won = game.outcome === 'across';
     centred(ctx, view, [
       [won ? t.over : t.fallen, Math.min(30, view.width * 0.085), won ? JADE.rim : JADE.ink],
@@ -326,4 +369,7 @@ export function draw(ctx: CanvasRenderingContext2D, view: View, game: Game, ui: 
       [t.again, Math.min(18, view.width * 0.05), JADE.ink],
     ]);
   }
+
+  // The overlays fade in, so the next frame must not inherit their alpha.
+  ctx.globalAlpha = 1;
 }

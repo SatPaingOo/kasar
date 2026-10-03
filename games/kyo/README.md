@@ -1,6 +1,6 @@
 # Kyo
 
-**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.1.0
+**Status:** S1 Prototype · active · last reviewed 2026-10-03 · v0.2.0
 
 ကြိုး — a rope.
 
@@ -39,6 +39,7 @@ Then open `games/kyo/`.
 | hold `␣` | swing |
 | let go | fly |
 | `P` | pause |
+| `M` | mute |
 
 On a touch screen it is the same one button: hold anywhere, let go.
 
@@ -65,6 +66,8 @@ the floor falling away is why a shallow sink can be outrun and a dive cannot.
 | `src/figure.ts` | the man, drawn in code. His own figure — this game may not reach into the other two |
 | `src/render.ts` | reads the game and paints it; decides the camera and nothing else |
 | `src/strings.ts` | everything the player reads, in English and Burmese |
+| `src/sound.ts` | every sound, made from oscillators and one noise buffer |
+| `src/ending.ts` | the shape of an ending over time. No canvas, so the timing is testable |
 | `src/main.ts` | the loop, the canvas and the one button |
 | `tests/unit/` | the rules, headlessly |
 
@@ -96,7 +99,20 @@ first:
   geometrically impossible and the only way across was to creep from anchor to
   anchor with no speed at all.
 
+## Sound
+
+The wind is the one sound doing real work. It is driven by his speed, not by
+the clock, because on a rope you cannot see how fast you are going and speed is
+the whole thing you are managing.
+
+Levels were measured rather than chosen by ear: each cue renders alone through
+an `OfflineAudioContext` and its peak comes off the buffer. The release — a
+band of noise, and the cue that matters most, since letting go is the game —
+came out at 0.035 and 0.054, which is silence, because a filtered noise burst
+keeps almost none of the gain it is given. It needed nearly three times the
+level of anything else. Everything now sits above 0.05, and all six cues over
+a full-speed wind peak at 0.579.
+
 ## Still to come
 
-- Sound. There is none yet.
-- An ending worth watching, for both ways a run can finish.
+- Nothing pressing.
