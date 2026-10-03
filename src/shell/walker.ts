@@ -262,13 +262,13 @@ function textOf(element: Element): Box | null {
 
 function measure(layer: HTMLElement): Layout {
   // The layer must not hold the page open while it is measured, or the page
-  // could never get shorter — nor narrower, which is what happens when the
-  // cards arrive and a scrollbar takes its share of the width.
-  layer.style.width = '0px';
+  // could never get shorter. Its width is left to the stylesheet, which
+  // makes it as wide as the window less any scrollbar: given a width in
+  // pixels, it went on holding the page that wide after a scrollbar arrived
+  // and took its share, until the next frame — and a hidden tab gets none.
   layer.style.height = '0px';
   const width = document.documentElement.scrollWidth;
   const height = document.documentElement.scrollHeight;
-  layer.style.width = `${width}px`;
   layer.style.height = `${height}px`;
 
   const perches: Perch[] = [];
@@ -380,8 +380,11 @@ export function startWalker(layer: HTMLElement): void {
 
   let pending = 0;
   const soon = (): void => {
+    // On the next frame, so a burst of changes is measured once — or a
+    // moment from now in a hidden tab, which gets no frames at all.
     cancelAnimationFrame(pending);
-    pending = requestAnimationFrame(rebuild);
+    window.clearTimeout(pending);
+    pending = document.hidden ? window.setTimeout(rebuild, 60) : requestAnimationFrame(rebuild);
   };
   // The cards arrive after a fetch, fonts load late, and the language button
   // changes every card's height: anything that moves the page re-measures it.

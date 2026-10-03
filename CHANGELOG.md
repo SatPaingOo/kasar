@@ -5,6 +5,14 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+### Fixed
+
+- The walker's layer could hold the page fifteen pixels wider than the
+  window, with a scrollbar to show for it: it was given the page's width in
+  pixels, and kept it after a vertical scrollbar arrived and took its share
+  until the next frame — which a hidden tab never gets. Its width is left to
+  the stylesheet now, and a hidden tab re-measures on a timer instead.
+
 ## [0.4.0] — 2026-10-04
 
 ### Changed
