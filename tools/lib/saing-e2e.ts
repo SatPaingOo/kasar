@@ -147,9 +147,14 @@ export const EAR = String.raw`
     osc.start = (when = 0) => {
       if (!striking && first !== null) {
         const drum = PITCH.findIndex((p) => Math.abs(p * GLIDE - first) < 0.5);
+        // Kept on the audio clock, where the page put it. Moved onto the
+        // wall clock here, two sounds the page scheduled for the same instant
+        // could come out a render quantum apart — the audio clock can tick
+        // between the two calls — and a call's first note would be heard as
+        // the end of whatever came before it.
         const due = performance.now() + (when - ctx.currentTime) * 1000;
-        if (osc.type === 'sine' && drum >= 0) log.push({ kind: 'drum', drum, due });
-        else if (osc.type === 'triangle' && Math.abs(first - CLAPPER) < 1) log.push({ kind: 'wa', due });
+        if (osc.type === 'sine' && drum >= 0) log.push({ kind: 'drum', drum, when, due });
+        else if (osc.type === 'triangle' && Math.abs(first - CLAPPER) < 1) log.push({ kind: 'wa', when, due });
       }
       return start(when);
     };
@@ -162,17 +167,19 @@ export const EAR = String.raw`
   function listen() {
     const claps = log.filter((e) => e.kind === 'wa');
     for (let k = 0; k + 1 < claps.length; k += 1) {
-      const from = claps[k].due;
-      const to = claps[k + 1].due;
+      const from = claps[k].when;
+      const to = claps[k + 1].when;
       if (answered.has(to)) continue;
-      const notes = log.filter((e) => e.kind === 'drum' && e.due >= from - 1 && e.due < to - 1);
+      // Five milliseconds either way, for a sound handed over late and
+      // scheduled for "now" rather than its own time.
+      const notes = log.filter((e) => e.kind === 'drum' && e.when >= from - 0.005 && e.when < to - 0.005);
       if (notes.length === 0) continue;
       answered.add(to);
       calls.push(notes.map((n) => n.drum));
       const wrong = calls.length === WRONG_ON;
       notes.forEach((note, i) => {
         const drum = wrong && i === 1 ? (note.drum + 1) % 3 : note.drum;
-        const due = note.due + (to - from);
+        const due = note.due + (to - from) * 1000;
         setTimeout(() => {
           slips.push(Math.round(performance.now() - due));
           striking = true;

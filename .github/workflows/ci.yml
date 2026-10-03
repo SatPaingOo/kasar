@@ -60,6 +60,18 @@ jobs:
 
       - run: npm ci
 
+      # Saing is played by ear, and on the runner Firefox's audio context
+      # never left "suspended": there is no sound device to play into. A
+      # sound server with a sink that goes nowhere gives it one. Chrome has a
+      # fake output of its own and was running without this.
+      - name: A sound server for the browsers to play into
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=nowhere
+          pactl set-default-sink nowhere
+
       - run: npm run e2e -- --all
 
       # What the colour under the text looked like, when something went wrong.
