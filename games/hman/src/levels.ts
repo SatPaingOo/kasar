@@ -67,6 +67,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Choosing', my: 'ရွေးချယ်ခြင်း' },
   { en: 'Again and again', my: 'ထပ်ခါ ထပ်ခါ' },
   { en: 'Array methods', my: 'Array method တွေ' },
+  { en: 'Text', my: 'စာသား' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -789,5 +790,219 @@ export const LEVELS: readonly Level[] = [
       en: "Each method hands back a new list, so the next can be called straight on it, and read top to bottom a chain says what happens in the order it happens. reduce's 0 matters: without it, an empty list has nothing to start from, and it throws.",
       my: 'method တစ်ခုစီက စာရင်းအသစ် ပြန်ပေးလို့ နောက်တစ်ခုကို အဲဒီပေါ်မှာ တန်းခေါ်လို့ရတယ်၊ အပေါ်ကနေ အောက်ကို ဖတ်ရင် chain က ဖြစ်တဲ့ အစီအစဉ်အတိုင်း ပြောပြတယ်။ reduce ရဲ့ 0 က အရေးကြီးတယ်: မပါရင် စာရင်း ဗလာမှာ စစရာ မရှိလို့ error တက်တယ်။',
     },
+  },
+
+  // ── Text ────────────────────────────────────────────────────────────
+  {
+    id: 'shout',
+    chapter: 4,
+    concept: { en: 'louder', my: 'ပိုကျယ်' },
+    brief: {
+      en: 'Now it is words. He shouts his move: give back the word in capital letters.',
+      my: 'အခု စကားလုံးတွေ။ သူက ထိုးချက်ကို အော်ပြောတယ်: စကားလုံးကို စာလုံးကြီးနဲ့ ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(word: string): string',
+    starter: 'return ',
+    shown: [one('hit', 'HIT'), one('go', 'GO')],
+    cases: [one('strike', 'STRIKE'), one('a', 'A'), one('', ''), one('Ok', 'OK'), one('kyo2', 'KYO2')],
+    hints: [
+      {
+        en: 'A string is a value with methods of its own, the way a list has.',
+        my: 'string ဆိုတာ စာရင်းလိုပဲ ကိုယ်ပိုင် method တွေ ပါတဲ့ တန်ဖိုး တစ်ခု။',
+      },
+      {
+        en: 'word.toUpperCase() gives back a new string; it never changes word.',
+        my: 'word.toUpperCase() က string အသစ် တစ်ခု ပြန်ပေးတယ်၊ word ကို ဘယ်တော့မှ မပြောင်းဘူး။',
+      },
+      code('return word.toUpperCase();'),
+    ],
+    lesson: {
+      en: 'Strings never change. toUpperCase, slice, trim — every string method hands back a new string and leaves the old one exactly as it was.',
+      my: 'string တွေက ဘယ်တော့မှ မပြောင်းဘူး။ toUpperCase၊ slice၊ trim — string method တိုင်းက string အသစ် ပြန်ပေးပြီး အဟောင်းကို ဒီအတိုင်း ထားခဲ့တယ်။',
+    },
+  },
+  {
+    id: 'initial',
+    chapter: 4,
+    concept: { en: 'the first letter', my: 'ပထမ စာလုံး' },
+    brief: {
+      en: "He signs with his first letter. Give back the word's first letter as a capital — or an empty string if there is no word at all.",
+      my: "သူက ပထမ စာလုံးနဲ့ လက်မှတ်ထိုးတယ်။ စကားလုံးရဲ့ ပထမ စာလုံးကို စာလုံးကြီးနဲ့ ပြန်ပေးပါ — စကားလုံး လုံးဝ မရှိရင် string ဗလာ ('') ပြန်ပေးပါ။",
+    },
+    signature: 'function strike(word: string): string',
+    starter: 'return ',
+    shown: [one('aung', 'A'), one('mya', 'M')],
+    cases: [one('kyaw', 'K'), one('z', 'Z'), one('', ''), one('Hla', 'H')],
+    hints: [
+      {
+        en: 'A string can be indexed like a list: word[0] is its first character.',
+        my: 'string ကို စာရင်းလိုပဲ index နဲ့ ယူလို့ရတယ်: word[0] က ပထမ စာလုံး။',
+      },
+      {
+        en: "But ''[0] is undefined, and undefined has no toUpperCase. slice(0, 1) gives '' instead.",
+        my: "ဒါပေမဲ့ ''[0] က undefined၊ undefined မှာ toUpperCase မရှိဘူး။ slice(0, 1) ကတော့ အဲဒီအစား '' ပေးတယ်။",
+      },
+      code('return word.slice(0, 1).toUpperCase();'),
+    ],
+    lesson: {
+      en: "slice never goes out of bounds: past the end it just gives back less, down to ''. Indexing past the end gives undefined, and calling a method on undefined is the most common error JavaScript has. ?. below is the other way round it: it stops at undefined instead of calling on it.",
+      my: "slice က ဘယ်တော့မှ အပြင်ကို မထွက်ဘူး: အဆုံးကို ကျော်ရင် နည်းနည်းပဲ ပြန်ပေးတယ်၊ '' ထိ။ index နဲ့ အဆုံးကို ကျော်ယူရင် undefined ရတယ်၊ undefined ပေါ်မှာ method ခေါ်တာက JavaScript မှာ အဖြစ်အများဆုံး error ပဲ။ အောက်က ?. က နောက်တစ်နည်း: undefined ဆိုရင် ခေါ်မနေဘဲ ရပ်လိုက်တယ်။",
+    },
+    another: "return word.at(0)?.toUpperCase() ?? '';",
+  },
+  {
+    id: 'letters',
+    chapter: 4,
+    concept: { en: 'how many a', my: 'a ဘယ်နှစ်လုံး' },
+    brief: {
+      en: "Every 'a' in the word is a blow. Give back how many there are — capital or small.",
+      my: "စကားလုံးထဲက 'a' တိုင်းက ထိုးချက် တစ်ချက်။ ဘယ်နှစ်လုံး ပါလဲ ပြန်ပေးပါ — စာလုံးကြီး ဖြစ်ဖြစ် စာလုံးသေး ဖြစ်ဖြစ်။",
+    },
+    signature: 'function strike(word: string): number',
+    starter: 'return ',
+    shown: [one('banana', 3), one('kyo', 0)],
+    cases: [one('Aung', 1), one('aaa', 3), one('', 0), one('Mandalay', 3), one('Ava', 2)],
+    hints: [
+      {
+        en: 'for (const ch of word) walks a string one character at a time, just as it walks a list.',
+        my: 'for (const ch of word) က စာရင်းကို လျှောက်သလိုပဲ string ကို တစ်လုံးချင်း လျှောက်တယ်။',
+      },
+      {
+        en: "'A' and 'a' are different characters. Make the word all small first: word.toLowerCase().",
+        my: "'A' နဲ့ 'a' က မတူတဲ့ စာလုံးတွေ။ စကားလုံးကို အရင် စာလုံးသေး ပြောင်းပါ: word.toLowerCase()။",
+      },
+      code("let count = 0;\nfor (const ch of word.toLowerCase()) {\n  if (ch === 'a') count += 1;\n}\nreturn count;"),
+    ],
+    lesson: {
+      en: 'For most purposes a string is a list of characters: it has a length, an index and a for…of. Comparing text is exact, so capitals have to be dealt with on purpose.',
+      my: 'ရည်ရွယ်ချက် အများစုအတွက် string က စာလုံးတွေရဲ့ စာရင်း တစ်ခုပဲ: length ရှိတယ်၊ index ရှိတယ်၊ for…of ရှိတယ်။ စာသား နှိုင်းယှဉ်တာက တိတိကျကျ ဖြစ်လို့ စာလုံးကြီး/သေးကို ရည်ရွယ်ချက်ရှိရှိ ကိုင်တွယ်ရမယ်။',
+    },
+    another: "return [...word.toLowerCase()].filter((ch) => ch === 'a').length;",
+  },
+  {
+    id: 'backwards',
+    chapter: 4,
+    concept: { en: 'backwards', my: 'ပြောင်းပြန်' },
+    brief: {
+      en: 'He reads the move back to front. Give back the word reversed.',
+      my: 'သူက ထိုးချက်ကို နောက်ကနေ ရှေ့ကို ဖတ်တယ်။ စကားလုံးကို ပြောင်းပြန် လှန်ပြီး ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(word: string): string',
+    starter: 'return ',
+    shown: [one('abc', 'cba'), one('kyo', 'oyk')],
+    cases: [one('strike', 'ekirts'), one('a', 'a'), one('', ''), one('noon', 'noon'), one('ab cd', 'dc ba')],
+    hints: [
+      {
+        en: 'Strings have no reverse, but lists do.',
+        my: 'string မှာ reverse မရှိဘူး၊ စာရင်းမှာတော့ ရှိတယ်။',
+      },
+      {
+        en: "split('') turns a string into a list of its characters, and join('') turns one back.",
+        my: "split('') က string ကို စာလုံးတွေရဲ့ စာရင်း အဖြစ် ပြောင်းတယ်၊ join('') က ပြန်ပေါင်းတယ်။",
+      },
+      code("return word.split('').reverse().join('');"),
+    ],
+    lesson: {
+      en: 'split and join are the bridge between text and lists, and most text work goes across it: split it, do list things, join it back.',
+      my: 'split နဲ့ join က စာသားနဲ့ စာရင်းကြားက တံတား၊ စာသား အလုပ် အများစုက ဒီလိုပဲ: split လုပ်၊ စာရင်းအလုပ်တွေ လုပ်၊ join နဲ့ ပြန်ပေါင်း။',
+    },
+    another: "return [...word].reverse().join('');",
+  },
+  {
+    id: 'palindrome',
+    chapter: 4,
+    concept: { en: 'the same both ways', my: 'နှစ်ဖက်လုံး တူ' },
+    brief: {
+      en: 'Some words are their own mirror. Give back true if the word reads the same backwards — capitals do not count.',
+      my: 'တချို့ စကားလုံးတွေက ကိုယ့်ကိုယ်ကိုပဲ မှန်ထဲက ပုံ။ နောက်ပြန် ဖတ်ရင်လည်း တူရင် true ပြန်ပေးပါ — စာလုံးကြီး/သေး ထည့်မတွက်ပါနဲ့။',
+    },
+    signature: 'function strike(word: string): boolean',
+    starter: 'return ',
+    shown: [one('level', true), one('kyo', false)],
+    cases: [one('Noon', true), one('a', true), one('', true), one('ab', false), one('Racecar', true)],
+    hints: [
+      {
+        en: 'You can already reverse a word. Compare the word with its reverse.',
+        my: 'စကားလုံးကို ပြောင်းပြန် လုပ်တတ်ပြီးသား။ စကားလုံးနဲ့ သူ့ပြောင်းပြန်ကို နှိုင်းယှဉ်ပါ။',
+      },
+      {
+        en: "'Noon' backwards is 'nooN'. Make it all small before comparing.",
+        my: "'Noon' ကို ပြောင်းပြန်လုပ်ရင် 'nooN'။ မနှိုင်းယှဉ်ခင် အကုန် စာလုံးသေး ပြောင်းပါ။",
+      },
+      code("const small = word.toLowerCase();\nreturn small === small.split('').reverse().join('');"),
+    ],
+    lesson: {
+      en: 'Putting text into one form first — all small, no spaces — and only then comparing is called normalising, and it is most of what comparing text well takes.',
+      my: 'စာသားကို ပုံစံ တစ်မျိုးတည်း (အကုန် စာလုံးသေး၊ space မပါ) အရင် ပြောင်းပြီးမှ နှိုင်းယှဉ်တာကို normalise လုပ်တယ်လို့ ခေါ်တယ်၊ စာသားကို ကောင်းကောင်း နှိုင်းယှဉ်ဖို့ အဓိက လိုတာ အဲဒါပဲ။',
+    },
+  },
+  {
+    id: 'addup',
+    chapter: 4,
+    concept: { en: 'numbers written down', my: 'စာနဲ့ ရေးထားတဲ့ ဂဏန်း' },
+    brief: {
+      en: 'The numbers came in as text, the way they come out of a form. Give back their sum, as a number.',
+      my: 'ဂဏန်းတွေက form ထဲကနေ ထွက်လာသလို စာသားအဖြစ် ရောက်လာတယ်။ သူတို့ရဲ့ ပေါင်းလဒ်ကို ဂဏန်းအဖြစ် ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(a: string, b: string): number',
+    starter: 'return ',
+    shown: [many(['4', '1'], 5), many(['10', '20'], 30)],
+    cases: [
+      many(['2', '3'], 5),
+      many(['0', '0'], 0),
+      many(['-5', '5'], 0),
+      many(['1.5', '1.5'], 3),
+      many(['100', '1'], 101),
+    ],
+    hints: [
+      {
+        en: "a + b looks like adding. With two strings, + joins them: '4' + '1' is '41'.",
+        my: "a + b က ပေါင်းသလို ထင်ရတယ်။ string နှစ်ခုဆိုရင် + က ဆက်ပေးတယ်: '4' + '1' က '41'။",
+      },
+      {
+        en: 'Number(a) turns text into a number.',
+        my: 'Number(a) က စာသားကို ဂဏန်း ပြောင်းပေးတယ်။',
+      },
+      code('return Number(a) + Number(b);'),
+    ],
+    lesson: {
+      en: '+ means two things, adding numbers and joining strings, and if either side is a string it joins. Turning text into a number on purpose, with Number, is how to say which one you mean.',
+      my: '+ က အဓိပ္ပာယ် နှစ်မျိုး ရှိတယ်: ဂဏန်းပေါင်းတာနဲ့ string ဆက်တာ၊ တစ်ဖက်ဖက်က string ဆိုရင် ဆက်တယ်။ Number နဲ့ စာသားကို ဂဏန်း ရည်ရွယ်ချက်ရှိရှိ ပြောင်းတာက ဘယ်ဟာကို ဆိုလိုလဲ ပြောပြတဲ့ နည်း။',
+    },
+    another: 'return parseFloat(a) + parseFloat(b);',
+  },
+  {
+    id: 'label',
+    chapter: 4,
+    concept: { en: 'a line of text', my: 'စာကြောင်း တစ်ကြောင်း' },
+    brief: {
+      en: 'The fight is scored. Give back a line like "Aung: 3 hits" — the name, a colon, the count, and the word hits, or hit when there is only one.',
+      my: 'ပွဲကို အမှတ်ပေးတယ်။ "Aung: 3 hits" လို စာကြောင်း တစ်ကြောင်း ပြန်ပေးပါ — နာမည်၊ colon၊ အရေအတွက်၊ ပြီးရင် hits (တစ်ချက်တည်းဆိုရင် hit)။',
+    },
+    signature: 'function strike(name: string, hits: number): string',
+    starter: 'return ',
+    shown: [many(['Aung', 3], 'Aung: 3 hits'), many(['Mya', 1], 'Mya: 1 hit')],
+    cases: [
+      many(['Kyaw', 2], 'Kyaw: 2 hits'),
+      many(['Hla', 0], 'Hla: 0 hits'),
+      many(['Zaw', 1], 'Zaw: 1 hit'),
+      many(['Ni', 10], 'Ni: 10 hits'),
+    ],
+    hints: [
+      {
+        en: 'Backticks make a template: inside one, ${…} puts a value into the text.',
+        my: 'backtick (`) က template တစ်ခု ဖန်တီးတယ်: အထဲမှာ ${…} က တန်ဖိုး တစ်ခုကို စာသားထဲ ထည့်ပေးတယ်။',
+      },
+      {
+        en: "Choose the word first: hits === 1 ? 'hit' : 'hits'.",
+        my: "စကားလုံးကို အရင် ရွေးပါ: hits === 1 ? 'hit' : 'hits'။",
+      },
+      code("const word = hits === 1 ? 'hit' : 'hits';\nreturn `${name}: ${hits} ${word}`;"),
+    ],
+    lesson: {
+      en: "A template literal is the readable way to build text out of values: what you see is the line you get. And one-or-many is the smallest real bug there is — '1 hits' is on a great many screens.",
+      my: "template literal က တန်ဖိုးတွေကနေ စာသား တည်ဆောက်တဲ့ ဖတ်ရလွယ်တဲ့ နည်း: မြင်ရတဲ့အတိုင်း ရတယ်။ ပြီးတော့ တစ်ခု/အများ ရွေးတာက လက်တွေ့ bug တွေထဲမှာ အသေးဆုံးပဲ — '1 hits' လို့ ပေါ်နေတဲ့ screen တွေ အများကြီး ရှိတယ်။",
+    },
+    another: "return name + ': ' + hits + (hits === 1 ? ' hit' : ' hits');",
   },
 ];

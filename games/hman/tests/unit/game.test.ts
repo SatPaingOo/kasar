@@ -408,6 +408,12 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
     'return parts.filter((n) => n % 2 === 0).map((n) => n * 2).reduce((s, n) => s + n);',
     'reduce with nothing to start from',
   ],
+  // Text
+  ['initial', 'return word[0].toUpperCase();', 'indexing an empty string and calling on undefined'],
+  ['letters', "return [...word].filter((ch) => ch === 'a').length;", 'a capital A left uncounted'],
+  ['palindrome', "return word === word.split('').reverse().join('');", 'capitals compared as they are'],
+  ['addup', 'return a + b;', '+ joining two strings instead of adding them'],
+  ['label', 'return `${name}: ${hits} hits`;', 'one hit called hits'],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */
