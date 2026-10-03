@@ -448,6 +448,24 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
   ],
   ['swap', 'const [first, second, ...rest] = items;\nreturn [second, first, ...rest];', 'a list too short to swap'],
   ['what', 'return typeof thing;', "typeof calling a list 'object'"],
+  // Moves of your own
+  [
+    'helper',
+    'return [parts.filter((n) => n % 2 === 0).length, parts.filter((n) => n % 2 === 1).length];',
+    'n % 2 === 1 missing the negative odd ones',
+  ],
+  ['twice', 'return (n * 3 - 1) * 2;', 'twice read as doubled'],
+  ['times', 'return n * (times || 2);', '|| turning no times at all into twice'],
+  [
+    'running',
+    'return parts.map((n) => {\n  let total = 0;\n  total += n;\n  return total;\n});',
+    'a total that starts again on every call',
+  ],
+  [
+    'combo',
+    'const moves = { double: (x) => x * 2, inc: (x) => x + 1, square: (x) => x * x };\nlet power = 0;\nfor (const name of combo) power = moves[name](power);\nreturn power;',
+    'a combo that ignores where it starts',
+  ],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */

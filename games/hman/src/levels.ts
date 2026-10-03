@@ -70,6 +70,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Text', my: 'စာသား' },
   { en: 'Things with names', my: 'နာမည်ပါတဲ့ အရာတွေ' },
   { en: 'Shapes of things', my: 'အရာတွေရဲ့ ပုံသဏ္ဌာန်' },
+  { en: 'Moves of your own', my: 'ကိုယ်ပိုင် ထိုးချက်တွေ' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -1486,5 +1487,164 @@ export const LEVELS: readonly Level[] = [
       en: "typeof answers for the simple types and says 'object' for nearly everything else — lists and null included. Narrowing an unknown is asking the most specific question first.",
       my: "typeof က ရိုးရှင်းတဲ့ type တွေအတွက် ဖြေပေးပြီး ကျန်တာ အားလုံးနီးပါးအတွက် 'object' လို့ပဲ ပြောတယ် — စာရင်းနဲ့ null ပါ အပါအဝင်။ unknown ကို narrow လုပ်တာက အတိကျဆုံး မေးခွန်းကို အရင် မေးတာပဲ။",
     },
+  },
+
+  // ── Moves of your own ───────────────────────────────────────────────
+  {
+    id: 'helper',
+    chapter: 7,
+    concept: { en: 'a move of your own', my: 'ကိုယ်ပိုင် ထိုးချက်' },
+    brief: {
+      en: 'Count the even parts and the odd ones, and give back both as [evens, odds]. Write the even test once, as a function of your own, and use it for both.',
+      my: 'စုံကိန်း အပိုင်းတွေနဲ့ မကိန်း အပိုင်းတွေကို ရေတွက်ပြီး [စုံ, မ] အဖြစ် နှစ်ခုလုံး ပြန်ပေးပါ။ စုံကိန်း စစ်ချက်ကို ကိုယ်ပိုင် function တစ်ခုအဖြစ် တစ်ခါ ရေးပြီး နှစ်ခုလုံးအတွက် သုံးပါ။',
+    },
+    signature: 'function strike(parts: number[]): [number, number]',
+    starter: '',
+    shown: [one([4, 9, 2], [2, 1]), one([7, 1], [0, 2])],
+    cases: [one([3, 8, 5], [1, 2]), one([], [0, 0]), one([6, 6, 1, 9], [2, 2]), one([-3, -4], [1, 1])],
+    hints: [
+      {
+        en: 'const isEven = (n) => n % 2 === 0; — a function is a value, and a const can hold it.',
+        my: 'const isEven = (n) => n % 2 === 0; — function ဆိုတာ တန်ဖိုး တစ်ခု၊ const က အဲဒါကို သိမ်းထားနိုင်တယ်။',
+      },
+      {
+        en: 'Odd is just not even: !isEven(n). Careful — n % 2 === 1 is wrong for negatives, because -3 % 2 is -1.',
+        my: 'မကိန်း ဆိုတာ စုံကိန်း မဟုတ်တာပဲ: !isEven(n)။ သတိ — n % 2 === 1 က အနုတ်ကိန်းတွေအတွက် မှားတယ်၊ -3 % 2 က -1 ဖြစ်လို့။',
+      },
+      code(
+        'const isEven = (n) => n % 2 === 0;\nconst evens = parts.filter(isEven).length;\nreturn [evens, parts.length - evens];',
+      ),
+    ],
+    lesson: {
+      en: 'A function written once and named is one you can trust everywhere it is used: fix it in one place and every use is fixed. filter(isEven) hands over the function itself without calling it — no brackets.',
+      my: 'တစ်ခါ ရေးပြီး နာမည်ပေးထားတဲ့ function က သုံးတဲ့ နေရာတိုင်းမှာ ယုံကြည်လို့ရတယ်: တစ်နေရာမှာ ပြင်ရင် သုံးတဲ့နေရာ အားလုံး ပြင်ပြီးသား ဖြစ်တယ်။ filter(isEven) က function ကိုယ်တိုင်ကို မခေါ်ဘဲ လွှဲပေးလိုက်တာ — ကွင်း မပါဘူး။',
+    },
+    another:
+      'let evens = 0;\nlet odds = 0;\nfor (const n of parts) {\n  if (n % 2 === 0) evens += 1;\n  else odds += 1;\n}\nreturn [evens, odds];',
+  },
+  {
+    id: 'twice',
+    chapter: 7,
+    concept: { en: 'twice over', my: 'နှစ်ခါ ထပ်' },
+    brief: {
+      en: 'His move turns a number n into n × 3 − 1. He makes it twice, the second time on what the first gave. Give back the result.',
+      my: 'သူ့ထိုးချက်က ဂဏန်း n ကို n × 3 − 1 ဖြစ်အောင် ပြောင်းတယ်။ သူက နှစ်ခါ ထိုးတယ်၊ ဒုတိယအကြိမ်က ပထမအကြိမ် ရလာတာပေါ်မှာ။ ရလဒ်ကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(n: number): number',
+    starter: 'return ',
+    shown: [one(1, 5), one(2, 14)],
+    cases: [one(0, -4), one(3, 23), one(-1, -13), one(10, 86)],
+    hints: [
+      {
+        en: 'Write the move once, as a function: const move = (x) => x * 3 - 1;',
+        my: 'ထိုးချက်ကို function တစ်ခုအဖြစ် တစ်ခါ ရေးပါ: const move = (x) => x * 3 - 1;',
+      },
+      {
+        en: 'Then call it on its own answer: move(move(n)).',
+        my: 'ပြီးရင် သူ့အဖြေပေါ်မှာ ပြန်ခေါ်ပါ: move(move(n))။',
+      },
+      code('const move = (x) => x * 3 - 1;\nreturn move(move(n));'),
+    ],
+    lesson: {
+      en: "move(move(n)) is composition: one function's output is the next one's input, read from the inside out. Most programs are only this, with better names.",
+      my: 'move(move(n)) ကို composition လို့ ခေါ်တယ်: function တစ်ခုရဲ့ ထွက်လာတာက နောက်တစ်ခုရဲ့ ဝင်တာ၊ အထဲကနေ အပြင်ကို ဖတ်ရတယ်။ program အများစုက ဒါပဲ၊ နာမည် ပိုကောင်းကောင်းနဲ့။',
+    },
+  },
+  {
+    id: 'times',
+    chapter: 7,
+    concept: { en: 'as many as asked', my: 'တောင်းသလောက်' },
+    brief: {
+      en: 'He hits for n, times times over — and when nobody says how many times, it is twice. Give back n × times.',
+      my: 'သူက n အားနဲ့ times ကြိမ် ထိုးတယ် — ဘယ်နှစ်ကြိမ်လဲ ဘယ်သူမှ မပြောရင် နှစ်ကြိမ်။ n × times ကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(n: number, times?: number): number',
+    starter: 'return ',
+    shown: [many([5, 3], 15), many([4], 8)],
+    cases: [many([2, 5], 10), many([7], 14), many([3, 0], 0), many([10, 1], 10), many([0], 0)],
+    hints: [
+      {
+        en: 'times?: number means a call may leave it out — and then it is undefined.',
+        my: 'times?: number ဆိုတာ ခေါ်တဲ့အခါ ချန်ထားခဲ့လို့ရတယ် — ချန်ရင် undefined ဖြစ်တယ်။',
+      },
+      {
+        en: 'Fill in the missing one with ??, which leaves a real 0 alone. || would turn no times at all into twice.',
+        my: '?? နဲ့ မပါတာကို ဖြည့်ပါ၊ ?? က တကယ့် 0 ကို မထိဘူး။ || ဆိုရင် လုံးဝ မထိုးတာကို နှစ်ကြိမ် ဖြစ်သွားစေမယ်။',
+      },
+      code('return n * (times ?? 2);'),
+    ],
+    lesson: {
+      en: 'An optional parameter is undefined when it is left out. In functions of your own you would write a default instead — (x, t = 2) — which fills it in only when it is missing, as below.',
+      my: 'optional parameter က ချန်ထားရင် undefined ဖြစ်တယ်။ ကိုယ်ပိုင် function တွေမှာဆိုရင် default တန်ဖိုး ရေးမယ် — (x, t = 2) — အောက်မှာလို မပါတဲ့အခါမှပဲ ဖြည့်ပေးတယ်။',
+    },
+    another: 'const hit = (x, t = 2) => x * t;\nreturn hit(n, times);',
+  },
+  {
+    id: 'running',
+    chapter: 7,
+    concept: { en: 'as it goes', my: 'သွားရင်းနဲ့' },
+    brief: {
+      en: 'Each blow lands on top of all the ones before it. Give back the running total: at each place, the sum of everything up to and including it.',
+      my: 'ထိုးချက် တစ်ချက်စီက အရင် ထိုးချက်အားလုံးရဲ့ အပေါ်မှာ ထပ်ကျတယ်။ running total ကို ပြန်ပေးပါ: နေရာ တစ်ခုစီမှာ အဲဒီအထိ (အဲဒါ အပါအဝင်) အားလုံးရဲ့ ပေါင်းလဒ်။',
+    },
+    signature: 'function strike(parts: number[]): number[]',
+    starter: '',
+    shown: [one([1, 2, 3], [1, 3, 6]), one([5], [5])],
+    cases: [one([4, 9, 2], [4, 13, 15]), one([], []), one([3, -3, 3], [3, 0, 3]), one([0, 0, 1], [0, 0, 1])],
+    hints: [
+      {
+        en: 'map can do it, if the arrow inside it remembers a total from one call to the next.',
+        my: 'map နဲ့ လုပ်လို့ရတယ်၊ အထဲက arrow က ခေါ်တစ်ခါနဲ့ တစ်ခါကြား total ကို မှတ်ထားနိုင်ရင်။',
+      },
+      {
+        en: 'Declare let total = 0 outside the map. The arrow can change it, because it can see it.',
+        my: 'map ရဲ့ အပြင်မှာ let total = 0 ကြေညာပါ။ arrow က မြင်နိုင်လို့ ပြောင်းလို့ရတယ်။',
+      },
+      code('let total = 0;\nreturn parts.map((n) => {\n  total += n;\n  return total;\n});'),
+    ],
+    lesson: {
+      en: 'The arrow closes over total: it keeps hold of a variable from where it was written and changes it on every call. A closure with state is how a function remembers — and declaring total inside the arrow instead would start it at 0 every time.',
+      my: 'arrow က total ကို closure အနေနဲ့ ဖမ်းထားတယ်: ရေးခဲ့တဲ့ နေရာက variable ကို ကိုင်ထားပြီး ခေါ်တိုင်း ပြောင်းတယ်။ state ရှိတဲ့ closure က function တစ်ခု မှတ်ထားနိုင်တဲ့ နည်း — total ကို arrow ထဲမှာ ကြေညာရင်တော့ ခေါ်တိုင်း 0 ကနေ ပြန်စမှာ။',
+    },
+    another:
+      'const out = [];\nlet total = 0;\nfor (const n of parts) {\n  total += n;\n  out.push(total);\n}\nreturn out;',
+  },
+  {
+    id: 'combo',
+    chapter: 7,
+    concept: { en: 'moves by name', my: 'နာမည်နဲ့ ထိုးချက်' },
+    brief: {
+      en: "A combo is a list of move names, and each move changes the power: 'double' doubles it, 'inc' adds 1, 'square' multiplies it by itself. Start from start and give back the power after the whole combo.",
+      my: "combo ဆိုတာ ထိုးချက် နာမည်တွေရဲ့ စာရင်း၊ ထိုးချက် တစ်ခုစီက အားကို ပြောင်းတယ်: 'double' က နှစ်ဆ၊ 'inc' က 1 တိုး၊ 'square' က ကိုယ့်ကိုယ်ကို မြှောက်။ start ကနေ စပြီး combo တစ်ခုလုံး ပြီးတဲ့ အားကို ပြန်ပေးပါ။",
+    },
+    signature: "type Move = 'double' | 'inc' | 'square';\nfunction strike(start: number, combo: Move[]): number",
+    starter: '',
+    shown: [many([3, ['double', 'inc']], 7), many([2, []], 2)],
+    cases: [
+      many([2, ['square', 'square']], 16),
+      many([1, ['inc', 'double', 'square']], 16),
+      many([-3, ['square']], 9),
+      many([0, ['inc', 'inc', 'inc']], 3),
+      many([5, ['double', 'square', 'inc']], 101),
+    ],
+    hints: [
+      {
+        en: 'Functions are values, so they can live in an object, under names: const moves = { double: (x) => x * 2, … }.',
+        my: 'function တွေက တန်ဖိုးတွေမို့ object ထဲမှာ နာမည်နဲ့ သိမ်းထားလို့ရတယ်: const moves = { double: (x) => x * 2, … }။',
+      },
+      {
+        en: 'Then moves[name] is the function for that name, and moves[name](power) makes the move.',
+        my: 'ပြီးရင် moves[name] က အဲဒီနာမည်အတွက် function၊ moves[name](power) က ထိုးချက်ကို လုပ်တယ်။',
+      },
+      code(
+        'const moves = {\n  double: (x) => x * 2,\n  inc: (x) => x + 1,\n  square: (x) => x * x,\n};\nlet power = start;\nfor (const name of combo) power = moves[name](power);\nreturn power;',
+      ),
+    ],
+    lesson: {
+      en: 'A table of functions replaces a chain of ifs: a new move is a new line, not another branch. And reduce, below, says the whole combo as one fold over the list.',
+      my: 'function ဇယား တစ်ခုက if တွေ အတန်းလိုက်ကို အစားထိုးတယ်: ထိုးချက် အသစ်က branch အသစ် မဟုတ်ဘဲ စာကြောင်း အသစ် တစ်ကြောင်းပဲ။ အောက်က reduce က combo တစ်ခုလုံးကို စာရင်းပေါ်မှာ ခေါက်ချ (fold) တစ်ခုအဖြစ် ပြောတယ်။',
+    },
+    another:
+      'const moves = { double: (x) => x * 2, inc: (x) => x + 1, square: (x) => x * x };\nreturn combo.reduce((power, name) => moves[name](power), start);',
   },
 ];
