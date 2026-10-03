@@ -487,6 +487,38 @@ const TRAPS: readonly (readonly [id: string, body: string, why: string])[] = [
     'let count = 0;\nfor (let dr = -1; dr <= 1; dr += 1) {\n  for (let dc = -1; dc <= 1; dc += 1) {\n    if (grid[r + dr]?.[c + dc] === 1) count += 1;\n  }\n}\nreturn count;',
     'the cell itself counted',
   ],
+  // Doing it well
+  [
+    'search',
+    'let low = 0;\nlet high = sorted.length;\nwhile (low < high) {\n  const mid = Math.floor((low + high) / 2);\n  if (sorted[mid] === target) return mid;\n  if (sorted[mid] < target) low = mid + 1;\n  else high = mid;\n}\nreturn sorted[low] === target ? low : 0;',
+    'a miss reported as index 0',
+  ],
+  [
+    'twosum',
+    'for (let i = 0; i < parts.length; i += 1) {\n  for (let j = 0; j < parts.length; j += 1) {\n    if (parts[i] + parts[j] === target) return [i, j];\n  }\n}\nreturn [-1, -1];',
+    'a part paired with itself',
+  ],
+  [
+    'insert',
+    'const at = sorted.findIndex((x) => x > n);\nreturn [...sorted.slice(0, at), n, ...sorted.slice(at)];',
+    'findIndex finding nothing, and -1 sliced',
+  ],
+  [
+    'merge',
+    'const out = [];\nlet i = 0;\nlet j = 0;\nwhile (i < a.length && j < b.length) {\n  if (a[i] <= b[j]) out.push(a[i++]);\n  else out.push(b[j++]);\n}\nreturn out;',
+    'what is left of the longer list dropped',
+  ],
+  [
+    'prime',
+    'if (n < 2) return false;\nfor (let d = 2; d * d < n; d += 1) {\n  if (n % d === 0) return false;\n}\nreturn true;',
+    'stopping short of the square root, so 25 is prime',
+  ],
+  [
+    'prime',
+    'for (let d = 2; d * d <= n; d += 1) {\n  if (n % d === 0) return false;\n}\nreturn true;',
+    '1 called prime',
+  ],
+  ['gcd', 'if (b === 0) return b;\nreturn strike(b, a % b);', 'a base case that returns the zero'],
 ];
 
 /** Whether a body gets every hidden case of a rung right. */

@@ -73,6 +73,7 @@ export const CHAPTERS: readonly Words[] = [
   { en: 'Moves of your own', my: 'ကိုယ်ပိုင် ထိုးချက်တွေ' },
   { en: 'Himself again', my: 'ကိုယ့်ကိုယ်ကို ပြန်ခေါ်' },
   { en: 'Rows and columns', my: 'အတန်းနဲ့ အတိုင်' },
+  { en: 'Doing it well', my: 'ကောင်းကောင်း လုပ်' },
 ];
 
 /** A case for a rung that takes one thing. */
@@ -2164,5 +2165,236 @@ export const LEVELS: readonly Level[] = [
       en: 'Two loops, one inside the other, walk a small square around a point, and continue skips one turn of a loop without leaving it. ?. is what makes the edges safe: it asks before it reaches. This exact rung is the heart of the Game of Life, and of minesweeper.',
       my: 'loop နှစ်ခု တစ်ခုထဲမှာ တစ်ခု ထည့်ရင် အမှတ် တစ်ခုပတ်ပတ်လည်က စတုရန်းလေး တစ်ခုကို လျှောက်နိုင်တယ်၊ continue က loop ကို မထွက်ဘဲ တစ်ကြိမ်ကို ကျော်တယ်။ ?. က အစွန်းတွေကို လုံခြုံစေတယ်: မလှမ်းခင် အရင်မေးတယ်။ ဒီအဆင့်က Game of Life နဲ့ minesweeper ရဲ့ နှလုံးသားပဲ။',
     },
+  },
+
+  // ── Doing it well ───────────────────────────────────────────────────
+  {
+    id: 'search',
+    chapter: 10,
+    concept: { en: 'halving', my: 'တစ်ဝက်စီ' },
+    brief: {
+      en: 'The parts are sorted. Give back the index of target, or -1 if it is not there — and look the way you would in a dictionary: open it in the middle and throw half away.',
+      my: 'အပိုင်းတွေက စီပြီးသား။ target ရဲ့ index ကို ပြန်ပေးပါ၊ မရှိရင် -1 — အဘိဓာန်ကို ရှာသလို ရှာပါ: အလယ်ကနေ ဖွင့်ပြီး တစ်ဝက်ကို ပစ်ပယ်လိုက်။',
+    },
+    signature: 'function strike(sorted: number[], target: number): number',
+    starter: '',
+    shown: [many([[1, 3, 5, 7, 9], 7], 3), many([[2, 4], 3], -1)],
+    cases: [
+      many([[1, 3, 5, 7, 9], 1], 0),
+      many([[1, 3, 5, 7, 9], 9], 4),
+      many([[], 5], -1),
+      many([[4], 4], 0),
+      many([[10, 20, 30, 40, 50, 60], 60], 5),
+      many([[10, 20, 30, 40, 50, 60], 5], -1),
+    ],
+    hints: [
+      {
+        en: 'Keep two ends, low and high. Look at the middle: if it is too small the answer is above it; if too big, below.',
+        my: 'အစွန်း နှစ်ဖက် low နဲ့ high ကို မှတ်ထား။ အလယ်ကို ကြည့်: သေးလွန်းရင် အဖြေက အပေါ်မှာ၊ ကြီးလွန်းရင် အောက်မှာ။',
+      },
+      {
+        en: 'while (low <= high) — and move low to mid + 1 or high to mid - 1, never to mid itself, or it can go round for ever.',
+        my: 'while (low <= high) — low ကို mid + 1 ဒါမှမဟုတ် high ကို mid - 1 ကို ရွှေ့ပါ၊ mid ကိုယ်တိုင်ကို ဘယ်တော့မှ မရွှေ့နဲ့၊ မဟုတ်ရင် အဆုံးမရှိ ပတ်နိုင်တယ်။',
+      },
+      code(
+        'let low = 0;\nlet high = sorted.length - 1;\nwhile (low <= high) {\n  const mid = Math.floor((low + high) / 2);\n  if (sorted[mid] === target) return mid;\n  if (sorted[mid] < target) low = mid + 1;\n  else high = mid - 1;\n}\nreturn -1;',
+      ),
+    ],
+    lesson: {
+      en: 'indexOf looks at every part; this looks at about twenty in a million. Throwing half away each time is the most important idea in searching, and it only works because the list was sorted first — that is its price.',
+      my: 'indexOf က အပိုင်းတိုင်းကို ကြည့်တယ်၊ ဒါကတော့ တစ်သန်းထဲမှာ နှစ်ဆယ်လောက်ပဲ ကြည့်တယ်။ တစ်ခါစီ တစ်ဝက် ပစ်တာက ရှာဖွေခြင်းရဲ့ အရေးအကြီးဆုံး အယူအဆ၊ စာရင်းက အရင် စီပြီးသား ဖြစ်မှပဲ အလုပ်လုပ်တယ် — အဲဒါက ပေးရတဲ့ အဖိုး။',
+    },
+    another: 'return sorted.indexOf(target);',
+  },
+  {
+    id: 'twosum',
+    chapter: 10,
+    concept: { en: 'a pair that adds up', my: 'ပေါင်းရင် ကိုက်တဲ့ အတွဲ' },
+    brief: {
+      en: 'Exactly two of the parts add up to target. Give back their indexes as [i, j], the smaller first.',
+      my: 'အပိုင်းတွေထဲက နှစ်ခု အတိအကျ ပေါင်းရင် target ရတယ်။ သူတို့ရဲ့ index တွေကို [i, j] အဖြစ် ပြန်ပေးပါ၊ အငယ်က ရှေ့။',
+    },
+    signature: 'function strike(parts: number[], target: number): [number, number]',
+    starter: '',
+    shown: [many([[2, 7, 11, 15], 9], [0, 1]), many([[3, 2, 4], 6], [1, 2])],
+    cases: [
+      many([[1, 5, 9], 14], [1, 2]),
+      many([[-3, 4, 8], 1], [0, 1]),
+      many([[0, 6, 0], 0], [0, 2]),
+      many([[3, 3], 6], [0, 1]),
+      many([[5, 1, 2, 9], 7], [0, 2]),
+    ],
+    hints: [
+      {
+        en: 'Two loops, one inside the other, try every pair — and j starts after i, so a part is never paired with itself.',
+        my: 'loop နှစ်ခု တစ်ခုထဲမှာ တစ်ခုက အတွဲတိုင်းကို စမ်းတယ် — j က i ရဲ့ နောက်ကနေ စ၊ ဒါမှ အပိုင်း တစ်ခုက ကိုယ့်ကိုယ်ကို မတွဲမိဘူး။',
+      },
+      {
+        en: 'Faster: walk once, keeping a Map from each value seen to its index, and at each part ask whether target - part has been seen.',
+        my: 'ပိုမြန်တဲ့နည်း: တွေ့ခဲ့တဲ့ တန်ဖိုး တစ်ခုစီကနေ သူ့ index ကို Map နဲ့ မှတ်ပြီး တစ်ခါပဲ လျှောက်ပါ၊ အပိုင်း တစ်ခုစီမှာ target - part ကို တွေ့ခဲ့ပြီးပြီလား မေးပါ။',
+      },
+      code(
+        'const seen = new Map();\nfor (let j = 0; j < parts.length; j += 1) {\n  const need = target - parts[j];\n  if (seen.has(need)) return [seen.get(need), j];\n  seen.set(parts[j], j);\n}\nreturn [-1, -1];',
+      ),
+    ],
+    lesson: {
+      en: 'The two loops ask about every pair — for a thousand parts, half a million questions. The Map asks one per part. Trading memory for time, by remembering what you have seen, is the move behind most fast algorithms.',
+      my: 'loop နှစ်ခုက အတွဲတိုင်းကို မေးတယ် — အပိုင်း တစ်ထောင်ဆိုရင် မေးခွန်း ငါးသိန်း။ Map ကတော့ အပိုင်း တစ်ခုကို တစ်ခါပဲ မေးတယ်။ တွေ့ခဲ့တာကို မှတ်ထားပြီး မှတ်ဉာဏ်နဲ့ အချိန်ကို လဲလှယ်တာက မြန်တဲ့ algorithm အများစုရဲ့ နောက်ကွယ်က လှည့်ကွက်။',
+    },
+    another:
+      'for (let i = 0; i < parts.length; i += 1) {\n  for (let j = i + 1; j < parts.length; j += 1) {\n    if (parts[i] + parts[j] === target) return [i, j];\n  }\n}\nreturn [-1, -1];',
+  },
+  {
+    id: 'insert',
+    chapter: 10,
+    concept: { en: 'in its place', my: 'သူ့နေရာမှာ' },
+    brief: {
+      en: 'The parts are sorted. Give back the list with n put in where it belongs, so that it is still sorted.',
+      my: 'အပိုင်းတွေက စီပြီးသား။ n ကို သူ့နေရာမှာ ထည့်ပြီး စီထားဆဲ ဖြစ်တဲ့ စာရင်းကို ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(sorted: number[], n: number): number[]',
+    starter: '',
+    shown: [many([[1, 3, 5], 4], [1, 3, 4, 5]), many([[], 2], [2])],
+    cases: [
+      many([[1, 3, 5], 0], [0, 1, 3, 5]),
+      many([[1, 3, 5], 9], [1, 3, 5, 9]),
+      many([[2, 2, 3], 2], [2, 2, 2, 3]),
+      many([[-5, -1], -3], [-5, -3, -1]),
+    ],
+    hints: [
+      {
+        en: 'Find the first part bigger than n. n goes just before it — or at the end, if there is none.',
+        my: 'n ထက် ကြီးတဲ့ ပထမဆုံး အပိုင်းကို ရှာ။ n က အဲဒါရဲ့ ရှေ့မှာ ဝင်တယ် — မရှိရင် နောက်ဆုံးမှာ။',
+      },
+      {
+        en: 'findIndex gives that place, or -1. Then: a slice before it, n, and a slice after.',
+        my: 'findIndex က အဲဒီနေရာ (မရှိရင် -1) ကို ပေးတယ်။ ပြီးရင်: အဲဒီရှေ့က slice၊ n၊ နောက်က slice။',
+      },
+      code(
+        'const at = sorted.findIndex((x) => x > n);\nif (at === -1) return [...sorted, n];\nreturn [...sorted.slice(0, at), n, ...sorted.slice(at)];',
+      ),
+    ],
+    lesson: {
+      en: 'This is one step of insertion sort: do it for every part, into a list that starts empty, and the list comes out sorted. slice and spread build the new list without touching the old one — and toSpliced, below, does it in one call.',
+      my: 'ဒါက insertion sort ရဲ့ အဆင့် တစ်ဆင့်: ဗလာကနေ စတဲ့ စာရင်း တစ်ခုထဲကို အပိုင်းတိုင်းအတွက် ဒီလို လုပ်ရင် စီပြီးသား စာရင်း ထွက်လာတယ်။ slice နဲ့ spread က အဟောင်းကို မထိဘဲ စာရင်းအသစ် တည်ဆောက်ပေးတယ် — အောက်က toSpliced က တစ်ခါခေါ်ရုံနဲ့ လုပ်ပေးတယ်။',
+    },
+    another:
+      'const at = sorted.findIndex((x) => x > n);\nreturn sorted.toSpliced(at === -1 ? sorted.length : at, 0, n);',
+  },
+  {
+    id: 'merge',
+    chapter: 10,
+    concept: { en: 'two into one', my: 'နှစ်ခုကို တစ်ခု' },
+    brief: {
+      en: 'Two sorted lists. Give back one sorted list of everything in both — by walking them side by side and taking the smaller front each time.',
+      my: 'စီပြီးသား စာရင်း နှစ်ခု။ နှစ်ခုလုံးက အရာအားလုံး ပါတဲ့ စီပြီးသား စာရင်း တစ်ခု ပြန်ပေးပါ — နှစ်ခုကို ဘေးချင်းယှဉ် လျှောက်ပြီး တစ်ခါစီ ရှေ့ဆုံးက ပိုသေးတာကို ယူပါ။',
+    },
+    signature: 'function strike(a: number[], b: number[]): number[]',
+    starter: '',
+    shown: [
+      many(
+        [
+          [1, 4, 9],
+          [2, 3, 10],
+        ],
+        [1, 2, 3, 4, 9, 10],
+      ),
+      many([[], [5]], [5]),
+    ],
+    cases: [
+      many([[1, 2], []], [1, 2]),
+      many(
+        [
+          [5, 6],
+          [1, 2],
+        ],
+        [1, 2, 5, 6],
+      ),
+      many([[1, 1], [1]], [1, 1, 1]),
+      many(
+        [
+          [-2, 0, 7],
+          [-1, 8],
+        ],
+        [-2, -1, 0, 7, 8],
+      ),
+    ],
+    hints: [
+      {
+        en: 'Keep a place in each list, i and j. Compare a[i] with b[j], take the smaller, and move that side on.',
+        my: 'စာရင်း တစ်ခုစီမှာ နေရာ i နဲ့ j ကို မှတ်ထား။ a[i] နဲ့ b[j] ကို နှိုင်းယှဉ်၊ ပိုသေးတာကို ယူ၊ ယူခဲ့တဲ့ဘက်ကို ရှေ့တိုး။',
+      },
+      {
+        en: 'When one list runs out, the rest of the other is already sorted: add it as it is.',
+        my: 'စာရင်း တစ်ခု ကုန်သွားရင် နောက်တစ်ခုရဲ့ ကျန်တာက စီပြီးသား: ဒီအတိုင်း ထည့်ပါ။',
+      },
+      code(
+        'const out = [];\nlet i = 0;\nlet j = 0;\nwhile (i < a.length && j < b.length) {\n  if (a[i] <= b[j]) out.push(a[i++]);\n  else out.push(b[j++]);\n}\nreturn [...out, ...a.slice(i), ...b.slice(j)];',
+      ),
+    ],
+    lesson: {
+      en: 'This is the heart of merge sort: split a list in half, sort each half the same way, then merge them like this. Walking two lists side by side with two indexes turns up wherever sorted data does.',
+      my: 'ဒါက merge sort ရဲ့ နှလုံးသား: စာရင်းကို တစ်ဝက်စီ ခွဲ၊ တစ်ဝက်စီကို အဲဒီနည်းနဲ့ပဲ စီ၊ ပြီးရင် ဒီလို ပေါင်း။ index နှစ်ခုနဲ့ စာရင်း နှစ်ခုကို ဘေးချင်းယှဉ် လျှောက်တာက စီပြီးသား data ရှိတဲ့ နေရာတိုင်းမှာ ပေါ်လာတယ်။',
+    },
+    another: 'return [...a, ...b].sort((x, y) => x - y);',
+  },
+  {
+    id: 'prime',
+    chapter: 10,
+    concept: { en: 'only itself', my: 'ကိုယ့်ကိုယ်ကိုပဲ' },
+    brief: {
+      en: 'A prime is a whole number above 1 that only 1 and itself divide. Give back true if n is prime.',
+      my: 'prime ဆိုတာ 1 ထက်ကြီးပြီး 1 နဲ့ ကိုယ့်ကိုယ်ကိုပဲ စားလို့ပြတ်တဲ့ ကိန်းပြည့်။ n က prime ဆိုရင် true ပြန်ပေးပါ။',
+    },
+    signature: 'function strike(n: number): boolean',
+    starter: '',
+    shown: [one(7, true), one(9, false)],
+    cases: [one(1, false), one(2, true), one(0, false), one(97, true), one(91, false), one(25, false), one(49, false)],
+    hints: [
+      {
+        en: 'Try every d from 2 upwards. If any of them leaves no remainder, n is not prime.',
+        my: '2 ကနေ အပေါ်ကို d တိုင်းကို စမ်းပါ။ တစ်ခုခုက အကြွင်း မကျန်စေရင် n က prime မဟုတ်ဘူး။',
+      },
+      {
+        en: 'You can stop once d × d is past n — and below 2, nothing is prime.',
+        my: 'd × d က n ကို ကျော်သွားတာနဲ့ ရပ်လို့ရပြီ — 2 အောက်မှာတော့ ဘာမှ prime မဟုတ်ဘူး။',
+      },
+      code(
+        'if (n < 2) return false;\nfor (let d = 2; d * d <= n; d += 1) {\n  if (n % d === 0) return false;\n}\nreturn true;',
+      ),
+    ],
+    lesson: {
+      en: 'If n has a divisor bigger than its square root it has a smaller one too, so checking up to √n is enough: a thousand checks for a million, not a million. And the edges — 0, 1, 2, and squares like 25 — are exactly where a first try goes wrong.',
+      my: 'n မှာ သူ့ နှစ်ထပ်ကိန်းရင်းထက် ကြီးတဲ့ စားကိန်း ရှိရင် ပိုသေးတဲ့ စားကိန်းလည်း ရှိတယ်၊ ဒါကြောင့် √n အထိ စစ်ရင် လုံလောက်တယ်: တစ်သန်းအတွက် တစ်သန်းခါ မဟုတ်ဘဲ တစ်ထောင်ခါ။ ပြီးတော့ အစွန်းတွေ — 0၊ 1၊ 2 နဲ့ 25 လို နှစ်ထပ်ကိန်းတွေ — က ပထမအကြိမ် ကြိုးစားတာ မှားတတ်တဲ့ နေရာ အတိအကျပဲ။',
+    },
+  },
+  {
+    id: 'gcd',
+    chapter: 10,
+    concept: { en: 'what both share', my: 'နှစ်ခုလုံး မျှတာ' },
+    brief: {
+      en: "Give back the biggest whole number that divides both a and b. Euclid's way: the answer for a and b is the answer for b and a % b, and when b is 0 the answer is a.",
+      my: 'a နဲ့ b နှစ်ခုလုံးကို စားလို့ပြတ်တဲ့ အကြီးဆုံး ကိန်းပြည့်ကို ပြန်ပေးပါ။ Euclid ရဲ့ နည်း: a နဲ့ b အတွက် အဖြေက b နဲ့ a % b အတွက် အဖြေပဲ၊ b က 0 ဆိုရင် အဖြေက a။',
+    },
+    signature: 'function strike(a: number, b: number): number',
+    starter: '',
+    shown: [many([12, 18], 6), many([7, 5], 1)],
+    cases: [many([100, 75], 25), many([9, 0], 9), many([0, 4], 4), many([17, 17], 17), many([48, 180], 12)],
+    hints: [
+      {
+        en: 'The brief is already a recursive function, base case and all.',
+        my: 'brief က recursive function တစ်ခု ဖြစ်ပြီးသား၊ base case ပါ အပါအဝင်။',
+      },
+      {
+        en: 'if (b === 0) return a; otherwise, call strike with b and a % b.',
+        my: 'if (b === 0) return a; မဟုတ်ရင် strike ကို b နဲ့ a % b နဲ့ ခေါ်ပါ။',
+      },
+      code('if (b === 0) return a;\nreturn strike(b, a % b);'),
+    ],
+    lesson: {
+      en: 'Euclid wrote this down about 2,300 years ago and it is still how it is done: every step shrinks the numbers fast, so even huge ones take a few dozen calls. An algorithm is a recipe that is sure to finish, and this is the oldest one still in use.',
+      my: 'Euclid က ဒါကို လွန်ခဲ့တဲ့ နှစ် ၂၃၀၀ လောက်က ရေးခဲ့တာ၊ အခုထိ ဒီနည်းနဲ့ပဲ လုပ်ကြတုန်း: အဆင့်တိုင်းမှာ ဂဏန်းတွေ မြန်မြန် သေးသွားလို့ ဂဏန်း အကြီးကြီးတွေတောင် ခေါ်ရတာ ဆယ်ဂဏန်းလောက်ပဲ။ algorithm ဆိုတာ ပြီးဆုံးမယ်လို့ သေချာတဲ့ ချက်ပြုတ်နည်း တစ်ခု၊ ဒါက အခုထိ သုံးနေတုန်း ဖြစ်တဲ့ အဟောင်းဆုံးပဲ။',
+    },
+    another: 'while (b !== 0) [a, b] = [b, a % b];\nreturn a;',
   },
 ];
