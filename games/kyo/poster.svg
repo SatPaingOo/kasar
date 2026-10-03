@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" role="img" aria-label="A stick figure swinging across a gorge on a rope, the floor of the gorge falling away beneath him">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9ec4c0"/>
+      <stop offset="1" stop-color="#d8ddc4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="400" fill="url(#sky)"/>
+  <polygon points="-10,400 -10,136.1 6,131.2 22,129.8 38,131.3 54,134.4 70,137.9 86,140.3 102,140.5 118,138.3 134,133.7 150,127.7 166,121.6 182,116.9 198,115.1 214,117.1 230,123.2 246,133.0 262,145.3 278,158.7 294,171.1 310,181.1 326,187.3 342,189.3 358,187.1 374,181.8 390,174.6 406,167.2 422,160.9 438,156.9 454,155.6 470,156.6 486,159.2 502,162.0 518,163.5 534,162.6 550,158.6 566,151.3 582,141.4 598,130.3 614,119.4 630,110.6 646,105.2 660,400" fill="#7f9c92" opacity="0.3"/>
+  <polygon points="-10,400 -10,246.1 6,242.3 22,240.1 38,239.7 54,240.7 70,242.5 86,244.2 102,244.8 118,243.8 134,240.6 150,235.4 166,228.6 182,221.3 198,214.4 214,209.2 230,206.3 246,206.5 262,209.5 278,215.0 294,222.1 310,229.7 326,236.6 342,242.0 358,245.4 374,246.5 390,245.8 406,244.0 422,242.1 438,240.8 454,241.0 470,242.8 486,246.2 502,250.6 518,255.1 534,258.8 550,260.5 566,259.8 582,256.3 598,250.3 614,242.4 630,233.7 646,225.4 660,400" fill="#4c6456" opacity="0.28"/>
+
+  <!-- the floor, falling away as the gorge goes on: the reason a crossing is
+       a descent and not a walk -->
+  <polygon points="0,330 640,398 640,400 0,400" fill="#2b3a31"/>
+  <line x1="0" y1="330" x2="640" y2="398" stroke="#1b2620" stroke-width="4"/>
+
+  <line x1="95" y1="150" x2="85" y2="0" stroke="#4c6456" stroke-width="4" opacity="0.75"/>
+  <line x1="215" y1="186" x2="205" y2="0" stroke="#4c6456" stroke-width="4" opacity="0.75"/>
+  <line x1="330" y1="158" x2="320" y2="0" stroke="#4c6456" stroke-width="4" opacity="0.75"/>
+  <line x1="448" y1="210" x2="438" y2="0" stroke="#4c6456" stroke-width="4" opacity="0.75"/>
+  <line x1="560" y1="196" x2="550" y2="0" stroke="#4c6456" stroke-width="4" opacity="0.75"/>
+  <circle cx="95" cy="150" r="7" fill="#3c5243"/>
+  <circle cx="215" cy="186" r="7" fill="#3c5243"/>
+  <circle cx="330" cy="158" r="7" fill="#3c5243"/>
+  <circle cx="448" cy="210" r="7" fill="#3c5243"/>
+  <circle cx="560" cy="196" r="7" fill="#3c5243"/>
+  <circle cx="215" cy="186" r="10" fill="#8fbf9f"/>
+
+  <!-- the rope, and him on the end of it, out at the top of a forward swing:
+       the moment the whole game is about letting go of -->
+  <line x1="215" y1="186" x2="285" y2="246" stroke="#e6efdf" stroke-width="4.5" stroke-linecap="round"/>
+
+  <g stroke="#1a2420" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M285 246 L268 272 L253 294"/>
+    <path d="M268 272 L300 288"/>
+    <path d="M253 294 L228 318 L236 344"/>
+    <path d="M253 294 L272 324 L266 350"/>
+  </g>
+  <circle cx="258" cy="276" r="12" fill="none" stroke="#1a2420" stroke-width="7"/>
+  <circle cx="265" cy="272" r="3" fill="#1a2420"/>
+</svg>
