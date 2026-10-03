@@ -1,5 +1,5 @@
 /**
- * Play Hman in real browsers, end to end.
+ * Smoke-test every game, and play Hman and Saing, in real browsers, end to end.
  *
  *   npm run e2e                 build, then every installed browser
  *   npm run e2e -- firefox      one engine only (firefox or chromium)
@@ -28,6 +28,8 @@ import type { Engine } from './lib/browsers.ts';
 import { launch } from './lib/drive.ts';
 import type { Box, Driver } from './lib/drive.ts';
 import { ADVICE, HARNESS, judgeAdvice, showsVersion } from './lib/hman-e2e.ts';
+import { CALLS, EAR, judgeEar } from './lib/saing-e2e.ts';
+import type { Heard } from './lib/saing-e2e.ts';
 import { CATCHER, SAMPLER, cardsMatch, isDrawn, isMoving, noErrors } from './lib/smoke.ts';
 import type { Card, Frame, Listed } from './lib/smoke.ts';
 import type { Said } from './lib/hman-e2e.ts';
@@ -306,6 +308,30 @@ async function playHman(driver: Driver, site: string, version: string, engine: E
   return out;
 }
 
+/**
+ * Saing, played by ear for its first section and the drum that joins after
+ * it, with one phrase played wrong on purpose. See tools/lib/saing-e2e.ts.
+ */
+async function playSaing(driver: Driver, site: string, engine: Engine): Promise<Outcome[]> {
+  await driver.viewport(900, 700);
+  await driver.navigate(new URL('games/saing/', site).href);
+  await wait(600);
+  await driver.evaluate(`${EAR}; return true;`);
+  // A real key, so the page is allowed to start its audio.
+  await driver.press(' ');
+  const deadline = Date.now() + 75_000;
+  let heard = await driver.evaluate<Heard>('return window.__ear.report();');
+  while (heard.calls.length < CALLS && Date.now() < deadline) {
+    await wait(1000);
+    heard = await driver.evaluate<Heard>('return window.__ear.report();');
+  }
+  const errors = await driver.evaluate<string[] | null>(
+    'return Array.isArray(window.__kasarErrors) ? window.__kasarErrors.slice() : null;',
+  );
+  await driver.screenshot(join(SHOTS, `${engine}-saing.png`));
+  return [...judgeEar(heard), { name: 'no errors while it played', ok: noErrors(errors), detail: errors }];
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const urlAt = args.indexOf('--url');
@@ -351,6 +377,7 @@ async function main(): Promise<void> {
       await driver.preload(CATCHER);
       report('the shelf and every game on it', await smoke(driver, site));
       report('hman, played', await playHman(driver, site, manifest.version, engine));
+      report('saing, played by ear', await playSaing(driver, site, engine));
       console.log(`  ${Math.round((Date.now() - started) / 1000)}s`);
       ran += 1;
     } finally {
