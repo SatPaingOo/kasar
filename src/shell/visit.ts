@@ -1,88 +1,66 @@
 /**
- * Tote Tote has visitors.
+ * Tote Tote's visitors: a friend, and a bird.
  *
- * Now and then someone comes to see him: they turn up at the side of the
- * screen, find him, say hello, keep him company for a while — walking where
- * he walks, sitting down beside him when he sits — and then say goodbye and
- * go. One at a time, and not always: most of the time he is on his own, so
- * that a visit is something that happens rather than part of the furniture,
- * and a shelf of games does not turn into a zoo competing with its cards.
+ * Nobody appears from nowhere. The friend comes in by one of the two ways
+ * into the page — down the ladder from the roof above the top of it, or out
+ * of the door on the floor at the foot of it, whichever he is nearer — and
+ * goes home the way it came. The bird needs no way: it flies in from off the
+ * screen on any side and flies off on any side when it is done.
  *
- * They talk mostly in signs — ♪ ! ? … ♥ — which need no translating and are
- * gone in a moment; a hello, a goodbye and his name are the only words, and
- * they are said in the page's language.
+ * The friend finds him, calls his name and he says hello, keeps him company
+ * — walking where he walks, climbing after him, sitting down beside him when
+ * he sits — then says goodbye, and they wave. The bird comes to play with
+ * him, or with the cat: with him it sings, hops about and rides on his head;
+ * with the cat, it lets itself be stalked and pounced at, and is always off
+ * again a moment before the cat lands.
  *
- * Each visitor moves by the same rules he does (roam.ts) but is led: its mind
- * is made up here. Pure, like the rest: no DOM, no clock, randomness handed
- * in, so that a visit always ending, and nobody ever standing on nothing, are
- * tested by running whole afternoons of them.
+ * One visitor at a time, and not always one. They talk mostly in signs.
+ * Their minds are made up here; their bodies move by roam.ts. Pure: no DOM,
+ * no clock, randomness handed in.
  */
 
+import { actor, between, clamp, headOf, say, tick, together } from './actor.js';
+import type { Actor, Say } from './actor.js';
+import type { Cat } from './cat.js';
 import { reachable } from './route.js';
 import { AWAY, RIDE, createRoamer, flyTo, goTo, inTransit, pause, stepRoamer, waysFor } from './roam.js';
 import type { Point, RoamInput, Roamer } from './roam.js';
 import { surfaceOf } from './world.js';
-import type { Box, Surface, World } from './world.js';
+import type { Box, World } from './world.js';
 
-/** Who can come. */
-export type Kind = 'friend' | 'cat' | 'bird';
-export const KINDS: readonly Kind[] = ['friend', 'cat', 'bird'];
-
-/** What is said: a word, looked up in the page's language when it is drawn, or a sign that needs none. */
-export type Say = 'name' | 'hello' | 'bye' | 'meow' | '♪' | '!' | '?' | '…' | '♥' | 'ha' | 'zZ';
-
-export interface Actor {
-  readonly kind: 'tote' | Kind;
-  readonly body: Roamer;
-  say: Say | null;
-  /** Seconds left of what is being said. */
-  sayFor: number;
-  /** 0 to 1: a visitor fades in as it arrives and out as it goes. */
-  alpha: number;
-  /** Seconds left of waving. */
-  wave: number;
-  /** Seconds left of bending down to stroke a cat. */
-  pet: number;
-}
+export type Guest = 'friend' | 'bird';
+export const GUESTS: readonly Guest[] = ['friend', 'bird'];
 
 /**
- * - `coming`: on its way to find him
- * - `greeting`: the two of them stopped, saying hello
- * - `staying`: keeping him company
+ * - `coming`: on its way to whoever it has come to see
+ * - `greeting`: stopped, saying hello
+ * - `staying`: keeping them company
  * - `going`: said goodbye, on its way out
  */
 export type Stage = 'coming' | 'greeting' | 'staying' | 'going';
 
+/** The way it came in, which is the way it goes out — or, for the bird, any way at all. */
+export type Way =
+  { readonly by: 'roof' | 'door'; readonly surface: string; readonly x: number } | { readonly by: 'sky' };
+
 export interface Visit {
   readonly actor: Actor;
+  /** Who it has come to see: him, or — a bird, sometimes — the cat. */
+  readonly host: 'tote' | 'cat';
+  readonly way: Way;
   stage: Stage;
   /** Seconds into the stage. */
   t: number;
   /** Seconds left of the stay. */
   stay: number;
-  /** Seconds until it next looks round for where he has got to. */
+  /** Seconds until it next looks round for where its host has got to. */
   check: number;
-  /** Where it leaves from. */
-  exit: { readonly surface: string; readonly x: number } | null;
-  /** Whether he has answered yet, in the greeting and the goodbye. */
+  /** Whether its host has answered yet, in the greeting and the goodbye. */
   answered: boolean;
-  /** Seconds until it calls to him again, when it cannot get to him. */
-  calls: number;
-  /** Seconds left of riding on his head — a bird's. */
+  /** Seconds left of riding on his head — the bird's. */
   ride: number;
-  /** It has called to him and he is on his way, so it stays where it is. */
-  waiting: boolean;
-}
-
-export interface Scene {
-  readonly tote: Actor;
-  visit: Visit | null;
-  /** Seconds before anyone may come. */
-  quiet: number;
-  /** Who came last, so the next is someone else. */
-  last: Kind | null;
-  /** Seconds until someone says something idle. */
-  chatter: number;
+  /** Times the bird has got away from the cat. */
+  escapes: number;
 }
 
 export const VISIT = {
@@ -100,301 +78,355 @@ export const VISIT = {
   /** It keeps this far behind him, and sits this far in from him. */
   behind: 28,
   beside: 24,
-  fade: 0.7,
-  /** Out of sight this long and it gives up and goes. */
+  /** Coming out of a doorway or going into one, it is in its shadow this far either side. */
+  doorway: 18,
+  /** Out of sight this long while staying, and it goes home. */
   lost: 15,
-  /** Unable to reach him for this long, and it gives up too. */
-  patience: 55,
-  sayFor: 2.2,
+  /** Unable to reach him for this long, and it goes home too. Long, because from the door to the top of a phone is a long climb. */
+  patience: 120,
   chatter: [7, 14],
 } as const;
 
-/** How each visitor differs, so they do not all move, meet or keep company alike. */
-interface Temper {
-  readonly pace: number;
-  /** The chance it hops for no reason when it has something to say. */
-  readonly bouncy: number;
-  /** Whether ladders are any use to it, and whether it needs any way at all. */
-  readonly climbs: boolean;
-  readonly flies: boolean;
-  /** What it says on meeting him, and what he says back. */
-  readonly greets: Say;
-  readonly answer: Say;
-  /** Whether he bends down to it, because it is small. */
-  readonly stoop: boolean;
-  /** What it says going, and whether it waves. */
-  readonly parting: Say;
-  readonly waves: boolean;
-  /** How it keeps him company when he stops: sits down beside him, or curls up and sleeps. */
-  readonly settles: 'beside' | 'curl';
-  /** How far behind him it keeps. */
-  readonly behind: number;
-  /** What each of them says, idly, while it is there. */
-  readonly signs: readonly Say[];
-  readonly his: readonly Say[];
-}
+const FRIEND_SIGNS: readonly Say[] = ['♪', 'ha', '…', '♥', '!', '?'];
+const BIRD_SIGNS: readonly Say[] = ['♪', '♪', '!'];
+const HIS_SIGNS: readonly Say[] = ['♪', '!', 'ha', '…'];
 
-const TEMPER: Readonly<Record<Kind, Temper>> = {
-  /** Smaller and quicker than he is, and bouncier. */
-  friend: {
-    pace: 1.35,
-    bouncy: 0.35,
-    climbs: true,
-    flies: false,
-    greets: 'name',
-    answer: 'hello',
-    stoop: false,
-    parting: 'bye',
-    waves: true,
-    settles: 'beside',
-    behind: VISIT.behind,
-    signs: ['♪', 'ha', '…', '♥', '!', '?'],
-    his: ['♪', 'ha', '…', '♥', '!', '?'],
-  },
-  /**
-   * A cat does not climb ladders, so where he goes down one it cannot follow:
-   * it waits at the top and calls. It comes to be stroked, curls up asleep
-   * beside him when he stops, and leaves the way cats leave — without a
-   * goodbye.
-   */
-  cat: {
-    pace: 1.2,
-    bouncy: 0.15,
-    climbs: false,
-    flies: false,
-    greets: 'meow',
-    answer: '♥',
-    stoop: true,
-    parting: 'meow',
-    waves: false,
-    settles: 'curl',
-    behind: 34,
-    signs: ['meow', '…', '?'],
-    his: ['♥', '…', '!'],
-  },
-  /**
-   * A bird needs no way anywhere: it flies in from off the page, lands near
-   * him and sings, hops about, now and then flies up onto his head and rides
-   * there wherever he goes — up and down the ladders too — and flies off
-   * when it is done.
-   */
-  bird: {
-    pace: 1,
-    bouncy: 0.3,
-    climbs: false,
-    flies: true,
-    greets: '♪',
-    answer: 'hello',
-    stoop: false,
-    parting: '♪',
-    waves: false,
-    settles: 'beside',
-    behind: 40,
-    signs: ['♪', '♪', '!'],
-    his: ['♪', '!', 'ha'],
-  },
-};
-
-/** How tall he stands, sits and stoops, in pixels: where his head is, for a bird to land on. */
-const TALL = { standing: 55, sitting: 33, stooping: 45 } as const;
-
-/** The top of his head, wherever he is and however he is standing. */
-export function headOf(tote: Roamer): Point {
-  const f = tote.facing;
-  if (tote.mode === 'sit' || tote.mode === 'cross') return { x: tote.x - f, y: tote.y - TALL.sitting };
-  if (tote.mode === 'look') return { x: tote.x + f * 13, y: tote.y - TALL.stooping };
-  return { x: tote.x, y: tote.y - TALL.standing };
-}
-
-const between = (random: () => number, [lo, hi]: readonly [number, number]): number => lo + random() * (hi - lo);
-const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
-
-function actor(kind: Actor['kind'], body: Roamer): Actor {
-  return { kind, body, say: null, sayFor: 0, alpha: kind === 'tote' ? 1 : 0, wave: 0, pet: 0 };
-}
-
-export function createScene(tote: Roamer, random: () => number): Scene {
-  return { tote: actor('tote', tote), visit: null, quiet: between(random, VISIT.firstQuiet), last: null, chatter: 0 };
-}
-
-function say(a: Actor, what: Say): void {
-  a.say = what;
-  a.sayFor = VISIT.sayFor;
-}
-
-function tick(a: Actor, dt: number): void {
-  a.sayFor = Math.max(0, a.sayFor - dt);
-  if (a.sayFor === 0) a.say = null;
-  a.wave = Math.max(0, a.wave - dt);
-  a.pet = Math.max(0, a.pet - dt);
-}
-
-const onScreen = (view: Box, s: Surface): boolean =>
-  s.y >= view.top + 70 && s.y <= view.bottom - 6 && s.x1 > view.left + 30 && s.x0 < view.right - 30;
+const sideOf = (from: number, to: number): 1 | -1 => (from < to ? 1 : -1);
 
 /**
- * Where a visitor turns up: the end of whatever he is on, the end further
- * from him so it walks across to him, if that is on screen; otherwise the
- * end of something that is.
+ * Which way the friend comes in: by the roof if he is in the top half of the
+ * page, by the door if he is in the bottom half — so it never has the whole
+ * page to cross — or by whichever there is.
  */
-function arrival(scene: Scene, world: World, view: Box, random: () => number): { surface: string; x: number } | null {
-  const tote = scene.tote.body;
-  const his = tote.surface === null ? undefined : surfaceOf(world, tote.surface);
-  const seen = world.surfaces.filter((s) => onScreen(view, s));
-  const s = his !== undefined && onScreen(view, his) ? his : seen[Math.floor(random() * seen.length)];
-  if (s === undefined) return null;
-  const lo = Math.max(s.x0, view.left + 12);
-  const hi = Math.min(s.x1, view.right - 12);
-  if (hi - lo < 40) return null;
-  return { surface: s.id, x: Math.abs(tote.x - lo) > Math.abs(tote.x - hi) ? lo : hi };
+function wayIn(world: World, tote: Roamer): Way | null {
+  const roof = world.roof === null ? undefined : surfaceOf(world, world.roof);
+  const door = world.door;
+  const roofWay: Way | null = roof === undefined ? null : { by: 'roof', surface: roof.id, x: roof.x0 };
+  const doorWay: Way | null = door === null ? null : { by: 'door', surface: 'floor', x: door };
+  return tote.y < world.height / 2 ? (roofWay ?? doorWay) : (doorWay ?? roofWay);
 }
 
-function begin(scene: Scene, world: World, input: RoamInput): void {
-  const pool = KINDS.filter((k) => k !== scene.last);
-  const kind = (pool.length > 0 ? pool : KINDS)[Math.floor(input.random() * (pool.length || KINDS.length))] ?? 'friend';
-  const at = arrival(scene, world, input.view, input.random);
-  if (at === null) {
-    scene.quiet = 5;
-    return;
+/** Somewhere just off the screen, on a side picked at random: where a bird comes from, and goes to. */
+function offScreen(view: Box, random: () => number): Point {
+  const roll = random();
+  const across = view.left + 40 + random() * Math.max(1, view.right - view.left - 80);
+  if (roll < 0.35) return { x: view.left - 40, y: view.top + 40 + random() * 100 };
+  if (roll < 0.7) return { x: view.right + 40, y: view.top + 40 + random() * 100 };
+  return { x: across, y: view.top - 40 };
+}
+
+/** Somewhere on what `near` is standing on, a little way off on the side the bird comes from. */
+function landingBy(
+  near: Roamer,
+  world: World,
+  from: number,
+  random: () => number,
+): (Point & { readonly onto: string }) | null {
+  const s = near.surface === null ? undefined : surfaceOf(world, near.surface);
+  if (s === undefined || s.id === world.roof) return null;
+  const side = from < near.x ? -1 : 1;
+  return { x: clamp(near.x + side * (30 + random() * 30), s.x0, s.x1), y: s.y, onto: s.id };
+}
+
+/** Start a visit, if anyone can come just now; null if they cannot. */
+export function beginVisit(kind: Guest, world: World, input: RoamInput, tote: Actor, cat: Cat | null): Visit | null {
+  const random = input.random;
+  if (kind === 'friend') {
+    const way = wayIn(world, tote.body);
+    if (way === null || way.by === 'sky') return null;
+    const body = createRoamer(world, random, { surface: way.surface, x: way.x });
+    body.led = true;
+    body.pace = 1.35;
+    body.restFor = 0;
+    return {
+      actor: actor('friend', body, way.by === 'door' ? 0 : 1),
+      host: 'tote',
+      way,
+      stage: 'coming',
+      t: 0,
+      stay: between(random, VISIT.stay),
+      check: 0,
+      answered: false,
+      ride: 0,
+      escapes: 0,
+    };
   }
-  const body = createRoamer(world, input.random, at);
-  // A good host: while someone who cannot climb is here, he stays where
-  // they can follow him.
-  scene.tote.body.climbs = TEMPER[kind].climbs || TEMPER[kind].flies;
+  // The bird: to the cat sometimes, if the cat is not busy with him.
+  const toCat = cat !== null && cat.mood !== 'with' && random() < 0.45;
+  const host = toCat && cat !== null ? cat.actor.body : tote.body;
+  if (inTransit(host)) return null;
+  const from = offScreen(input.view, random);
+  const spot = landingBy(host, world, from.x, random);
+  if (spot === null) return null;
+  const body = createRoamer(world, random);
   body.led = true;
-  body.pace = TEMPER[kind].pace;
-  body.climbs = TEMPER[kind].climbs;
-  body.restFor = 0;
-  scene.visit = {
-    actor: actor(kind, body),
+  body.climbs = false;
+  body.x = from.x;
+  body.y = from.y;
+  body.surface = null;
+  flyTo(body, spot, spot.onto);
+  return {
+    actor: actor('bird', body),
+    host: toCat ? 'cat' : 'tote',
+    way: { by: 'sky' },
     stage: 'coming',
     t: 0,
-    stay: between(input.random, VISIT.stay),
+    stay: between(random, toCat ? [25, 45] : VISIT.stay),
     check: 0,
-    exit: null,
     answered: false,
-    calls: 0,
     ride: 0,
-    waiting: false,
+    escapes: 0,
   };
-  if (TEMPER[kind].flies) {
-    // In from off the page, on the far side from him, and down beside him.
-    const view = input.view;
-    const tote = scene.tote.body;
-    const fromRight = tote.x < (view.left + view.right) / 2;
-    body.x = fromRight ? view.right + 30 : view.left - 30;
-    body.y = view.top + 40 + input.random() * 60;
-    body.surface = null;
-    const spot = landing(tote, world, body.x, input.random) ?? {
-      x: at.x,
-      y: surfaceOf(world, at.surface)?.y ?? body.y,
-      onto: at.surface,
-    };
-    flyTo(body, spot, spot.onto);
-  }
 }
 
-/** Somewhere on what he is on, a little way off on the side it comes from — or null if he is between surfaces. */
-function landing(tote: Roamer, world: World, from: number, random: () => number): (Point & { onto: string }) | null {
+function next(v: Visit, stage: Stage): void {
+  v.stage = stage;
+  v.t = 0;
+  v.check = 0;
+  v.answered = false;
+}
+
+/** Somewhere just behind him on what he is on — or beside him, if he is sitting. */
+function besideHim(tote: Roamer, world: World): { surface: string; x: number } | null {
   const s = tote.surface === null ? undefined : surfaceOf(world, tote.surface);
   if (s === undefined) return null;
-  const side = from < tote.x ? -1 : 1;
-  return { x: clamp(tote.x + side * (30 + random() * 30), s.x0, s.x1), y: s.y, onto: s.id };
+  const sitting = tote.mode === 'sit' || tote.mode === 'cross';
+  const x = tote.x - tote.facing * (sitting ? VISIT.beside : VISIT.behind);
+  return { surface: s.id, x: clamp(x, s.x0, s.x1) };
 }
 
-/** A bird's visit: it has no use for routes, so it is decided here, apart. */
-function birdStep(scene: Scene, v: Visit, world: World, input: RoamInput): void {
+/** The friend going home: back to the way it came, and through it. True once it is gone. */
+function goingHome(v: Visit, world: World, input: RoamInput): boolean {
+  const body = v.actor.body;
+  if (v.way.by === 'sky') return true;
+  const there = body.surface === v.way.surface && Math.abs(body.x - v.way.x) < 1.5;
+  if (there) {
+    // Up the ladder past the top of the page, or into the dark of the doorway.
+    body.mode = 'gone';
+    return true;
+  }
+  if (!inTransit(body) && body.steps.length === 0 && body.restFor <= 0.3) {
+    goTo(body, world, { surface: v.way.surface, x: v.way.x }, 'rest', input.random);
+  }
+  return false;
+}
+
+/** One frame of a friend's visit. True once it is over. */
+function stepFriend(v: Visit, world: World, input: RoamInput, tote: Actor, chatter: { left: number }): boolean {
   const dt = input.dt;
-  const tote = scene.tote;
   const guest = v.actor;
   const body = guest.body;
-  const temper = TEMPER.bird;
+  const him = tote.body;
 
-  if (body.mode === 'ride') {
-    // On his head, wherever that has got to.
-    const head = headOf(tote.body);
-    body.x = head.x;
-    body.y = head.y;
-    body.facing = tote.body.facing;
+  // Coming out of the doorway, or going into it, it is in its shadow.
+  if (v.way.by === 'door') {
+    const out = body.surface === 'floor' ? Math.abs(body.x - v.way.x) : VISIT.doorway;
+    guest.alpha = clamp(out / VISIT.doorway, 0, 1);
   }
-  const leaving = v.stage === 'going';
-  guest.alpha = clamp(guest.alpha + (leaving ? (v.t > 1 ? -dt / 1.2 : 0) : dt / VISIT.fade), 0, 1);
-  if (!leaving && body.away > VISIT.lost && body.mode !== 'ride' && body.mode !== 'air') {
-    stage(v, 'going');
-    v.exit = null;
-  }
-  const flying = body.mode === 'air';
-  const near = (): boolean =>
-    body.mode === 'ride' ||
-    (body.surface !== null && body.surface === tote.body.surface && Math.abs(body.x - tote.body.x) <= VISIT.near);
+  if (v.stage === 'staying' && body.away > VISIT.lost) next(v, 'going');
 
   switch (v.stage) {
     case 'coming': {
       if (v.t > VISIT.patience) {
-        stage(v, 'going');
+        next(v, 'going');
         break;
       }
-      if (flying || v.check > 0 || inTransit(tote.body)) break;
-      v.check = 1;
-      if (together(body, tote.body, VISIT.meet)) {
-        stage(v, 'greeting');
-        const face = body.x < tote.body.x ? 1 : -1;
+      if (v.check > 0 || inTransit(body) || inTransit(him)) break;
+      v.check = 1.2;
+      // He has seen someone coming: he stops where he is and waits, rather
+      // than lead them a chase up and down the ladders.
+      const canReach =
+        body.surface !== null && him.surface !== null && reachable(world, body.surface, waysFor(body)).has(him.surface);
+      if (canReach && !him.led) {
+        if (v.t < 3) say(tote, '!');
+        pause(him, 1.5, sideOf(him.x, body.x));
+      }
+      if (together(body, him, VISIT.meet)) {
+        next(v, 'greeting');
+        const face = sideOf(body.x, him.x);
         pause(body, VISIT.greet, face);
-        pause(tote.body, VISIT.greet, face === 1 ? -1 : 1);
-        say(guest, temper.greets);
+        pause(him, VISIT.greet, face === 1 ? -1 : 1);
+        say(guest, 'name');
         break;
       }
-      // Waiting for it, as he would for anyone.
-      if (v.t < 3) say(tote, '!');
-      pause(tote.body, 1.5, body.x < tote.body.x ? -1 : 1);
-      const spot = landing(tote.body, world, body.x, input.random);
+      const spot = besideHim(him, world);
+      if (spot !== null) goTo(body, world, spot, 'rest', input.random);
+      break;
+    }
+    case 'greeting': {
+      if (!v.answered && v.t > 0.7) {
+        v.answered = true;
+        say(tote, 'hello');
+      }
+      if (v.t >= VISIT.greet) next(v, 'staying');
+      break;
+    }
+    case 'staying': {
+      v.stay -= dt;
+      if (v.stay <= 0) {
+        next(v, 'going');
+        const face = sideOf(body.x, him.x);
+        say(guest, 'bye');
+        guest.wave = 1.6;
+        pause(body, 1.4, face);
+        if (!inTransit(him)) pause(him, 2.2, face === 1 ? -1 : 1);
+        break;
+      }
+      chatter.left -= dt;
+      if (chatter.left <= 0) {
+        chatter.left = between(input.random, VISIT.chatter);
+        const mine = input.random() < 0.5;
+        const pool = mine ? FRIEND_SIGNS : HIS_SIGNS;
+        say(mine ? guest : tote, pool[Math.floor(input.random() * pool.length)] ?? '♪');
+        if (mine && input.random() < 0.35 && !inTransit(body) && body.mode !== 'cross' && body.surface !== null) {
+          goTo(body, world, { surface: body.surface, x: body.x }, 'bounce', input.random);
+        }
+      }
+      if (v.check > 0 || inTransit(body) || inTransit(him) || body.restFor > 0.3) break;
+      v.check = 1;
+      const sitting = him.mode === 'sit' || him.mode === 'cross';
+      const spot = besideHim(him, world);
+      if (spot === null) break;
+      if (sitting && body.mode !== 'cross') {
+        // He has sat down: it sits down beside him, facing the same way.
+        goTo(body, world, spot, 'cross', input.random, him.facing);
+      } else if (!sitting && (body.mode === 'cross' || !together(body, him, VISIT.near))) {
+        goTo(body, world, spot, 'rest', input.random);
+      }
+      break;
+    }
+    case 'going': {
+      if (!v.answered && v.t > 0.5) {
+        v.answered = true;
+        say(tote, 'bye');
+        tote.wave = 1.8;
+      }
+      if (v.t < 1.4) break;
+      return goingHome(v, world, input);
+    }
+  }
+  return false;
+}
+
+/** One frame of the bird's visit. True once it is over. */
+function stepBird(
+  v: Visit,
+  world: World,
+  input: RoamInput,
+  tote: Actor,
+  cat: Cat | null,
+  chatter: { left: number },
+): boolean {
+  const dt = input.dt;
+  const guest = v.actor;
+  const body = guest.body;
+  const him = tote.body;
+  const host = v.host === 'cat' && cat !== null ? cat.actor.body : him;
+
+  if (body.mode === 'ride') {
+    // On his head, wherever that has got to.
+    const head = headOf(him);
+    body.x = head.x;
+    body.y = head.y;
+    body.facing = him.facing;
+  }
+  if (body.mode === 'gone') return true;
+  if (v.stage !== 'going' && body.away > VISIT.lost && body.mode !== 'ride' && body.mode !== 'air') {
+    next(v, 'going');
+  }
+  // The cat's pounce on its way, whatever the bird was doing and whoever it
+  // came to see: it is off, a moment before the cat lands.
+  const pounce = cat !== null && cat.actor.body.mode === 'air' ? cat.actor.body.flight : null;
+  if (pounce !== null && body.mode !== 'air' && body.mode !== 'ride' && Math.abs(pounce.to.x - body.x) < 30) {
+    v.escapes += 1;
+    const floor = surfaceOf(world, 'floor');
+    if (floor !== undefined) {
+      const away = sideOf(cat?.actor.body.x ?? body.x, body.x);
+      const x = clamp(body.x + away * (60 + input.random() * 80), floor.x0, floor.x1);
+      flyTo(body, { x, y: floor.y }, 'floor');
+      say(guest, '♪');
+    }
+  }
+  const flying = body.mode === 'air';
+
+  switch (v.stage) {
+    case 'coming': {
+      if (v.t > VISIT.patience) {
+        next(v, 'going');
+        break;
+      }
+      if (flying || v.check > 0 || inTransit(host)) break;
+      v.check = 1;
+      if (together(body, host, VISIT.meet)) {
+        next(v, 'greeting');
+        const face = sideOf(body.x, host.x);
+        pause(body, VISIT.greet, face);
+        if (v.host === 'tote') pause(him, VISIT.greet, face === 1 ? -1 : 1);
+        say(guest, '♪');
+        break;
+      }
+      if (v.host === 'tote' && !him.led) {
+        if (v.t < 3) say(tote, '!');
+        pause(him, 1.5, sideOf(him.x, body.x));
+      }
+      const spot = landingBy(host, world, body.x, input.random);
       if (spot !== null) flyTo(body, spot, spot.onto);
       break;
     }
     case 'greeting': {
       if (!v.answered && v.t > 0.7) {
         v.answered = true;
-        say(tote, temper.answer);
+        if (v.host === 'tote') say(tote, 'hello');
       }
-      if (v.t >= VISIT.greet) stage(v, 'staying');
+      if (v.t >= VISIT.greet) next(v, 'staying');
       break;
     }
     case 'staying': {
       v.stay -= dt;
-      if (v.stay <= 0) {
-        stage(v, 'going');
-        say(guest, temper.parting);
+      if (v.stay <= 0 && !(body.mode === 'ride' && inTransit(him))) {
+        next(v, 'going');
+        say(guest, '♪');
         break;
       }
-      scene.chatter -= dt;
-      if (scene.chatter <= 0) {
-        scene.chatter = between(input.random, VISIT.chatter) * 0.8;
-        const who = input.random() < 0.65 ? guest : tote;
-        const pool = who === guest ? temper.signs : temper.his;
-        say(who, pool[Math.floor(input.random() * pool.length)] ?? '♪');
+      chatter.left -= dt;
+      if (chatter.left <= 0) {
+        chatter.left = between(input.random, VISIT.chatter) * 0.8;
+        const mine = v.host === 'cat' || input.random() < 0.65;
+        const pool = mine ? BIRD_SIGNS : HIS_SIGNS;
+        say(mine ? guest : tote, pool[Math.floor(input.random() * pool.length)] ?? '♪');
+      }
+      if (v.host === 'cat') {
+        if (flying || v.check > 0 || body.restFor > 0.3) break;
+        v.check = 1.5;
+        if (!together(body, host, 220)) {
+          const spot = landingBy(host, world, body.x, input.random);
+          if (spot !== null) flyTo(body, spot, spot.onto);
+        }
+        break;
       }
       if (flying) break;
       if (body.mode === 'ride') {
         v.ride -= dt;
-        // Off again when it has had enough, and only onto somewhere — not
+        // Off again when it has had enough — and only onto somewhere, not
         // from halfway up a ladder.
-        if (v.ride <= 0 && !inTransit(tote.body)) {
-          const spot = landing(tote.body, world, tote.body.x + (input.random() < 0.5 ? -1 : 1), input.random);
+        if (v.ride <= 0 && !inTransit(him)) {
+          const spot = landingBy(him, world, him.x + (input.random() < 0.5 ? -1 : 1), input.random);
           if (spot !== null) flyTo(body, spot, spot.onto);
         }
         break;
       }
       if (v.check > 0 || body.restFor > 0.3) break;
       v.check = 1;
-      if (inTransit(tote.body)) break;
+      if (inTransit(him)) break;
       const roll = input.random();
-      if (!near() || roll < 0.08) {
+      const near = body.surface !== null && body.surface === him.surface && Math.abs(body.x - him.x) <= VISIT.near;
+      if (!near || roll < 0.08) {
         // To him: onto his head, sometimes; otherwise down beside him.
         if (roll < 0.3) {
           v.ride = 4 + input.random() * 6;
-          flyTo(body, headOf(tote.body), RIDE);
+          flyTo(body, headOf(him), RIDE);
         } else {
-          const spot = landing(tote.body, world, body.x, input.random);
+          const spot = landingBy(him, world, body.x, input.random);
           if (spot !== null) flyTo(body, spot, spot.onto);
         }
       } else if (roll < 0.5 && body.surface !== null) {
@@ -402,285 +434,41 @@ function birdStep(scene: Scene, v: Visit, world: World, input: RoamInput): void 
         const s = surfaceOf(world, body.surface);
         if (s !== undefined) {
           const x = clamp(body.x + (input.random() - 0.5) * 60, s.x0, s.x1);
-          goTo(body, world, { surface: s.id, x }, input.random() < temper.bouncy ? 'bounce' : 'rest', input.random);
+          goTo(body, world, { surface: s.id, x }, input.random() < 0.3 ? 'bounce' : 'rest', input.random);
         }
       }
       break;
     }
     case 'going': {
-      if (!v.answered && v.t > 0.4) {
+      if (!v.answered && v.t > 0.4 && v.host === 'tote') {
         v.answered = true;
         say(tote, 'bye');
         tote.wave = 1.8;
       }
-      if (body.mode !== 'air' && body.mode !== 'gone') {
-        // Up and off the page, on whichever side is further from him.
-        const view = input.view;
-        const right = tote.body.x < (view.left + view.right) / 2;
-        flyTo(body, { x: right ? view.right + 40 : view.left - 40, y: view.top - 40 }, AWAY);
-      }
-      if (body.mode === 'gone' || guest.alpha <= 0) {
-        scene.last = 'bird';
-        scene.visit = null;
-        scene.quiet = between(input.random, VISIT.quiet);
-        tote.body.climbs = true;
+      if (body.mode !== 'air') {
+        // Up and off the screen, on any side.
+        flyTo(body, offScreen(input.view, input.random), AWAY);
       }
       break;
     }
   }
+  return false;
 }
 
-/** Somewhere just behind him on what he is on — or beside him, if he is sitting. */
-function besideHim(tote: Roamer, world: World, behind: number): { surface: string; x: number } | null {
-  const s = tote.surface === null ? undefined : surfaceOf(world, tote.surface);
-  if (s === undefined) return null;
-  const sitting = tote.mode === 'sit' || tote.mode === 'cross';
-  const x = tote.x - tote.facing * (sitting ? VISIT.beside : behind);
-  return { surface: s.id, x: clamp(x, s.x0, s.x1) };
-}
-
-/**
- * The nearest it can get to him, for one that cannot go everywhere he can:
- * the place it can reach that is closest to where he is.
- */
-function nearestTo(tote: Roamer, body: Roamer, world: World): { surface: string; x: number } | null {
-  if (body.surface === null) return null;
-  let best: { surface: string; x: number } | null = null;
-  let distance = Infinity;
-  for (const id of reachable(world, body.surface, waysFor(body))) {
-    const s = surfaceOf(world, id);
-    if (s === undefined) continue;
-    const x = clamp(tote.x, s.x0, s.x1);
-    const d = Math.hypot(x - tote.x, s.y - tote.y);
-    if (d < distance) [best, distance] = [{ surface: id, x }, d];
-  }
-  return best;
-}
-
-/** Whether he has stopped for long enough to be kept company sitting down. */
-const resting = (tote: Roamer): boolean =>
-  tote.mode === 'sit' || tote.mode === 'cross' || tote.mode === 'look' || (tote.mode === 'stand' && tote.restFor > 1.5);
-
-const together = (a: Roamer, b: Roamer, within: number): boolean =>
-  a.surface !== null && a.surface === b.surface && Math.abs(a.x - b.x) <= within;
-
-function stage(v: Visit, next: Stage): void {
-  v.stage = next;
-  v.t = 0;
-  v.check = 0;
-  v.answered = false;
-}
-
-/**
- * Go to him — to just behind him, or beside him if he is sitting. One that
- * cannot get there goes as near as it can, and calls to him from there.
- */
-function follow(
+/** One frame of whoever is visiting. True once the visit is over. */
+export function stepVisit(
   v: Visit,
-  tote: Actor,
   world: World,
   input: RoamInput,
-  temper: Temper,
-  then: 'rest' | 'cross',
-  face: 1 | -1 | null = null,
-): void {
-  const body = v.actor.body;
-  if (v.waiting) {
-    // He is on his way to it: it stays put, rather than set off towards
-    // where he was and pass him going the other way.
-    if (inTransit(tote.body) || tote.body.steps.length > 0) return;
-    v.waiting = false;
-  }
-  const spot = besideHim(tote.body, world, temper.behind);
-  if (spot !== null && goTo(body, world, spot, then, input.random, face)) return;
-  const near = nearestTo(tote.body, body, world);
-  if (near === null) return;
-  // Near enough the nearest it can get: it stays put rather than shuffling
-  // after every step he takes up there.
-  const there = body.surface === near.surface && Math.abs(body.x - near.x) < 40;
-  if (!there) {
-    goTo(body, world, near, 'rest', input.random);
-    return;
-  }
-  if (v.calls > 0) return;
-  v.calls = 6;
-  say(v.actor, temper.greets === 'meow' ? 'meow' : '?');
-  // And he hears it, and comes — by any way there is, ladders included.
-  if (!inTransit(tote.body) && body.surface !== null) {
-    const climbs = tote.body.climbs;
-    tote.body.climbs = true;
-    const x = body.x + (tote.body.x < body.x ? -1 : 1) * temper.behind;
-    if (goTo(tote.body, world, { surface: body.surface, x }, 'rest', input.random)) {
-      say(tote, '!');
-      v.waiting = true;
-    }
-    tote.body.climbs = climbs;
-  }
-}
-
-/** One frame of the whole scene: him, and whoever has come to see him. */
-export function stepScene(scene: Scene, world: World, input: RoamInput): Scene {
-  const dt = input.dt;
-  const tote = scene.tote;
-  stepRoamer(tote.body, world, input);
-  tick(tote, dt);
-
-  const v = scene.visit;
-  if (v === null) {
-    scene.quiet -= dt;
-    // Nobody turns up while he is halfway up a ladder: they would arrive
-    // somewhere he is not, and some could not follow him to where he is.
-    if (scene.quiet <= 0 && !inTransit(tote.body)) {
-      if (input.random() < VISIT.chance) begin(scene, world, input);
-      else scene.quiet = between(input.random, VISIT.quiet);
-    }
-    return scene;
-  }
-
-  const guest = v.actor;
-  const body = guest.body;
-  const temper = TEMPER[guest.kind as Kind];
-  stepRoamer(body, world, input);
-  tick(guest, dt);
-  v.t += dt;
-  v.check -= dt;
-  v.calls -= dt;
-  if (temper.flies) {
-    birdStep(scene, v, world, input);
-    return scene;
-  }
-
-  const leaving = v.stage === 'going';
-  guest.alpha = clamp(guest.alpha + (leaving && v.exit === null ? -dt : dt) / VISIT.fade, 0, 1);
-
-  // Out of sight too long — scrolled away from, say — and it goes, quietly.
-  if (!leaving && body.away > VISIT.lost) {
-    stage(v, 'going');
-    v.exit = null;
-  }
-
-  switch (v.stage) {
-    case 'coming': {
-      // Waiting for him to come to it does not use up its patience.
-      if (v.waiting) v.t -= dt;
-      if (v.t > VISIT.patience) {
-        stage(v, 'going');
-        v.exit = null;
-        break;
-      }
-      if (v.check > 0 || inTransit(body) || inTransit(tote.body)) break;
-      v.check = 1.2;
-      // He has seen someone coming: he stops where he is and waits for them,
-      // instead of leading them a chase up and down the ladders — so long as
-      // they can get to him. One that cannot calls, and he goes to it.
-      const canReach =
-        body.surface !== null &&
-        tote.body.surface !== null &&
-        reachable(world, body.surface, waysFor(body)).has(tote.body.surface);
-      if (canReach) {
-        if (v.t < 2) say(tote, '!');
-        pause(tote.body, 1.5, body.x < tote.body.x ? -1 : 1);
-      }
-      if (together(body, tote.body, VISIT.meet)) {
-        stage(v, 'greeting');
-        const face = body.x < tote.body.x ? 1 : -1;
-        pause(body, VISIT.greet, face);
-        pause(tote.body, VISIT.greet, face === 1 ? -1 : 1);
-        if (temper.stoop) {
-          // Something small: he bends down to it.
-          tote.body.mode = 'look';
-          tote.pet = VISIT.greet;
-        }
-        say(guest, temper.greets);
-        break;
-      }
-      follow(v, tote, world, input, temper, 'rest');
-      break;
-    }
-    case 'greeting': {
-      if (!v.answered && v.t > 0.7) {
-        v.answered = true;
-        say(tote, temper.answer);
-      }
-      if (v.t >= VISIT.greet) stage(v, 'staying');
-      break;
-    }
-    case 'staying': {
-      v.stay -= dt;
-      if (v.stay <= 0) {
-        stage(v, 'going');
-        const face = body.x < tote.body.x ? 1 : -1;
-        say(guest, temper.parting);
-        if (temper.waves) guest.wave = 1.6;
-        pause(body, 1.4, face);
-        if (!inTransit(tote.body)) pause(tote.body, 2.2, face === 1 ? -1 : 1);
-        const s = body.surface === null ? undefined : surfaceOf(world, body.surface);
-        if (s !== undefined) {
-          // Out by whichever end of what it is on is further from him.
-          const end = Math.abs(tote.body.x - s.x0) > Math.abs(tote.body.x - s.x1) ? s.x0 : s.x1;
-          v.exit = { surface: s.id, x: end };
-        }
-        break;
-      }
-      scene.chatter -= dt;
-      if (scene.chatter <= 0) {
-        scene.chatter = between(input.random, VISIT.chatter);
-        const who = input.random() < 0.5 ? guest : tote;
-        const pool =
-          who === guest
-            ? body.mode === 'cross' && temper.settles === 'curl'
-              ? ['zZ' as const]
-              : temper.signs
-            : temper.his;
-        say(who, pool[Math.floor(input.random() * pool.length)] ?? '…');
-        if (who === guest && input.random() < temper.bouncy && !inTransit(body) && body.mode !== 'cross') {
-          goTo(body, world, { surface: body.surface ?? '', x: body.x }, 'bounce', input.random);
-        }
-      }
-      if (v.check > 0 || inTransit(body) || inTransit(tote.body) || (body.restFor > 0.3 && body.mode !== 'cross'))
-        break;
-      v.check = 1;
-      const settled =
-        temper.settles === 'beside' ? tote.body.mode === 'sit' || tote.body.mode === 'cross' : resting(tote.body);
-      if (settled && body.mode !== 'cross') {
-        // He has stopped: it settles down beside him — sitting with him, or
-        // curled up asleep.
-        if (together(body, tote.body, VISIT.near) || temper.settles === 'beside') {
-          follow(v, tote, world, input, temper, 'cross', temper.settles === 'beside' ? tote.body.facing : null);
-        } else {
-          follow(v, tote, world, input, temper, 'rest');
-        }
-      } else if (!settled && body.mode === 'cross') {
-        // He has got up, so it does — a cat a moment later.
-        follow(v, tote, world, input, temper, 'rest');
-      } else if (!settled && !together(body, tote.body, VISIT.near)) {
-        follow(v, tote, world, input, temper, 'rest');
-      }
-      if (body.mode === 'cross' && temper.settles === 'curl') body.restFor = Math.max(body.restFor, 2);
-      break;
-    }
-    case 'going': {
-      if (!v.answered && v.t > 0.5 && v.exit !== null) {
-        v.answered = true;
-        say(tote, 'bye');
-        tote.wave = 1.8;
-        tote.pet = 0;
-      }
-      if (v.exit !== null && v.t > 1.4 && !inTransit(body) && body.restFor <= 0.3) {
-        const there = body.surface === v.exit.surface && Math.abs(body.x - v.exit.x) < 1;
-        if (there || v.t > 30) v.exit = null;
-        else if (body.steps.length === 0) {
-          if (!goTo(body, world, v.exit, 'rest', input.random)) v.exit = null;
-        }
-      }
-      if (v.exit === null && guest.alpha <= 0) {
-        scene.last = guest.kind as Kind;
-        scene.visit = null;
-        scene.quiet = between(input.random, VISIT.quiet);
-        tote.body.climbs = true;
-      }
-      break;
-    }
-  }
-  return scene;
+  tote: Actor,
+  cat: Cat | null,
+  chatter: { left: number },
+): boolean {
+  stepRoamer(v.actor.body, world, input);
+  tick(v.actor, input.dt);
+  v.t += input.dt;
+  v.check -= input.dt;
+  return v.actor.kind === 'bird'
+    ? stepBird(v, world, input, tote, cat, chatter)
+    : stepFriend(v, world, input, tote, chatter);
 }

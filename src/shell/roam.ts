@@ -238,7 +238,7 @@ const inView = (view: Box, x: number, y: number): boolean =>
 function destination(r: Roamer, world: World, input: RoamInput): { surface: string; x: number } | null {
   const v = input.view;
   const options = world.surfaces
-    .filter((s) => s.id !== r.surface)
+    .filter((s) => s.id !== r.surface && s.id !== world.roof)
     .map((s) => {
       const lo = Math.max(s.x0, v.left + 20);
       const hi = Math.min(s.x1, v.right - 20);
@@ -386,6 +386,13 @@ export function flyTo(r: Roamer, to: Point, onto: string): void {
   r.steps = [];
   r.restFor = 0;
   fly(r, 'fly', to, onto);
+}
+
+/** Jump — a cat's pounce — to a point on a surface. */
+export function hopTo(r: Roamer, to: Point, onto: string): void {
+  r.steps = [];
+  r.restFor = 0;
+  fly(r, 'hop', to, onto);
 }
 
 /** Stop where he is for a while, facing one way: to greet someone, or see them off. */

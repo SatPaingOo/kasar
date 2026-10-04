@@ -14,7 +14,12 @@ import type { Layout, World } from '../../../src/shell/world.js';
 import { desktop, phone } from './layouts.js';
 
 /** Before the shelf has loaded: the masthead and the floor, nothing else. */
-const empty = (): Layout => ({ ...desktop(), height: 768, perches: desktop().perches.slice(0, 2) });
+const empty = (): Layout => ({
+  ...desktop(),
+  height: 768,
+  perches: desktop().perches.slice(0, 2),
+  ground: { left: 104, top: 700, right: 1176, bottom: 768 },
+});
 
 const layouts: Record<string, () => Layout> = { desktop, phone, empty };
 
@@ -66,11 +71,12 @@ describe('the world', () => {
   it('makes a surface of the top of everything, the rule and the floor', () => {
     const world = buildWorld(desktop());
     expect(world.surfaces.map((s) => s.id).sort()).toEqual(
-      ['floor', 'rule', 'mark', 'readout', 'card:0', 'card:1', 'card:2', 'card:3', 'card:4'].sort(),
+      ['floor', 'roof', 'rule', 'mark', 'readout', 'card:0', 'card:1', 'card:2', 'card:3', 'card:4'].sort(),
     );
     const card = surfaceOf(world, 'card:1');
     expect(card).toEqual({ id: 'card:1', x0: 470 + WORLD.inset, x1: 810 - WORLD.inset, y: 270 });
-    expect(surfaceOf(world, 'floor')?.y).toBe(1116 - WORLD.floorInset);
+    // The floor is the top of the footer, not the bottom of the page.
+    expect(surfaceOf(world, 'floor')).toEqual({ id: 'floor', x0: 104 + WORLD.inset, x1: 1176 - WORLD.inset, y: 1100 });
   });
 
   it('hops between neighbours in a row, and only neighbours', () => {
@@ -128,6 +134,33 @@ describe('the world', () => {
     }
     // And somewhere with nowhere out of the way is still somewhere.
     expect(spotOn(world, 'rule', 140, 160, () => 0.5)).toBe(150);
+  });
+
+  it('has a roof above the page, a ladder down from it beside the readout, and nobody put down on it', () => {
+    for (const make of [desktop, phone]) {
+      const world = buildWorld(make());
+      const roof = surfaceOf(world, 'roof');
+      expect(world.roof).toBe('roof');
+      expect(roof?.y).toBeLessThan(0);
+      const ladder = world.ladders.find((l) => l.top.surface === 'roof');
+      expect(ladder?.bottom.surface).toBe('readout');
+      // Nothing jumps on or off it: it is climbed, or nothing.
+      expect(world.links.filter((l) => l.from === 'roof' || l.to === 'roof').every((l) => l.kind === 'ladder')).toBe(
+        true,
+      );
+      expect(surfaceUnder(world, roof?.x0 ?? 0, -100).id).not.toBe('roof');
+    }
+  });
+
+  it('puts the door at the right-hand end of the floor and the basket at the left', () => {
+    const world = buildWorld(desktop());
+    const floor = surfaceOf(world, 'floor');
+    expect(world.door).toBe((floor?.x1 ?? 0) - WORLD.doorIn);
+    expect(world.home).toBe((floor?.x0 ?? 0) + WORLD.homeIn);
+    // No room on the floor, no door and no basket.
+    const cramped = buildWorld({ ...desktop(), ground: { left: 100, top: 1100, right: 220, bottom: 1166 } });
+    expect(cramped.door).toBeNull();
+    expect(cramped.home).toBeNull();
   });
 
   it('finds what is under a point, and the nearest thing when nothing is', () => {

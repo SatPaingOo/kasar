@@ -31,7 +31,9 @@ describe('left to himself', () => {
             did.add(r.mode === 'air' ? `air:${r.flight?.kind}` : r.mode);
           }
           // Twenty minutes: he has been on most of the page, and done most things.
-          expect(visited.size / world.surfaces.length).toBeGreaterThan(0.75);
+          // The roof is the way in from above the page, not somewhere he goes.
+          expect(visited.has('roof')).toBe(false);
+          expect(visited.size / (world.surfaces.length - 1)).toBeGreaterThan(0.75);
           // On a phone the only hop is between the title and the readout, and
           // nothing ever needs it; on a wide screen there is one between every
           // two cards in a row.

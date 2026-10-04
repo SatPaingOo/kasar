@@ -20,10 +20,11 @@ export function desktop(): Layout {
   });
   return {
     width: 1280,
-    height: 1116,
+    height: 1166,
     rule: box(104, 80, 1176, 230),
     perches: [{ id: 'mark', box: box(104, 80, 330, 126) }, { id: 'readout', box: box(1010, 84, 1176, 120) }, ...cards],
     obstacles: [box(104, 146, 400, 162), box(104, 170, 220, 186)],
+    ground: box(104, 1100, 1176, 1166),
   };
 }
 
@@ -35,9 +36,10 @@ export function phone(): Layout {
   }));
   return {
     width: 375,
-    height: 1982,
+    height: 2030,
     rule: box(16, 40, 359, 190),
     perches: [{ id: 'mark', box: box(16, 40, 200, 80) }, { id: 'readout', box: box(230, 44, 359, 76) }, ...cards],
     obstacles: [box(16, 100, 330, 140), box(16, 150, 150, 170)],
+    ground: box(16, 1980, 359, 2030),
   };
 }

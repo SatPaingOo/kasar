@@ -31,6 +31,11 @@ interface GameEntry {
 const TEXT = {
   tagline: { en: 'Small games, one at a time.', my: 'ဂိမ်းလေးများ၊ တစ်ခုချင်းစီ' },
   by: { en: 'by Sat Paing Oo', my: 'Sat Paing Oo ရေးသားသည်' },
+  made: {
+    en: 'Every picture and every sound here is made in code.',
+    my: 'ဒီက ပုံတိုင်း၊ အသံတိုင်းကို code နဲ့ ရေးထားတယ်။',
+  },
+  source: { en: 'source ↗', my: 'source code ↗' },
   empty: { en: 'No games on the shelf yet.', my: 'စင်ပေါ်မှာ ဂိမ်း မရှိသေးဘူး' },
   broken: { en: 'Could not read the shelf.', my: 'စင်ကို မဖတ်နိုင်ဘူး' },
 } as const;
@@ -52,6 +57,8 @@ const tagline = document.querySelector<HTMLParagraphElement>('#tagline');
 const langButton = document.querySelector<HTMLButtonElement>('#lang');
 const counter = document.querySelector<HTMLSpanElement>('#count');
 const byline = document.querySelector<HTMLAnchorElement>('#by');
+const made = document.querySelector<HTMLSpanElement>('#made');
+const source = document.querySelector<HTMLAnchorElement>('#source');
 
 function card(game: GameEntry): HTMLLIElement {
   const item = document.createElement('li');
@@ -103,6 +110,8 @@ function card(game: GameEntry): HTMLLIElement {
 function render(): void {
   if (tagline !== null) tagline.textContent = TEXT.tagline[lang];
   if (byline !== null) byline.textContent = TEXT.by[lang];
+  if (made !== null) made.textContent = TEXT.made[lang];
+  if (source !== null) source.textContent = TEXT.source[lang];
   if (counter !== null) counter.textContent = countLabel(games.length);
   if (langButton !== null) langButton.textContent = SWITCH[lang];
   document.documentElement.lang = lang;

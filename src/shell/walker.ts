@@ -18,8 +18,9 @@
 
 import { createRoamer, settle } from './roam.js';
 import type { Roamer } from './roam.js';
-import { createScene, stepScene } from './visit.js';
-import type { Actor, Say, Scene } from './visit.js';
+import type { Actor, Say } from './actor.js';
+import { createScene, everyone, refit, stepScene } from './scene.js';
+import type { Scene } from './scene.js';
 import { footAt } from './walk.js';
 import { buildWorld, ladderOf } from './world.js';
 import type { Box, Layout, Perch, World } from './world.js';
@@ -450,7 +451,8 @@ function tuft(ctx: CanvasRenderingContext2D, top: Point, facing: 1 | -1): void {
 /** Words for what is said, in the page's language; a sign as it is. */
 function words(what: Say): string {
   const lang = document.documentElement.lang === 'my' ? 'my' : 'en';
-  return what === 'name' || what === 'hello' || what === 'bye' || what === 'meow' ? WORDS[lang][what] : what;
+  if (what === 'name' || what === 'hello' || what === 'bye' || what === 'meow') return WORDS[lang][what];
+  return what;
 }
 
 /** A small bubble over a head, in the shelf's own grey, fading as it goes. */
@@ -523,7 +525,51 @@ function measure(layer: HTMLElement): Layout {
   }
   for (const slot of document.querySelectorAll('#shelf .slot')) obstacles.push(boxOf(slot));
   const header = document.querySelector('header');
-  return { width, height, rule: header === null ? null : boxOf(header), perches, obstacles };
+  const foot = document.querySelector('footer.foot');
+  return {
+    width,
+    height,
+    rule: header === null ? null : boxOf(header),
+    perches,
+    obstacles,
+    ground: foot === null ? null : boxOf(foot),
+  };
+}
+
+/**
+ * The door on the floor that visitors come and go by, and the cat's basket
+ * at the other end: drawn in the same grey line as the ladders. The door's
+ * opening is filled darker than the page, so whoever comes out of it comes
+ * out of the dark.
+ */
+function decor(world: World): { readonly lines: string; readonly dark: string } {
+  const floor = world.surfaces.find((s) => s.id === 'floor');
+  if (floor === undefined) return { lines: '', dark: '' };
+  const y = floor.y;
+  const lines: string[] = [];
+  let dark = '';
+  if (world.door !== null) {
+    const x = world.door;
+    const w = 15;
+    const h = 54;
+    // A doorway with a rounded head, a step, and a door standing open against the wall.
+    dark = `M${x - w} ${y}V${y - h + w}A${w} ${w} 0 0 1 ${x + w} ${y - h + w}V${y}Z`;
+    lines.push(
+      dark,
+      `M${x - w - 4} ${y}H${x + w + 4}`,
+      `M${x + w} ${y}L${x + w + 9} ${y - 4}V${y - h + w - 2}L${x + w} ${y - h + w}`,
+    );
+  }
+  if (world.home !== null) {
+    const x = world.home;
+    // A low basket with a rim, and a cushion in it.
+    lines.push(
+      `M${x - 17} ${y - 9}Q${x - 16} ${y} ${x - 8} ${y}H${x + 8}Q${x + 16} ${y} ${x + 17} ${y - 9}`,
+      `M${x - 18} ${y - 9}H${x + 18}`,
+      `M${x - 12} ${y - 4}Q${x} ${y - 7} ${x + 12} ${y - 4}`,
+    );
+  }
+  return { lines: lines.join(''), dark };
 }
 
 /** The ladders as one SVG path: two rails each, and rungs between. */
@@ -552,7 +598,9 @@ interface Sprite {
 
 export function startWalker(layer: HTMLElement): void {
   const first = layer.querySelector<HTMLCanvasElement>('canvas');
-  const path = layer.querySelector<SVGPathElement>('path');
+  const path = layer.querySelector<SVGPathElement>('path.ladders');
+  const lines = layer.querySelector<SVGPathElement>('path.decor');
+  const dark = layer.querySelector<SVGPathElement>('path.dark');
   const svg = layer.querySelector<SVGSVGElement>('svg');
   if (first === null || path === null || svg === null) return;
 
@@ -569,16 +617,20 @@ export function startWalker(layer: HTMLElement): void {
   };
   const his = sprite(first);
   if (his === null) return;
-  let guest: Sprite | null = null;
+  /** A canvas for each of the others, made the first time they are drawn. */
+  const sprites = new Map<Actor, Sprite>();
 
   let world = buildWorld(measure(layer));
   let shape = shapeOf(world);
-  const scene: Scene = createScene(createRoamer(world), Math.random);
+  const scene: Scene = createScene(world, createRoamer(world), Math.random);
+  sprites.set(scene.tote, his);
   let clock = 0;
   let pointer: Point | null = null;
 
   function paint(s: Sprite, who: Actor): void {
     const r = who.body;
+    s.canvas.style.display = r.mode === 'gone' ? 'none' : '';
+    if (r.mode === 'gone') return;
     // Whole pixels for the canvas, the fraction drawn inside it, so nobody
     // either blurs or jitters.
     const left = r.x - SPRITE.footX;
@@ -632,20 +684,25 @@ export function startWalker(layer: HTMLElement): void {
   }
 
   function draw(): void {
-    if (his !== null) paint(his, scene.tote);
-    const visit = scene.visit;
-    if (visit === null) {
-      if (guest !== null) guest.canvas.style.display = 'none';
-      return;
+    const here = new Set(everyone(scene));
+    for (const who of here) {
+      let s = sprites.get(who);
+      if (s === undefined) {
+        const canvas = document.createElement('canvas');
+        layer.append(canvas);
+        const made = sprite(canvas);
+        if (made === null) continue;
+        sprites.set(who, made);
+        s = made;
+      }
+      paint(s, who);
     }
-    if (guest === null) {
-      const canvas = document.createElement('canvas');
-      layer.append(canvas);
-      guest = sprite(canvas);
-      if (guest === null) return;
+    // Whoever has gone: their canvas goes with them.
+    for (const [who, s] of sprites) {
+      if (here.has(who)) continue;
+      s.canvas.remove();
+      sprites.delete(who);
     }
-    guest.canvas.style.display = '';
-    paint(guest, visit.actor);
   }
 
   function rebuild(): void {
@@ -653,14 +710,19 @@ export function startWalker(layer: HTMLElement): void {
     const nextShape = shapeOf(next);
     world = next;
     path?.setAttribute('d', laddersPath(world));
+    const extra = decor(world);
+    lines?.setAttribute('d', extra.lines);
+    dark?.setAttribute('d', extra.dark);
     svg?.setAttribute('viewBox', `0 0 ${world.width} ${world.height}`);
     svg?.setAttribute('width', String(world.width));
     svg?.setAttribute('height', String(world.height));
     if (nextShape !== shape) {
       shape = nextShape;
       // The page moved under them: whatever they were doing is off.
-      for (const r of [scene.tote.body, scene.visit?.actor.body]) {
-        if (r === undefined) continue;
+      refit(scene, world, Math.random);
+      for (const who of everyone(scene)) {
+        const r = who.body;
+        if (r.mode === 'gone' || r.mode === 'ride' || r.mode === 'air') continue;
         const onLadder = r.ladder !== null && ladderOf(world, r.ladder) !== undefined;
         if (!onLadder || r.mode !== 'climb') settle(r, world);
       }
@@ -687,8 +749,8 @@ export function startWalker(layer: HTMLElement): void {
   rebuild();
 
   // Someone who asked for less movement gets him standing there, not gone: he
-  // is part of the page, and the page should not change shape on them. Nobody
-  // comes to visit, either.
+  // is part of the page, and the page should not change shape on them. The
+  // cat sleeps in its basket. Nobody comes to visit.
   if (still.matches) return;
 
   window.addEventListener(
@@ -707,11 +769,6 @@ export function startWalker(layer: HTMLElement): void {
     if (event.pointerType !== 'mouse') forget();
   });
 
-  const ease = (s: Sprite | null, r: Roamer | undefined, dt: number): void => {
-    if (s === null || r === undefined) return;
-    s.gait += clamp((r.mode === 'walk' && r.speed > 0 ? 1 : 0) - s.gait, -dt * 5, dt * 5);
-  };
-
   let last = performance.now();
   function frame(now: number): void {
     const dt = Math.min((now - last) / 1000, MAX_DT);
@@ -719,8 +776,12 @@ export function startWalker(layer: HTMLElement): void {
     clock += dt;
     const view: Box = { left: scrollX, top: scrollY, right: scrollX + innerWidth, bottom: scrollY + innerHeight };
     stepScene(scene, world, { dt, random: Math.random, pointer, view });
-    ease(his, scene.tote.body, dt);
-    ease(guest, scene.visit?.actor.body, dt);
+    for (const who of everyone(scene)) {
+      const s = sprites.get(who);
+      if (s === undefined) continue;
+      const r = who.body;
+      s.gait += clamp((r.mode === 'walk' && r.speed > 0 ? 1 : 0) - s.gait, -dt * 5, dt * 5);
+    }
     draw();
     requestAnimationFrame(frame);
   }

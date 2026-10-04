@@ -183,18 +183,23 @@ nothing chasing him off a ledge are tested rather than hoped. He is drawn
 over the page but takes no click, on a small canvas that moves inside a layer
 the size of the page, so he scrolls with it and can never make it wider.
 
-His name is Tote Tote, and he has visitors (`visit.ts`). They are the
-shelf's own too: the obvious cast — the games' heroes dropping in — would be
-the rule broken by the front door. One comes at a time and not often, so the
-shelf stays a frame for its games rather than a zoo beside them, and they
-talk in signs rather than sentences for the same reason. A visitor moves by
-the same rules he does but is led, its mind made up by the visit; that
-every visit ends and nobody ever stands on nothing is tested by running
-whole afternoons of them. Each visitor differs in how it moves, not in
-colour — the shelf is grey — so a cat, which cannot use the ladders, plans
-its routes without them, and he keeps to where it can follow; and a bird,
-which needs no routes at all, flies point to point, its visit decided apart
-from the others.
+His name is Tote Tote, and he has neighbours. A cat lives at the foot of
+the page, in a basket on the floor, which is the footer's top line (`cat.ts`).
+It cannot climb ladders, so the floor is its whole world, and he goes down to
+see it every few minutes (`scene.ts`) — the one reason he has to go all the
+way down the page, against his habit of staying where he is being looked at.
+Visitors come one at a time and not often (`visit.ts`), and never from
+nowhere: a friend comes in by the roof — a place above the top of the page,
+with a ladder down from it — or by the door on the floor, and leaves the same
+way; a bird flies in and out off the screen. They are the shelf's own too:
+the obvious cast — the games' heroes dropping in — would be the rule broken
+by the front door. They talk in signs rather than sentences, so the shelf
+stays a frame for its games rather than a zoo beside them. Each moves by the
+same rules he does but is led, its mind made up by the scene; each differs in
+how it moves, not in colour, since the shelf is grey. That nobody ever stands
+on nothing, that the cat never leaves the floor or catches the bird, that a
+friend leaves by the way it came, and that every visit ends are tested by
+running whole afternoons of them.
 
 ### Logic the tools decide is split from the scripts that run it
 

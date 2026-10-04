@@ -112,6 +112,14 @@
         opacity: 0.3;
       }
 
+      /* The inside of the doorway: darker than the page, so whoever comes
+         through it comes out of the dark. */
+      #walkway path.dark {
+        fill: #050608;
+        stroke: none;
+        opacity: 0.9;
+      }
+
       #walkway canvas {
         position: absolute;
         left: 0;
@@ -374,6 +382,49 @@
         }
       }
 
+      /* ---- the foot of the page ----------------------------------- */
+
+      /*
+        The ground. Its top line is the floor Tote Tote walks on at the bottom
+        of the page, where the cat has its basket and the door is that
+        visitors come and go by — both drawn by walker.ts, on this line.
+      */
+      .foot {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1.1rem 0 1.6rem;
+        border-top: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        color: var(--ink-dim);
+      }
+
+      html[lang='my'] .foot {
+        font-family: var(--font);
+        letter-spacing: 0.01em;
+        font-size: 0.8rem;
+      }
+
+      .foot a {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 1px;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .foot a:hover,
+      .foot a:focus-visible {
+        color: var(--ink);
+        border-color: currentColor;
+      }
+
       .empty {
         padding: 3rem 0;
         font-family: var(--mono);
@@ -423,10 +474,19 @@
           <li class="empty" id="loading">…</li>
         </ul>
       </main>
+
+      <footer class="foot">
+        <span id="made">Every picture and every sound here is made in code.</span>
+        <a id="source" href="https://github.com/SatPaingOo/kasar">source ↗</a>
+      </footer>
     </div>
 
     <div id="walkway" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg"><path /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg">
+        <path class="dark" />
+        <path class="ladders" />
+        <path class="decor" />
+      </svg>
       <canvas></canvas>
     </div>
 

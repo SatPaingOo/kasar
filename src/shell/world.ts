@@ -41,6 +41,11 @@ export interface Layout {
   readonly perches: readonly Perch[];
   /** Anything else a ladder must not cross: lines of text, empty slots. */
   readonly obstacles: readonly Box[];
+  /**
+   * The foot of the page, whose top line is the floor — or null, and the
+   * floor is just above the bottom of the page.
+   */
+  readonly ground: Box | null;
 }
 
 export interface Surface {
@@ -104,6 +109,14 @@ export interface World {
    * be in front of it. Fine to pass through; not where to stop.
    */
   readonly crowded: ReadonlyMap<string, readonly (readonly [number, number])[]>;
+  /**
+   * The ways in and out of the page, for whoever comes and goes: the roof —
+   * a place above the top of the page, with a ladder down from it — and a
+   * door on the floor. And on the floor at the other end, the cat's basket.
+   */
+  readonly roof: string | null;
+  readonly door: number | null;
+  readonly home: number | null;
 }
 
 export const WORLD = {
@@ -129,6 +142,11 @@ export const WORLD = {
   reach: 34,
   /** How tall he stands, for what he would be in front of. */
   tall: 58,
+  /** The roof is this far above the top of the page: out of sight, and a ladder's climb away. */
+  roof: -60,
+  /** The door stands this far in from the right-hand end of the floor, the basket from the left. */
+  doorIn: 26,
+  homeIn: 34,
 } as const;
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -138,13 +156,18 @@ const gapTo = (s: Surface, x: number): number => (x < s.x0 ? s.x0 - x : x > s.x1
 
 function surfacesOf(layout: Layout): Surface[] {
   const out: Surface[] = [];
-  const floorY = layout.height - WORLD.floorInset;
-  out.push({
-    id: 'floor',
-    x0: WORLD.floorMargin,
-    x1: Math.max(WORLD.floorMargin, layout.width - WORLD.floorMargin),
-    y: floorY,
-  });
+  const ground = layout.ground;
+  const floorY = ground === null ? layout.height - WORLD.floorInset : ground.top;
+  out.push(
+    ground === null
+      ? {
+          id: 'floor',
+          x0: WORLD.floorMargin,
+          x1: Math.max(WORLD.floorMargin, layout.width - WORLD.floorMargin),
+          y: floorY,
+        }
+      : { id: 'floor', x0: ground.left + WORLD.inset, x1: ground.right - WORLD.inset, y: floorY },
+  );
   if (layout.rule !== null) {
     out.push({
       id: 'rule',
@@ -263,6 +286,28 @@ export function buildWorld(layout: Layout): World {
     }
   }
 
+  // The roof: somewhere above the top of the page, and a ladder down from
+  // it to the readout — or the title — in the margin beside it. It is the
+  // way in from above; nobody lives there. Added after the hops, leaps and
+  // drops so that nobody jumps off it, only climbs.
+  let roof: string | null = null;
+  const below = surfaceOf_(surfaces, 'readout') ?? surfaceOf_(surfaces, 'mark');
+  if (below !== undefined) {
+    const right = below.x1 + WORLD.inset + WORLD.ladderOut;
+    const x = right <= layout.width - 4 ? right : below.x0 - WORLD.inset - WORLD.ladderOut;
+    const top: Surface = { id: 'roof', x0: x, x1: x, y: WORLD.roof };
+    surfaces.push(top);
+    groups.find(top.id);
+    const id = `ladder:${ladders.length}`;
+    const foot: Attach = { surface: below.id, x: clamp(x, below.x0, below.x1), y: below.y };
+    ladders.push({ id, x, top: { surface: top.id, x, y: top.y }, bottom: foot });
+    both(
+      { kind: 'ladder', from: top.id, to: below.id, ladder: id, at: x, land: foot.x },
+      { kind: 'ladder', from: below.id, to: top.id, ladder: id, at: foot.x, land: x },
+    );
+    roof = top.id;
+  }
+
   // Ladders, until everything can reach the floor. Each group that cannot
   // yet gets one, from its lowest level down to the nearest thing below that
   // belongs to another group — so between rows of cards, a ladder in the
@@ -351,7 +396,24 @@ export function buildWorld(layout: Layout): World {
     crowded.set(s.id, spans);
   }
 
-  return { width: layout.width, height: layout.height, surfaces, ladders, links, crowded };
+  const floor = surfaceOf_(surfaces, 'floor');
+  const room = floor !== undefined && floor.x1 - floor.x0 > 160;
+  return {
+    width: layout.width,
+    height: layout.height,
+    surfaces,
+    ladders,
+    links,
+    crowded,
+    roof,
+    // The door at the right-hand end of the floor, the basket at the left.
+    door: room && floor !== undefined ? floor.x1 - WORLD.doorIn : null,
+    home: room && floor !== undefined ? floor.x0 + WORLD.homeIn : null,
+  };
+}
+
+function surfaceOf_(surfaces: readonly Surface[], id: string): Surface | undefined {
+  return surfaces.find((s) => s.id === id);
 }
 
 /** Whether standing at x on a surface would put him in front of something. */
@@ -374,11 +436,13 @@ export const ladderOf = (world: World, id: string): Ladder | undefined => world.
 
 /** The surface right under a point, or the nearest one if nothing is: where he lands when the page moves under him. */
 export function surfaceUnder(world: World, x: number, y: number): Surface {
-  const under = world.surfaces.filter((s) => s.y >= y - WORLD.level && gapTo(s, x) === 0).sort((a, b) => a.y - b.y)[0];
+  // Never the roof: nobody is put down above the page.
+  const places = world.surfaces.filter((s) => s.id !== world.roof);
+  const under = places.filter((s) => s.y >= y - WORLD.level && gapTo(s, x) === 0).sort((a, b) => a.y - b.y)[0];
   if (under !== undefined) return under;
-  let best = world.surfaces[0] as Surface;
+  let best = places[0] as Surface;
   let distance = Infinity;
-  for (const s of world.surfaces) {
+  for (const s of places) {
     const d = Math.hypot(gapTo(s, x), s.y - y);
     if (d < distance) [best, distance] = [s, d];
   }

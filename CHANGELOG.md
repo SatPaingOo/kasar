@@ -7,37 +7,38 @@ keeps its own, because each game carries its own version.
 
 ### Added
 
+- A footer. Its top line is the ground: the floor Tote Tote walks on at the
+  bottom of the page, where before there was only the bottom of the window.
+  It says what is true of everything here — every picture and every sound
+  is made in code — and links to the source.
 - The shelf's figure has a name: Tote Tote, တုတ်တုတ် — he is a stick figure.
-- He has visitors. Now and then a friend turns up at the side of the
-  screen — smaller than he is, quicker, with a tuft of hair — finds him,
-  calls his name, and he says hello. It keeps him company for a minute or so,
-  walking where he walks, climbing after him, sitting down cross-legged
-  beside him when he sits on the end of a card; then they say goodbye, wave,
-  and it walks off and fades out. One visitor at a time and not always one:
-  most of the time he is on his own, so a visit is something that happens
-  rather than more furniture competing with the cards. Out of sight for a
-  while — scrolled away from — a visitor gives up and goes, quietly.
-- They talk mostly in signs, ♪ ! ? … ♥, which need no translating; his
-  name, hello and goodbye are the only words, said in the page's language.
-- A cat visits too, turn and turn about with the friend. It does not climb
-  ladders, so while it is there he stays where it can follow him; if it ends
-  up where it cannot reach him, it goes as near as it can and calls, and he
-  says "!" and comes. He bends down and strokes it when they meet, it curls
-  up asleep beside him when he stops, and it leaves the way cats leave —
-  without a goodbye, though he still waves it off. Drawn side on, in the same
-  grey line as him: a back, four legs that trot in diagonal pairs, ears and a
-  tail, with poses of its own for a leap, sitting up on an end, asleep and
-  crouched to watch.
+- A cat lives at the foot of the page, in a basket at the left-hand end of
+  the floor. Mostly it sleeps; now and then it gets up, wanders a little way
+  and comes back. It does not climb ladders, so the floor is all the world it
+  has — and every few minutes he goes down to see it, wherever anyone is
+  looking: it comes to him to be stroked, follows him about, curls up beside
+  him when he sits, and when he climbs away it watches him go and goes home.
+  That is the reason he goes all the way down the page at all.
+- Visitors, one at a time and not always one. Nobody appears from nowhere:
+  there are two ways into the page — a ladder down from the roof above the
+  top of it, beside the readout, and a door on the floor at the right-hand
+  end — and a visitor comes in by one and goes out by the same one.
+- A friend — smaller than he is, quicker, with a tuft of hair — comes in by
+  whichever way he is nearer, finds him, calls his name, and he says hello.
+  It keeps him company for a minute or so, walking where he walks, climbing
+  after him, sitting down cross-legged beside him when he sits on the end of
+  a card; then they say goodbye, wave, and it goes home the way it came.
+- A bird needs no way: it flies in from off the screen on any side and off
+  it on any side. It comes to play with him — sings, hops about, and every so
+  often rides on his head wherever he goes, up and down the ladders too — or
+  with the cat, which stalks it and pounces, and never catches it.
 - He waits for whoever is coming: seeing a visitor arrive, he says "!" and
   stops where he is instead of leading it a chase up and down the ladders.
-  Nobody turns up while he is halfway up one, and a cat that has called him
-  stays put while he comes. Over hours of each layout, every visit now finds
-  him.
-- And a bird. It needs no way anywhere: it flies in from off the page, lands
-  beside him and sings, hops about, and every so often flies up onto his
-  head and rides there wherever he goes — up and down the ladders too —
-  then flies off when it is done. Small and side on: a body, a head and a
-  beak, a tail, wings that beat in flight and fold when it lands.
+- They talk mostly in signs, ♪ ! ? … ♥ zZ, which need no translating; his
+  name, hello, goodbye and the cat's meow are the only words, said in the
+  page's language.
+- The visitors, the cat, the door and the basket are all the shelf's own, in
+  its grey line; none of them is borrowed from a game.
 
 ## [0.4.1] — 2026-10-04
 
