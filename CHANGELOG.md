@@ -5,6 +5,8 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-10-04
+
 ### Added
 
 - A footer. Its top line is the ground: the floor Tote Tote walks on at the

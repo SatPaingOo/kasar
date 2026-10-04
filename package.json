@@ -1,6 +1,6 @@
 {
   "name": "kasar",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "A shelf of small browser games, each one standing on its own.",
   "private": true,
   "type": "module",
