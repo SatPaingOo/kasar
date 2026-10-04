@@ -19,6 +19,17 @@ keeps its own, because each game carries its own version.
   while — scrolled away from — a visitor gives up and goes, quietly.
 - They talk mostly in signs, ♪ ! ? … ♥, which need no translating; his
   name, hello and goodbye are the only words, said in the page's language.
+- A cat visits too, turn and turn about with the friend. It does not climb
+  ladders, so while it is there he stays where it can follow him; if it ends
+  up where it cannot reach him, it goes as near as it can and calls, and he
+  says "!" and comes. He bends down and strokes it when they meet, it curls
+  up asleep beside him when he stops, and it leaves the way cats leave —
+  without a goodbye, though he still waves it off. Drawn side on, in the same
+  grey line as him: a back, four legs that trot in diagonal pairs, ears and a
+  tail, with poses of its own for a leap, sitting up on an end, asleep and
+  crouched to watch.
+- He waits for whoever is coming: seeing a visitor arrive, he says "!" and
+  stops where he is instead of leading it a chase up and down the ladders.
 
 ## [0.4.1] — 2026-10-04
 

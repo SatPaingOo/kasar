@@ -52,12 +52,12 @@ const FIGURE = {
 
 /** Each one's own canvas, and where the feet sit on it. */
 const SPRITE = { width: 128, height: 132, footX: 64, footY: 118 } as const;
-/** His friend is smaller than he is: younger, and quicker on its feet. */
-const SIZE: Readonly<Record<Actor['kind'], number>> = { tote: 1, friend: 0.74 };
+/** His friend is smaller than he is: younger, and quicker on its feet. The cat is drawn to its own measure. */
+const SIZE: Readonly<Record<Actor['kind'], number>> = { tote: 1, friend: 0.74, cat: 1 };
 /** The only words anyone says. Everything else is a sign, which needs no translating. */
-const WORDS: Readonly<Record<'en' | 'my', Readonly<Record<'name' | 'hello' | 'bye', string>>>> = {
-  en: { name: 'Tote Tote!', hello: 'hi!', bye: 'bye!' },
-  my: { name: 'တုတ်တုတ်!', hello: 'မင်္ဂလာပါ', bye: 'ဘိုင်ဘိုင်' },
+const WORDS: Readonly<Record<'en' | 'my', Readonly<Record<'name' | 'hello' | 'bye' | 'meow', string>>>> = {
+  en: { name: 'Tote Tote!', hello: 'hi!', bye: 'bye!', meow: 'meow' },
+  my: { name: 'တုတ်တုတ်!', hello: 'မင်္ဂလာပါ', bye: 'ဘိုင်ဘိုင်', meow: 'ညောင်' },
 };
 const FONT = '"Myanmar Text", "Noto Sans Myanmar", Padauk, system-ui, sans-serif';
 const INK_ALPHA = 0.5;
@@ -269,8 +269,8 @@ function drawCross(ctx: CanvasRenderingContext2D, r: Roamer, time: number): Poin
   return top;
 }
 
-/** At the edge, leaning out and looking down it. */
-function drawLooking(ctx: CanvasRenderingContext2D, r: Roamer, time: number): Point {
+/** At the edge, leaning out and looking down it — or bent down to stroke a cat. */
+function drawLooking(ctx: CanvasRenderingContext2D, r: Roamer, time: number, pet: number): Point {
   const f = r.facing;
   const sway = Math.sin(time * 1.3) * 0.8;
   const hip: Point = { x: -f * 1, y: -FIGURE.hip };
@@ -281,10 +281,113 @@ function drawLooking(ctx: CanvasRenderingContext2D, r: Roamer, time: number): Po
     line(ctx, hip, midJoint(hip, foot, FIGURE.thigh, FIGURE.shin, f === 1 ? -1 : 1), foot);
   }
   line(ctx, hip, shoulder, neck);
-  for (const side of [0.15, -0.1]) arm(ctx, shoulder, f, side, 0.25);
+  for (const side of [0.15, -0.1]) {
+    // Stroking: the front hand reaches down to it and back.
+    if (side > 0 && pet > 0) arm(ctx, shoulder, f, 0.75 + Math.sin(time * 6) * 0.25, 0.15);
+    else arm(ctx, shoulder, f, side, 0.25);
+  }
   const top: Point = { x: neck.x + f * 4.5, y: neck.y - FIGURE.headRadius + 3 };
   head(ctx, top, { x: top.x + f * 2.2, y: top.y + 2.4 });
   return top;
+}
+
+/**
+ * The cat, side on: a back, four legs, ears and a tail, in the same grey
+ * line as everyone else. Its own poses — trotting, leaping, sitting up on an
+ * end, curled up asleep, crouched to watch — over the modes everyone shares.
+ */
+function drawCat(ctx: CanvasRenderingContext2D, r: Roamer, gait: number, time: number): Point {
+  const f = r.facing;
+  const ears = (at: Point): void => {
+    for (const dx of [-1.6, 1.1]) {
+      ctx.beginPath();
+      ctx.moveTo(at.x + dx - 1.3, at.y - 2.4);
+      ctx.lineTo(at.x + dx - 0.6 * f, at.y - 6);
+      ctx.lineTo(at.x + dx + 1.3, at.y - 2.8);
+      ctx.closePath();
+      ctx.fill();
+    }
+  };
+  const face = (at: Point, asleep: boolean): void => {
+    ctx.beginPath();
+    ctx.arc(at.x, at.y, 3.4, 0, Math.PI * 2);
+    ctx.stroke();
+    ears(at);
+    if (asleep) line(ctx, { x: at.x + f * 0.6, y: at.y - 0.2 }, { x: at.x + f * 2.2, y: at.y - 0.2 });
+    else {
+      ctx.beginPath();
+      ctx.arc(at.x + f * 1.5, at.y - 0.5, 0.75, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+  const tail = (from: Point, to: Point, bend: Point): void => {
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.quadraticCurveTo(bend.x, bend.y, to.x, to.y);
+    ctx.stroke();
+  };
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.lineWidth = FIGURE.lineWidth * 0.8;
+
+  if (r.mode === 'cross') {
+    // Curled up asleep, breathing.
+    const rise = Math.sin(time * 1.4) * 0.4;
+    ctx.beginPath();
+    ctx.ellipse(0, -4.5 - rise / 2, 8.5, 4.5 + rise, 0, Math.PI, 0);
+    ctx.lineTo(-8.5, -4.5 - rise / 2);
+    ctx.stroke();
+    tail({ x: -f * 8.5, y: -1 }, { x: f * 4, y: 0 }, { x: -f * 4, y: 2.5 });
+    const at: Point = { x: f * 7, y: -4.5 };
+    face(at, true);
+    return at;
+  }
+  if (r.mode === 'sit') {
+    // Sitting up on the end, front paws together, tail round its feet.
+    const chest: Point = { x: f * 2.5, y: -13 };
+    const haunch: Point = { x: -f * 2.5, y: -4 };
+    line(ctx, haunch, chest);
+    line(ctx, { x: -f * 4, y: 0 }, haunch, { x: f * 1, y: -1 });
+    line(ctx, chest, { x: f * 3, y: 0 });
+    line(ctx, chest, { x: f * 4.4, y: 0 });
+    tail({ x: -f * 4, y: -1 }, { x: f * 3.5, y: 1 }, { x: -f * 6, y: 3 });
+    const at: Point = { x: f * 4.5, y: -17 };
+    face(at, false);
+    return at;
+  }
+
+  const airborne = r.mode === 'air';
+  const crouch = r.mode === 'look' ? 3.5 : 0;
+  const bob = gait * -Math.cos(r.phase * 2) * 0.6;
+  const hip: Point = { x: -f * (airborne ? 9 : 8), y: -10 + crouch + bob };
+  const shoulder: Point = { x: f * (airborne ? 8 : 7), y: -11 + crouch * 1.4 + bob };
+  // The back, with a little arch.
+  ctx.beginPath();
+  ctx.moveTo(hip.x, hip.y);
+  ctx.quadraticCurveTo(0, Math.min(hip.y, shoulder.y) - 2, shoulder.x, shoulder.y);
+  ctx.stroke();
+  // Legs: a trot moves diagonal pairs together.
+  const legs: readonly [Point, number][] = [
+    [hip, 0],
+    [hip, Math.PI],
+    [shoulder, Math.PI],
+    [shoulder, 0],
+  ];
+  for (const [root, offset] of legs) {
+    if (airborne) {
+      const reach = root === shoulder ? 5 : -5;
+      line(ctx, root, { x: root.x + f * reach + offset * 0.3, y: root.y + 6.5 });
+      continue;
+    }
+    const step = footAt(r.phase * 1.6 + offset);
+    line(ctx, root, { x: root.x + f * step.reach * 3 * gait, y: -step.lift * 3 * gait });
+  }
+  const swish = Math.sin(time * 2.2) * 1.5;
+  const tailUp = airborne ? 2 : r.mode === 'look' ? 8 : 12;
+  tail(hip, { x: hip.x - f * (airborne ? 9 : 6), y: hip.y - tailUp + swish }, { x: hip.x - f * 7, y: hip.y - 1 });
+  const at: Point = { x: shoulder.x + f * 4.2, y: shoulder.y - (r.mode === 'look' ? 0.5 : 4) };
+  line(ctx, shoulder, at);
+  face(at, false);
+  return at;
 }
 
 /** The friend's one mark of its own: a tuft of hair, blown back the way it has come. */
@@ -298,7 +401,7 @@ function tuft(ctx: CanvasRenderingContext2D, top: Point, facing: 1 | -1): void {
 /** Words for what is said, in the page's language; a sign as it is. */
 function words(what: Say): string {
   const lang = document.documentElement.lang === 'my' ? 'my' : 'en';
-  return what === 'name' || what === 'hello' || what === 'bye' ? WORDS[lang][what] : what;
+  return what === 'name' || what === 'hello' || what === 'bye' || what === 'meow' ? WORDS[lang][what] : what;
 }
 
 /** A small bubble over a head, in the shelf's own grey, fading as it goes. */
@@ -448,25 +551,27 @@ export function startWalker(layer: HTMLElement): void {
     ctx.lineJoin = 'round';
     ctx.globalAlpha = (r.startled > 0 ? STARTLED_ALPHA : INK_ALPHA) * who.alpha;
     let at: Point;
-    switch (r.mode) {
-      case 'air':
-        at = drawAirborne(ctx, r);
-        break;
-      case 'climb':
-        at = drawClimbing(ctx, r);
-        break;
-      case 'sit':
-        at = drawSitting(ctx, r, clock);
-        break;
-      case 'cross':
-        at = drawCross(ctx, r, clock);
-        break;
-      case 'look':
-        at = drawLooking(ctx, r, clock);
-        break;
-      default:
-        at = drawUpright(ctx, r, s.gait, clock, who.wave);
-    }
+    if (who.kind === 'cat') at = drawCat(ctx, r, s.gait, clock);
+    else
+      switch (r.mode) {
+        case 'air':
+          at = drawAirborne(ctx, r);
+          break;
+        case 'climb':
+          at = drawClimbing(ctx, r);
+          break;
+        case 'sit':
+          at = drawSitting(ctx, r, clock);
+          break;
+        case 'cross':
+          at = drawCross(ctx, r, clock);
+          break;
+        case 'look':
+          at = drawLooking(ctx, r, clock, who.pet);
+          break;
+        default:
+          at = drawUpright(ctx, r, s.gait, clock, who.wave);
+      }
     if (who.kind === 'friend') tuft(ctx, at, r.facing);
     if (who.say !== null) {
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);

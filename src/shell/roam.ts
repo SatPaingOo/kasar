@@ -21,7 +21,7 @@
  */
 
 import { route } from './route.js';
-import type { Step } from './route.js';
+import type { Step, Ways } from './route.js';
 import { ladderOf, spotOn, surfaceOf, surfaceUnder } from './world.js';
 import type { Box, Surface, World } from './world.js';
 
@@ -111,6 +111,8 @@ export interface Roamer {
   led: boolean;
   /** Which way to face on arriving, if it matters. */
   face: 1 | -1 | null;
+  /** Whether ladders are any use to him. A cat goes without. */
+  climbs: boolean;
 }
 
 export interface RoamInput {
@@ -163,6 +165,7 @@ export function createRoamer(
     pace: 1,
     led: false,
     face: null,
+    climbs: true,
   };
 }
 
@@ -266,7 +269,7 @@ function decide(r: Roamer, world: World, input: RoamInput): void {
 
   const go = (then: Then): boolean => {
     const where = destination(r, world, input);
-    const steps = where === null ? null : route(world, { surface: here.id, x: r.x }, where);
+    const steps = where === null ? null : route(world, { surface: here.id, x: r.x }, where, waysFor(r));
     if (steps === null || steps.length === 0) return false;
     r.steps = steps;
     r.then = then;
@@ -331,6 +334,12 @@ function arrive(r: Roamer, world: World, input: RoamInput): void {
   r.restFor = r.led ? 0.25 : between(input.random, 1.2, 3.5);
 }
 
+/** The ways open to him: all of them, or all but the ladders. */
+export const waysFor =
+  (r: Roamer): Ways =>
+  (link) =>
+    r.climbs || link.kind !== 'ladder';
+
 /** Whether he is between surfaces — on a ladder or in the air — and cannot be redirected yet. */
 export const inTransit = (r: Roamer): boolean => r.mode === 'air' || r.mode === 'climb';
 
@@ -348,7 +357,7 @@ export function goTo(
   face: 1 | -1 | null = null,
 ): boolean {
   if (inTransit(r) || r.surface === null) return false;
-  const steps = route(world, { surface: r.surface, x: r.x }, to);
+  const steps = route(world, { surface: r.surface, x: r.x }, to, waysFor(r));
   if (steps === null) return false;
   r.steps = steps;
   r.then = then;

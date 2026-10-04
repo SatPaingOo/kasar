@@ -51,8 +51,12 @@ function costOf(world: World, link: Link): number {
   }
 }
 
+/** Which ways someone can take: a cat, say, does not climb ladders. */
+export type Ways = (link: Link) => boolean;
+const anyWay: Ways = () => true;
+
 /** The steps from one spot to another, or null if there is no way. */
-export function route(world: World, from: Spot, to: Spot): Step[] | null {
+export function route(world: World, from: Spot, to: Spot, ways: Ways = anyWay): Step[] | null {
   const target = surfaceOf(world, to.surface);
   if (surfaceOf(world, from.surface) === undefined || target === undefined) return null;
   const goalX = clamp(to.x, target.x0, target.x1);
@@ -80,7 +84,7 @@ export function route(world: World, from: Spot, to: Spot): Step[] | null {
     const visit = best.get(here);
     if (visit === undefined) continue;
     for (const link of world.links) {
-      if (link.from !== here || done.has(link.to)) continue;
+      if (link.from !== here || done.has(link.to) || !ways(link)) continue;
       const exit = exitFor(link, visit.x);
       const cost = visit.cost + Math.abs(visit.x - exit) + costOf(world, link);
       if (cost < (best.get(link.to)?.cost ?? Infinity)) {
@@ -124,13 +128,13 @@ export function route(world: World, from: Spot, to: Spot): Step[] | null {
 }
 
 /** Every surface each surface can reach, for checking that nowhere is cut off. */
-export function reachable(world: World, from: string): Set<string> {
+export function reachable(world: World, from: string, ways: Ways = anyWay): Set<string> {
   const seen = new Set<string>([from]);
   const queue = [from];
   while (queue.length > 0) {
     const here = queue.shift() as string;
     for (const link of world.links) {
-      if (link.from === here && !seen.has(link.to)) {
+      if (link.from === here && !seen.has(link.to) && ways(link)) {
         seen.add(link.to);
         queue.push(link.to);
       }
