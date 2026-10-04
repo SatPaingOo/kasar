@@ -206,27 +206,6 @@
         text-transform: uppercase;
       }
 
-      .by {
-        margin: 0.45rem 0 0;
-        font-size: 0.82rem;
-        color: var(--ink-dim);
-      }
-
-      .by a {
-        text-decoration: none;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 1px;
-        transition:
-          color 0.15s ease,
-          border-color 0.15s ease;
-      }
-
-      .by a:hover,
-      .by a:focus-visible {
-        color: var(--ink);
-        border-color: currentColor;
-      }
-
       button {
         flex: none;
         font-family: var(--font);
@@ -387,7 +366,8 @@
       /*
         The ground. Its top line is the floor Tote Tote walks on at the bottom
         of the page, where the cat has its basket and the door is that
-        visitors come and go by — both drawn by walker.ts, on this line.
+        visitors come and go by — both drawn by walker.ts, on this line. And
+        the credit, which used to sit in the masthead.
       */
       .foot {
         display: flex;
@@ -407,6 +387,10 @@
         font-family: var(--font);
         letter-spacing: 0.01em;
         font-size: 0.8rem;
+      }
+
+      .foot p {
+        margin: 0;
       }
 
       .foot a {
@@ -466,7 +450,6 @@
           </div>
         </div>
         <p class="tagline" id="tagline">Small games, one at a time.</p>
-        <p class="by"><a href="https://satpaingoo.github.io/portfolio/" id="by">by Sat Paing Oo</a></p>
       </header>
 
       <main>
@@ -476,8 +459,14 @@
       </main>
 
       <footer class="foot">
-        <span id="made">Every picture and every sound here is made in code.</span>
-        <a id="source" href="https://github.com/SatPaingOo/kasar">source ↗</a>
+        <p>
+          <span id="made-before">Every picture and every sound here is made in code, by </span
+          ><a id="by" href="https://satpaingoo.github.io/portfolio/">Sat Paing Oo</a><span id="made-after">.</span>
+        </p>
+        <p>
+          <span id="rights">© 2026 · All rights reserved</span> ·
+          <a id="source" href="https://github.com/SatPaingOo/kasar">source ↗</a>
+        </p>
       </footer>
     </div>
 

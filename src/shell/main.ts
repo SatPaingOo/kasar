@@ -30,11 +30,12 @@ interface GameEntry {
 
 const TEXT = {
   tagline: { en: 'Small games, one at a time.', my: 'ဂိမ်းလေးများ၊ တစ်ခုချင်းစီ' },
-  by: { en: 'by Sat Paing Oo', my: 'Sat Paing Oo ရေးသားသည်' },
+  /** Either side of the author's name, which is a link and the same in both languages. */
   made: {
-    en: 'Every picture and every sound here is made in code.',
-    my: 'ဒီက ပုံတိုင်း၊ အသံတိုင်းကို code နဲ့ ရေးထားတယ်။',
+    en: ['Every picture and every sound here is made in code, by ', '.'],
+    my: ['ဒီက ပုံတိုင်း၊ အသံတိုင်းကို ', ' က code နဲ့ ရေးထားတယ်။'],
   },
+  rights: { en: '© 2026 · All rights reserved', my: '© 2026 · မူပိုင်ခွင့် အားလုံး ရယူထားသည်' },
   source: { en: 'source ↗', my: 'source code ↗' },
   empty: { en: 'No games on the shelf yet.', my: 'စင်ပေါ်မှာ ဂိမ်း မရှိသေးဘူး' },
   broken: { en: 'Could not read the shelf.', my: 'စင်ကို မဖတ်နိုင်ဘူး' },
@@ -50,14 +51,15 @@ function countLabel(n: number): string {
 
 let lang: Lang = pickLang([navigator.language, ...navigator.languages]);
 let games: readonly GameEntry[] = [];
-let problem: keyof typeof TEXT | null = null;
+let problem: 'empty' | 'broken' | null = null;
 
 const shelf = document.querySelector<HTMLUListElement>('#shelf');
 const tagline = document.querySelector<HTMLParagraphElement>('#tagline');
 const langButton = document.querySelector<HTMLButtonElement>('#lang');
 const counter = document.querySelector<HTMLSpanElement>('#count');
-const byline = document.querySelector<HTMLAnchorElement>('#by');
-const made = document.querySelector<HTMLSpanElement>('#made');
+const madeBefore = document.querySelector<HTMLSpanElement>('#made-before');
+const madeAfter = document.querySelector<HTMLSpanElement>('#made-after');
+const rights = document.querySelector<HTMLSpanElement>('#rights');
 const source = document.querySelector<HTMLAnchorElement>('#source');
 
 function card(game: GameEntry): HTMLLIElement {
@@ -109,8 +111,9 @@ function card(game: GameEntry): HTMLLIElement {
 
 function render(): void {
   if (tagline !== null) tagline.textContent = TEXT.tagline[lang];
-  if (byline !== null) byline.textContent = TEXT.by[lang];
-  if (made !== null) made.textContent = TEXT.made[lang];
+  if (madeBefore !== null) madeBefore.textContent = TEXT.made[lang][0];
+  if (madeAfter !== null) madeAfter.textContent = TEXT.made[lang][1];
+  if (rights !== null) rights.textContent = TEXT.rights[lang];
   if (source !== null) source.textContent = TEXT.source[lang];
   if (counter !== null) counter.textContent = countLabel(games.length);
   if (langButton !== null) langButton.textContent = SWITCH[lang];

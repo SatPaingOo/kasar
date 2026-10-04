@@ -519,7 +519,7 @@ function measure(layer: HTMLElement): Layout {
     perches.push({ id: `card:${card.getAttribute('href') ?? perches.length}`, box: boxOf(card) });
   }
   const obstacles: Box[] = [];
-  for (const block of document.querySelectorAll('header .tagline, header .by a, #shelf .empty')) {
+  for (const block of document.querySelectorAll('header .tagline, #shelf .empty')) {
     const words = textOf(block);
     if (words !== null) obstacles.push(words);
   }

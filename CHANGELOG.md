@@ -10,7 +10,8 @@ keeps its own, because each game carries its own version.
 - A footer. Its top line is the ground: the floor Tote Tote walks on at the
   bottom of the page, where before there was only the bottom of the window.
   It says what is true of everything here — every picture and every sound
-  is made in code — and links to the source.
+  is made in code, by Sat Paing Oo — with the copyright, all rights
+  reserved, and a link to the source.
 - The shelf's figure has a name: Tote Tote, တုတ်တုတ် — he is a stick figure.
 - A cat lives at the foot of the page, in a basket at the left-hand end of
   the floor. Mostly it sleeps; now and then it gets up, wanders a little way
@@ -39,6 +40,13 @@ keeps its own, because each game carries its own version.
   page's language.
 - The visitors, the cat, the door and the basket are all the shelf's own, in
   its grey line; none of them is borrowed from a game.
+
+### Changed
+
+- The credit has moved from the masthead to the footer, still linking to the
+  portfolio, so the masthead is the name and the tagline and nothing else.
+  "All rights reserved" is what the repository already means, having no
+  licence; it would have to go if one were added.
 
 ## [0.4.1] — 2026-10-04
 
