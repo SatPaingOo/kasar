@@ -192,7 +192,9 @@ the same rules he does but is led, its mind made up by the visit; that
 every visit ends and nobody ever stands on nothing is tested by running
 whole afternoons of them. Each visitor differs in how it moves, not in
 colour — the shelf is grey — so a cat, which cannot use the ladders, plans
-its routes without them, and he keeps to where it can follow.
+its routes without them, and he keeps to where it can follow; and a bird,
+which needs no routes at all, flies point to point, its visit decided apart
+from the others.
 
 ### Logic the tools decide is split from the scripts that run it
 

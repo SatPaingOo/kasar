@@ -53,7 +53,7 @@ const FIGURE = {
 /** Each one's own canvas, and where the feet sit on it. */
 const SPRITE = { width: 128, height: 132, footX: 64, footY: 118 } as const;
 /** His friend is smaller than he is: younger, and quicker on its feet. The cat is drawn to its own measure. */
-const SIZE: Readonly<Record<Actor['kind'], number>> = { tote: 1, friend: 0.74, cat: 1 };
+const SIZE: Readonly<Record<Actor['kind'], number>> = { tote: 1, friend: 0.74, cat: 1, bird: 1 };
 /** The only words anyone says. Everything else is a sign, which needs no translating. */
 const WORDS: Readonly<Record<'en' | 'my', Readonly<Record<'name' | 'hello' | 'bye' | 'meow', string>>>> = {
   en: { name: 'Tote Tote!', hello: 'hi!', bye: 'bye!', meow: 'meow' },
@@ -390,6 +390,55 @@ function drawCat(ctx: CanvasRenderingContext2D, r: Roamer, gait: number, time: n
   return at;
 }
 
+/**
+ * The bird, side on and small: a body, a head and a beak, a tail and two
+ * legs. Flying, its wings beat; on the ground it goes about in hops; perched
+ * on his head or standing, its wing is folded along its back.
+ */
+function drawBird(ctx: CanvasRenderingContext2D, r: Roamer, time: number): Point {
+  const f = r.facing;
+  const flight = r.mode === 'air' ? r.flight : null;
+  const flying = flight !== null && flight.kind === 'fly';
+  // On the ground it hops rather than walks.
+  const hop = r.mode === 'walk' ? Math.abs(Math.sin(r.phase * 1.4)) * 3 : 0;
+  const lift = flying ? 6 : hop;
+  const body: Point = { x: 0, y: -5 - lift };
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.lineWidth = FIGURE.lineWidth * 0.75;
+  ctx.beginPath();
+  ctx.ellipse(body.x, body.y, 4.6, 3.1, -f * 0.15, 0, Math.PI * 2);
+  ctx.stroke();
+  // Tail, two feathers back and up.
+  line(ctx, { x: body.x - f * 4, y: body.y - 0.5 }, { x: body.x - f * 8, y: body.y - 2.6 });
+  line(ctx, { x: body.x - f * 4, y: body.y }, { x: body.x - f * 7.8, y: body.y + 0.4 });
+  if (flying) {
+    // Wings beating, one a beat behind the other.
+    for (const lag of [0, 0.5]) {
+      const beat = Math.sin(time * 22 + lag);
+      line(ctx, { x: body.x - f * 0.5, y: body.y - 1 }, { x: body.x - f * (2.5 + lag * 2), y: body.y - 1 - beat * 7 });
+    }
+  } else {
+    // Folded along its back, and two legs down to whatever it stands on.
+    line(ctx, { x: body.x + f * 1.5, y: body.y - 1.6 }, { x: body.x - f * 3.2, y: body.y - 0.6 });
+    for (const dx of [-0.6, 1.2]) line(ctx, { x: body.x + f * dx, y: body.y + 2.8 }, { x: body.x + f * dx, y: -hop });
+  }
+  const head: Point = { x: body.x + f * 4.4, y: body.y - 3.4 };
+  ctx.beginPath();
+  ctx.arc(head.x, head.y, 2.2, 0, Math.PI * 2);
+  ctx.stroke();
+  // A beak, and an eye.
+  ctx.beginPath();
+  ctx.moveTo(head.x + f * 1.8, head.y - 0.8);
+  ctx.lineTo(head.x + f * 4.4, head.y + 0.1);
+  ctx.lineTo(head.x + f * 1.8, head.y + 0.8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(head.x + f * 0.7, head.y - 0.5, 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  return head;
+}
+
 /** The friend's one mark of its own: a tuft of hair, blown back the way it has come. */
 function tuft(ctx: CanvasRenderingContext2D, top: Point, facing: 1 | -1): void {
   for (const lean of [-0.5, 0, 0.5]) {
@@ -552,6 +601,7 @@ export function startWalker(layer: HTMLElement): void {
     ctx.globalAlpha = (r.startled > 0 ? STARTLED_ALPHA : INK_ALPHA) * who.alpha;
     let at: Point;
     if (who.kind === 'cat') at = drawCat(ctx, r, s.gait, clock);
+    else if (who.kind === 'bird') at = drawBird(ctx, r, clock);
     else
       switch (r.mode) {
         case 'air':

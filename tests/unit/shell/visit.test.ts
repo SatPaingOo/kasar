@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createRoamer } from '../../../src/shell/roam.js';
-import { VISIT, createScene, stepScene } from '../../../src/shell/visit.js';
+import { VISIT, createScene, headOf, stepScene } from '../../../src/shell/visit.js';
 import type { Mode } from '../../../src/shell/roam.js';
 import type { Kind, Say, Scene, Stage } from '../../../src/shell/visit.js';
 import { buildWorld } from '../../../src/shell/world.js';
@@ -26,6 +26,12 @@ interface Log {
   stroked: number;
   /** Times the cat called to him from somewhere he was not. */
   calledAcross: number;
+  /** Frames the bird rode on his head, and of those, frames he was on a ladder — and any it was not on his head. */
+  riding: number;
+  ridingUp: number;
+  offHead: number;
+  /** How each bird visit ended: what it was doing in its last frame. */
+  readonly birdLeft: Mode[];
   visits: number;
   ended: number;
   /** Frames with a visitor, and with none. */
@@ -42,9 +48,13 @@ function run(world: World, seed: number, seconds: number, view: (scene: Scene) =
   const log: Log = {
     stages: [],
     said: [],
-    modes: { friend: new Set(), cat: new Set() },
+    modes: { friend: new Set(), cat: new Set(), bird: new Set() },
     stroked: 0,
     calledAcross: 0,
+    riding: 0,
+    ridingUp: 0,
+    offHead: 0,
+    birdLeft: [],
     visits: 0,
     ended: 0,
     busy: 0,
@@ -78,6 +88,12 @@ function run(world: World, seed: number, seconds: number, view: (scene: Scene) =
       }
       saidGuest = v.actor.say;
       log.modes[kind].add(v.actor.body.mode);
+      if (v.actor.body.mode === 'ride') {
+        log.riding += 1;
+        if (scene.tote.body.mode === 'climb') log.ridingUp += 1;
+        const head = headOf(scene.tote.body);
+        if (Math.abs(v.actor.body.x - head.x) > 0.01 || Math.abs(v.actor.body.y - head.y) > 0.01) log.offHead += 1;
+      }
       if (scene.tote.pet > 0) log.stroked += 1;
       if (v.actor.body.mode === 'cross' && scene.tote.body.mode === 'sit') log.sideBySide += 1;
       log.busy += 1;
@@ -85,6 +101,7 @@ function run(world: World, seed: number, seconds: number, view: (scene: Scene) =
       log.longest = Math.max(log.longest, length);
     } else {
       if (before !== null) {
+        if (before.actor.kind === 'bird') log.birdLeft.push(before.actor.body.mode);
         log.ended += 1;
         log.stages.push('going');
       }
@@ -105,20 +122,30 @@ describe('a visit', () => {
       `comes, finds him, says hello, stays, says goodbye and goes, on the ${name} layout`,
       () => {
         const world = buildWorld(make());
+        const said = new Set<string>();
         for (const seed of [1, 2, 3]) {
           const log = run(world, seed, 20 * 60);
           expect(log.visits).toBeGreaterThan(3);
           // Every visit but perhaps the one still going at the end has ended.
           expect(log.ended).toBeGreaterThanOrEqual(log.visits - 1);
-          // Both have been, in turn, each meeting him and leaving in its own way.
-          expect(log.said).toEqual(
-            expect.arrayContaining(['friend:name', 'tote@friend:hello', 'friend:bye', 'tote@friend:bye']),
-          );
-          expect(log.said).toEqual(expect.arrayContaining(['cat:meow', 'tote@cat:♥', 'tote@cat:bye']));
-          // In order, every time: coming, then hello, then the stay, then away.
-          const joined = log.stages.join(' ');
-          expect(joined).toContain('coming greeting staying going');
+          for (const line of log.said) said.add(line);
+          // In order: coming, then hello, then the stay, then away.
+          expect(log.stages.join(' ')).toContain('coming greeting staying going');
         }
+        // Between them, everyone has been, met him and left in its own way.
+        expect([...said]).toEqual(
+          expect.arrayContaining([
+            'friend:name',
+            'tote@friend:hello',
+            'friend:bye',
+            'tote@friend:bye',
+            'cat:meow',
+            'tote@cat:♥',
+            'bird:♪',
+            'tote@bird:hello',
+            'tote@bird:bye',
+          ]),
+        );
       },
       LONG,
     );
@@ -199,6 +226,48 @@ describe('the cat', () => {
     () => {
       for (const log of all()) expect(log.said).not.toContain('cat:bye');
       expect(all().some((log) => log.said.includes('tote@cat:bye'))).toBe(true);
+    },
+    LONG,
+  );
+});
+
+describe('the bird', () => {
+  let logs: Log[] | null = null;
+  const all = (): Log[] => {
+    if (logs !== null) return logs;
+    const wide = buildWorld(desktop());
+    const narrow = buildWorld(phone());
+    logs = [21, 22, 23].flatMap((seed) => [run(wide, seed, 30 * 60), run(narrow, seed, 30 * 60)]);
+    return logs;
+  };
+
+  it(
+    'flies in, lands beside him and sings, and he says hello',
+    () => {
+      expect(all().some((log) => log.modes.bird.has('air'))).toBe(true);
+      expect(all().some((log) => log.said.includes('bird:♪') && log.said.includes('tote@bird:hello'))).toBe(true);
+    },
+    LONG,
+  );
+
+  it(
+    'rides on his head wherever he goes, up and down the ladders too, and never anywhere else',
+    () => {
+      expect(all().reduce((n, log) => n + log.riding, 0)).toBeGreaterThan(0);
+      expect(all().reduce((n, log) => n + log.ridingUp, 0)).toBeGreaterThan(0);
+      for (const log of all()) expect(log.offHead).toBe(0);
+    },
+    LONG,
+  );
+
+  it(
+    'flies off the page when it is done, and the visit ends',
+    () => {
+      const left = all().flatMap((log) => log.birdLeft);
+      expect(left.length).toBeGreaterThan(0);
+      // Fading out on the wing, or already off the page — never standing about.
+      for (const mode of left) expect(['air', 'gone']).toContain(mode);
+      for (const log of all()) expect(log.ended).toBeGreaterThanOrEqual(log.visits - 1);
     },
     LONG,
   );

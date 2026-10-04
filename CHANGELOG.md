@@ -30,6 +30,14 @@ keeps its own, because each game carries its own version.
   crouched to watch.
 - He waits for whoever is coming: seeing a visitor arrive, he says "!" and
   stops where he is instead of leading it a chase up and down the ladders.
+  Nobody turns up while he is halfway up one, and a cat that has called him
+  stays put while he comes. Over hours of each layout, every visit now finds
+  him.
+- And a bird. It needs no way anywhere: it flies in from off the page, lands
+  beside him and sings, hops about, and every so often flies up onto his
+  head and rides there wherever he goes — up and down the ladders too —
+  then flies off when it is done. Small and side on: a body, a head and a
+  beak, a tail, wings that beat in flight and fold when it lands.
 
 ## [0.4.1] — 2026-10-04
 

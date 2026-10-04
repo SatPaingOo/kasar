@@ -25,6 +25,8 @@ export const DT = 1 / 30;
 function problem(world: World, r: Roamer): string | null {
   if (!Number.isFinite(r.x) || !Number.isFinite(r.y)) return `at ${r.x}, ${r.y}`;
   if (r.mode === 'air') return r.flight === null ? 'in the air with no flight' : null;
+  // On his head, or flown off the page: a bird's, and somewhere it can be.
+  if (r.mode === 'ride' || r.mode === 'gone') return null;
   if (r.mode === 'climb') {
     const ladder = ladderOf(world, r.ladder ?? '');
     if (ladder === undefined) return `climbing ${r.ladder}, which is not there`;

@@ -51,13 +51,21 @@ const ARC = {
   drop: { time: 0.3, height: 8 },
   bounce: { time: 0.4, height: 14 },
   step: { time: 0.2, height: 4 },
+  /** A bird's flight: as long as its distance needs, and high in the middle. */
+  fly: { time: 0.6, height: 30 },
 } as const;
+
+/** Where a flight lands that is not on a surface: on his head, or off the page altogether. */
+export const RIDE = '@head';
+export const AWAY = '@away';
 
 /**
  * `sit` is on the very end of something with the legs over the edge; `cross`
- * is cross-legged, anywhere — beside someone sitting on an end, say.
+ * is cross-legged, anywhere — beside someone sitting on an end, say. A bird
+ * has two of its own: `ride`, perched on his head, where whoever leads it
+ * keeps it; and `gone`, flown off the page.
  */
-export type Mode = 'stand' | 'walk' | 'climb' | 'air' | 'sit' | 'cross' | 'look';
+export type Mode = 'stand' | 'walk' | 'climb' | 'air' | 'sit' | 'cross' | 'look' | 'ride' | 'gone';
 export type Then = 'rest' | 'sit' | 'cross' | 'look' | 'bounce';
 
 export interface Point {
@@ -207,13 +215,14 @@ function fly(r: Roamer, kind: keyof typeof ARC, to: Point, onto: string | null):
   const arc = ARC[kind];
   const from = { x: r.x, y: r.y };
   const fall = Math.max(0, to.y - from.y);
+  const far = Math.hypot(to.x - from.x, to.y - from.y);
   r.flight = {
     kind,
     from,
     to,
-    peak: Math.min(from.y, to.y) - arc.height,
-    // A longer drop takes longer, the way falling does.
-    time: arc.time + (kind === 'drop' ? fall / 600 : 0),
+    peak: Math.min(from.y, to.y) - arc.height - (kind === 'fly' ? far * 0.12 : 0),
+    // A longer drop takes longer, the way falling does; a flight as long as it is far.
+    time: arc.time + (kind === 'drop' ? fall / 600 : 0) + (kind === 'fly' ? far / 260 : 0),
     t: 0,
     onto,
   };
@@ -372,6 +381,13 @@ export function goTo(
   return true;
 }
 
+/** Fly — for a bird — to a point: onto a surface, onto his head, or away. */
+export function flyTo(r: Roamer, to: Point, onto: string): void {
+  r.steps = [];
+  r.restFor = 0;
+  fly(r, 'fly', to, onto);
+}
+
 /** Stop where he is for a while, facing one way: to greet someone, or see them off. */
 export function pause(r: Roamer, seconds: number, facing: 1 | -1): void {
   if (inTransit(r)) return;
@@ -410,6 +426,11 @@ function begin(r: Roamer, world: World, step: Step): boolean {
 /** One frame. Mutates and returns the same object, so a frame does not allocate. */
 export function stepRoamer(r: Roamer, world: World, input: RoamInput): Roamer {
   const dt = input.dt;
+  if (r.mode === 'gone' || r.mode === 'ride') {
+    // Off the page, or on his head where the visit keeps it: nothing to do here.
+    r.away = inView(input.view, r.x, r.y) ? 0 : r.away + dt;
+    return r;
+  }
   if (r.mode !== 'air' && r.mode !== 'climb' && (r.surface === null || surfaceOf(world, r.surface) === undefined)) {
     settle(r, world);
   }
@@ -458,6 +479,10 @@ export function stepRoamer(r: Roamer, world: World, input: RoamInput): Roamer {
         r.flight = null;
         if (f.onto === null) {
           r.mode = 'climb';
+        } else if (f.onto === RIDE || f.onto === AWAY) {
+          r.mode = f.onto === RIDE ? 'ride' : 'gone';
+          r.surface = null;
+          r.restFor = 0;
         } else {
           r.surface = f.onto;
           r.ladder = null;
