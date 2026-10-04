@@ -5,6 +5,21 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+### Added
+
+- The shelf's figure has a name: Tote Tote, တုတ်တုတ် — he is a stick figure.
+- He has visitors. Now and then a friend turns up at the side of the
+  screen — smaller than he is, quicker, with a tuft of hair — finds him,
+  calls his name, and he says hello. It keeps him company for a minute or so,
+  walking where he walks, climbing after him, sitting down cross-legged
+  beside him when he sits on the end of a card; then they say goodbye, wave,
+  and it walks off and fades out. One visitor at a time and not always one:
+  most of the time he is on his own, so a visit is something that happens
+  rather than more furniture competing with the cards. Out of sight for a
+  while — scrolled away from — a visitor gives up and goes, quietly.
+- They talk mostly in signs, ♪ ! ? … ♥, which need no translating; his
+  name, hello and goodbye are the only words, said in the page's language.
+
 ## [0.4.1] — 2026-10-04
 
 ### Fixed

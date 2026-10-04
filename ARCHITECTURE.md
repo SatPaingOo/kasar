@@ -183,6 +183,15 @@ nothing chasing him off a ledge are tested rather than hoped. He is drawn
 over the page but takes no click, on a small canvas that moves inside a layer
 the size of the page, so he scrolls with it and can never make it wider.
 
+His name is Tote Tote, and he has visitors (`visit.ts`). They are the
+shelf's own too: the obvious cast — the games' heroes dropping in — would be
+the rule broken by the front door. One comes at a time and not often, so the
+shelf stays a frame for its games rather than a zoo beside them, and they
+talk in signs rather than sentences for the same reason. A visitor moves by
+the same rules he does but is led, its mind made up by the visit; that
+every visit ends and nobody ever stands on nothing is tested by running
+whole afternoons of them.
+
 ### Logic the tools decide is split from the scripts that run it
 
 `tools/lib/` holds what each tool judges — which file a request may have,

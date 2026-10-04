@@ -1,5 +1,6 @@
 /**
- * What the shelf's figure does with the page, one frame at a time.
+ * What the shelf's figure — Tote Tote, တုတ်တုတ် — does with the page, one
+ * frame at a time. Visitors move by the same rules; see visit.ts.
  *
  * He is not wandering at random. Whenever he has nothing to do he picks
  * something he wants — to go and see somewhere else on the page, to stroll,
@@ -52,8 +53,12 @@ const ARC = {
   step: { time: 0.2, height: 4 },
 } as const;
 
-export type Mode = 'stand' | 'walk' | 'climb' | 'air' | 'sit' | 'look';
-type Then = 'rest' | 'sit' | 'look' | 'bounce';
+/**
+ * `sit` is on the very end of something with the legs over the edge; `cross`
+ * is cross-legged, anywhere — beside someone sitting on an end, say.
+ */
+export type Mode = 'stand' | 'walk' | 'climb' | 'air' | 'sit' | 'cross' | 'look';
+export type Then = 'rest' | 'sit' | 'cross' | 'look' | 'bounce';
 
 export interface Point {
   readonly x: number;
@@ -97,6 +102,15 @@ export interface Roamer {
   /** Where a climb is heading, and what he steps off onto at the end of it. */
   climbTo: number | null;
   stepOff: { readonly to: string; readonly x: number } | null;
+  /** How fast he goes, against Tote Tote's own pace. */
+  pace: number;
+  /**
+   * Following someone else's plan instead of making his own: a visitor,
+   * whose mind is made up in visit.ts. Left with nothing to do, he waits.
+   */
+  led: boolean;
+  /** Which way to face on arriving, if it matters. */
+  face: 1 | -1 | null;
 }
 
 export interface RoamInput {
@@ -111,11 +125,25 @@ export interface RoamInput {
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
 const between = (random: () => number, lo: number, hi: number): number => lo + random() * (hi - lo);
 
-/** He starts on the masthead's rule, which is on screen whenever the page opens — or wherever there is. */
-export function createRoamer(world: World, random: () => number = Math.random): Roamer {
-  const start = surfaceOf(world, 'rule') ?? surfaceOf(world, 'floor') ?? (world.surfaces[0] as Surface);
+/**
+ * He starts on the masthead's rule, which is on screen whenever the page
+ * opens — or wherever there is. A visitor is put where it arrives.
+ */
+export function createRoamer(
+  world: World,
+  random: () => number = Math.random,
+  at: { readonly surface: string; readonly x: number } | null = null,
+): Roamer {
+  const start =
+    (at === null ? undefined : surfaceOf(world, at.surface)) ??
+    surfaceOf(world, 'rule') ??
+    surfaceOf(world, 'floor') ??
+    (world.surfaces[0] as Surface);
   return {
-    x: spotOn(world, start.id, start.x0, start.x1, random),
+    x:
+      at !== null && at.surface === start.id
+        ? clamp(at.x, start.x0, start.x1)
+        : spotOn(world, start.id, start.x0, start.x1, random),
     y: start.y,
     facing: random() < 0.5 ? -1 : 1,
     mode: 'stand',
@@ -132,6 +160,9 @@ export function createRoamer(world: World, random: () => number = Math.random): 
     away: 0,
     climbTo: null,
     stepOff: null,
+    pace: 1,
+    led: false,
+    face: null,
   };
 }
 
@@ -223,6 +254,13 @@ function destination(r: Roamer, world: World, input: RoamInput): { surface: stri
 function decide(r: Roamer, world: World, input: RoamInput): void {
   const here = r.surface === null ? undefined : surfaceOf(world, r.surface);
   if (here === undefined) return;
+  if (r.led) {
+    // Someone else decides; until they do, stand where he is.
+    r.then = 'rest';
+    r.mode = 'stand';
+    r.restFor = 0.25;
+    return;
+  }
   const lost = r.away > ROAM.away;
   const roll = input.random();
 
@@ -267,21 +305,73 @@ function decide(r: Roamer, world: World, input: RoamInput): void {
 function arrive(r: Roamer, world: World, input: RoamInput): void {
   const here = r.surface === null ? undefined : surfaceOf(world, r.surface);
   const then = r.then;
+  const face = r.face;
   r.then = 'rest';
+  r.face = null;
   r.speed = 0;
   if ((then === 'sit' || then === 'look') && here !== undefined) {
     // Facing out over whichever end he is at.
-    r.facing = r.x - here.x0 < here.x1 - r.x ? -1 : 1;
+    r.facing = face ?? (r.x - here.x0 < here.x1 - r.x ? -1 : 1);
     r.mode = then;
     r.restFor = then === 'sit' ? between(input.random, 4, 8) : between(input.random, 1.6, 3);
+    return;
+  }
+  if (then === 'cross') {
+    if (face !== null) r.facing = face;
+    r.mode = 'cross';
+    r.restFor = between(input.random, 6, 12);
     return;
   }
   if (then === 'bounce') {
     fly(r, 'bounce', { x: r.x, y: r.y }, r.surface);
     return;
   }
+  if (face !== null) r.facing = face;
   r.mode = 'stand';
-  r.restFor = between(input.random, 1.2, 3.5);
+  r.restFor = r.led ? 0.25 : between(input.random, 1.2, 3.5);
+}
+
+/** Whether he is between surfaces — on a ladder or in the air — and cannot be redirected yet. */
+export const inTransit = (r: Roamer): boolean => r.mode === 'air' || r.mode === 'climb';
+
+/**
+ * Send him somewhere and have him do `then` when he gets there — for a
+ * visitor, whose plans are made for it. False if he cannot be sent: he is
+ * between surfaces, or there is no way.
+ */
+export function goTo(
+  r: Roamer,
+  world: World,
+  to: { readonly surface: string; readonly x: number },
+  then: Then,
+  random: () => number,
+  face: 1 | -1 | null = null,
+): boolean {
+  if (inTransit(r) || r.surface === null) return false;
+  const steps = route(world, { surface: r.surface, x: r.x }, to);
+  if (steps === null) return false;
+  r.steps = steps;
+  r.then = then;
+  r.face = face;
+  r.restFor = 0;
+  if (steps.length === 0) {
+    // Already there.
+    arrive(r, world, { dt: 0, random, pointer: null, view: { left: 0, top: 0, right: 0, bottom: 0 } });
+  } else {
+    r.mode = 'walk';
+  }
+  return true;
+}
+
+/** Stop where he is for a while, facing one way: to greet someone, or see them off. */
+export function pause(r: Roamer, seconds: number, facing: 1 | -1): void {
+  if (inTransit(r)) return;
+  r.steps = [];
+  r.then = 'rest';
+  r.mode = 'stand';
+  r.speed = 0;
+  r.restFor = seconds;
+  r.facing = facing;
 }
 
 /** Take the next step of the plan. */
@@ -340,7 +430,7 @@ export function stepRoamer(r: Roamer, world: World, input: RoamInput): Roamer {
     }
   }
 
-  const hurry = r.startled > 0 ? ROAM.flee : r.away > 0 ? ROAM.hurry : ROAM.stroll;
+  const hurry = (r.startled > 0 ? ROAM.flee : r.away > 0 ? ROAM.hurry : ROAM.stroll) * r.pace;
 
   switch (r.mode) {
     case 'air': {
@@ -382,7 +472,7 @@ export function stepRoamer(r: Roamer, world: World, input: RoamInput): Roamer {
       }
       r.x = ladder.x;
       const toGo = r.climbTo - r.y;
-      const moved = Math.min(Math.abs(toGo), ROAM.climb * (hurry === ROAM.stroll ? 1 : 1.6) * dt);
+      const moved = Math.min(Math.abs(toGo), ROAM.climb * r.pace * (r.startled > 0 || r.away > 0 ? 1.6 : 1) * dt);
       r.y += Math.sign(toGo) * moved;
       r.climb += moved * ROAM.climbPerPixel;
       r.speed = moved / Math.max(dt, 1e-6);

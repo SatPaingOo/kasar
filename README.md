@@ -173,7 +173,8 @@ tests/unit/tools/smoke.test.ts          how the smoke test tells a game that wor
 tests/unit/shell/colour.test.ts         contrast on an accent nobody here chose
 tests/unit/shell/lang.test.ts           which language the shelf opens in
 tests/unit/shell/world.test.ts          the page as somewhere to live: nowhere cut off, no ladder across a card
-tests/unit/shell/roam.test.ts           the shelf's figure run for twenty minutes: never on nothing, never lost
+tests/unit/shell/roam.test.ts           Tote Tote run for twenty minutes: never on nothing, never lost
+tests/unit/shell/visit.test.ts          his visitors: one at a time, hello and goodbye, every visit ends
 tests/unit/shell/walk.test.ts           his feet carry him forwards, not in a moonwalk
 ```
 
