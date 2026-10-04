@@ -69,7 +69,6 @@ function run(world: World, seed: number, seconds: number, view: Box = whole(worl
     ended: 0,
   };
   let first: Where | null = null;
-  let last: Where | null = null;
   let catAir = false;
   for (let i = 0; i < seconds / DT; i += 1) {
     const before = scene.visit;
@@ -104,15 +103,14 @@ function run(world: World, seed: number, seconds: number, view: Box = whole(worl
         log.visits += 1;
         first = at(v.actor.body);
       }
-      // Gone is gone from where it went: the roof, or the doorway.
       if (v.actor.body.mode !== 'gone') where(world, v.actor.body);
-      last = at(v.actor.body);
     }
     if (before !== null && v !== before) {
-      // Where it was when it went — the frame it went in, not the one before.
-      last = at(before.actor.body);
+      // Where it was when it went — the frame it went in, not the one
+      // before: gone is gone from the roof, or the doorway.
+      const last = at(before.actor.body);
       log.ended += 1;
-      if (first !== null && last !== null) {
+      if (first !== null) {
         if (before.actor.kind === 'friend') log.friends.push({ first, last });
         else log.birds.push({ cameFromOff: off(view, first), leftOff: off(view, last) });
       }
