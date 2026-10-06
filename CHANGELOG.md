@@ -5,6 +5,20 @@ keeps its own, because each game carries its own version.
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-10-06
+
+### Changed
+
+- The blurb on every card is rewritten. Five of them in a column all read
+  the same way — a scene, a full stop, an instruction — and gave the setting
+  rather than the decision, which is the part of each of these games worth a
+  sentence. Tazaung's best idea, that the spark you relight the sky with is
+  spent out of your own lantern, was not on its card at all, and Hman's never
+  said it teaches TypeScript. Each now leads with what your hands do, or the
+  rule that binds them, and says what it costs. The Burmese drops the pronoun
+  throughout, as Burmese does, and keeps one register instead of wandering
+  between ကိုယ့် and မင်း.
+
 ## [0.5.0] — 2026-10-04
 
 ### Added
