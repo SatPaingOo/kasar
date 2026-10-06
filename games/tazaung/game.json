@@ -1,10 +1,13 @@
 {
   "id": "tazaung",
   "version": "0.1.0",
-  "title": { "en": "Tazaung", "my": "တန်ဆောင်" },
+  "title": {
+    "en": "Tazaung",
+    "my": "တန်ဆောင်"
+  },
   "blurb": {
-    "en": "The sky is going out. Relight it before your lantern does.",
-    "my": "ကောင်းကင် ငြိမ်းနေပြီ။ ကိုယ့်မီးအိမ် မငြိမ်းခင် ပြန်ထွန်းပါ။"
+    "en": "Lights are falling out of the sky, and the spark that relights them comes out of your own lantern.",
+    "my": "ကောင်းကင်က မီးတွေ တစ်လုံးချင်း ကြွေနေတယ်။ ပြန်ထွန်းဖို့ မီးပွားက ကိုယ့်မီးအိမ်ထဲကပဲ ထွက်တယ်။"
   },
   "accent": "#f0d2a8",
   "year": 2026

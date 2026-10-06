@@ -149,11 +149,11 @@ tools/e2e.ts           smoke-tests every game and plays Hman and Saing, in real 
 
 | | |
 |---|---|
-| [Tazaung](games/tazaung/README.md) | The sky is going out. Relight it before your lantern does. |
-| [Hlaykar](games/hlaykar/README.md) | The water is rising. Stack the stones; he climbs whatever you build. |
-| [Kyo](games/kyo/README.md) | A gorge, and one rope. The only thing to decide is when to let go. |
-| [Hman](games/hman/README.md) | Write the move and he makes it — seventy-five rungs of TypeScript, where a right answer lands on the mirror and a wrong one lands on you. |
-| [Saing](games/saing/README.md) | A circle of tuned drums plays a phrase. Play it back — same drums, same rhythm. |
+| [Tazaung](games/tazaung/README.md) | Lights are falling out of the sky, and the spark that relights them comes out of your own lantern. |
+| [Hlaykar](games/hlaykar/README.md) | He climbs one step, never two, never down. Build him a stair out of the falling stones — the water is the clock. |
+| [Kyo](games/kyo/README.md) | One button, one rope. Let go too early and he stalls; too late and the gorge has him. |
+| [Hman](games/hman/README.md) | Write the body of a TypeScript function and he fights with exactly what you wrote — seventy-five rungs of it. |
+| [Saing](games/saing/README.md) | Play back what the drum circle just played — by ear, same drums, same rhythm. Each phrase is a beat longer than the last. |
 
 ## Tests
 
